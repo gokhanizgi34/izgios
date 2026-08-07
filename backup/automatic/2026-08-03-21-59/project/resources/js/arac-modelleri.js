@@ -1,0 +1,665 @@
+const aracModelleri = {
+
+
+"OPEL": [
+"ASTRA",
+"VECTRA",
+"CORSA",
+"INSIGNIA",
+"MOKKA",
+"CROSSLAND",
+"GRANDLAND",
+"TIGRA",
+"MERIVA",
+"ZAFIRA",
+"COMBO"
+],
+"CHEVROLET": [
+"CRUZE",
+"AVEO",
+"LACETTI",
+"CAPTIVA",
+"SPARK",
+"EPICA",
+"KALOS",
+"CORVETTE",
+"CAMARO"
+],
+"FORD": [
+"FIESTA",
+"FOCUS",
+"MONDEO",
+"MUSTANG",
+"PUMA",
+"KUGA",
+"EDGE",
+"EXPLORER",
+"RANGER",
+"TRANSIT"
+],
+"MERCEDES-BENZ": [
+"A-SERISI",
+"C-SERISI",
+"E-SERISI",
+"S-SERISI",
+"CLA",
+"CLS",
+"GLA",
+"GLC",
+"GLE",
+"G-SERISI",
+"VITO"
+],
+"BMW": [
+"1 SERISI",
+"2 SERISI",
+"3 SERISI",
+"4 SERISI",
+"5 SERISI",
+"7 SERISI",
+"X1",
+"X3",
+"X5",
+"M3",
+"M5",
+"I4",
+"IX"
+],
+"VOLKSWAGEN": [
+"GOLF",
+"PASSAT",
+"POLO",
+"JETTA",
+"TIGUAN",
+"T-ROC",
+"ARTEON",
+"TOUAREG",
+"SCIROCCO",
+"CADDY",
+"TRANSPORTER"
+],
+"RENAULT": [
+"CLIO",
+"MEGANE",
+"FLUENCE",
+"SYMBOL",
+"CAPTUR",
+"KADJAR",
+"AUSTRAL",
+"RAFALE",
+"LAGUNA",
+"SCENIC",
+"KANGOO"
+],
+"ABARTH": [
+"500",
+"595",
+"695"
+],
+"ACURA": [
+"ILX",
+"TLX",
+"RDX",
+"MDX",
+"NSX"
+],
+"AION": [
+"AION S",
+"AION Y",
+"AION V",
+"AION LX"
+],
+"ALFA ROMEO": [
+"GIULIETTA",
+"TONALE",
+"GIULIA",
+"STELVIO",
+"MITO",
+"159",
+"156"
+],
+"ALPINE": [
+"A110"
+],
+"ANADOL": [
+"A1",
+"A2",
+"STC-16",
+"SV-1600",
+"BUGGY"
+],
+"ARORA": [
+"CAPRI",
+"MAXI",
+"FREEDOM",
+"AR-200"
+],
+"ASTON MARTIN": [
+"DB11",
+"DB12",
+"VANTAGE",
+"DBS",
+"DBX"
+],
+"AUDI": [
+"A3",
+"A4",
+"A5",
+"A6",
+"A8",
+"Q2",
+"Q3",
+"Q5",
+"Q7",
+"TT",
+"R8",
+"E-TRON"
+],
+"BENTLEY": [
+"CONTINENTAL GT",
+"BENTAYGA",
+"FLYING SPUR"
+],
+"BUICK": [
+"ENCORE",
+"ENCLAVE",
+"LACROSSE",
+"REGAL"
+],
+"BYD": [
+"ATTO 3",
+"SEAL",
+"HAN",
+"DOLPHIN",
+"SONG"
+],
+"CADILLAC": [
+"ESCALADE",
+"XT5",
+"XT6",
+"CT5"
+],
+"CHERY": [
+"TIGGO 7",
+"TIGGO 8",
+"OMODA 5"
+],
+"CHRYSLER": [
+"300C",
+"PT CRUISER",
+"VOYAGER"
+],
+"CITROEN": [
+"C3",
+"C4",
+"C5",
+"BERLINGO",
+"AMI",
+"JUMPY"
+],
+"CUPRA": [
+"FORMENTOR",
+"LEON",
+"BORN",
+"ATECA"
+],
+"DACIA": [
+"DUSTER",
+"SANDERO",
+"JOGGER",
+"SPRING",
+"LOGAN"
+],
+"DAEWOO": [
+"LANOS",
+"MATIZ",
+"NUBIRA",
+"LEGANZA"
+],
+"DAIHATSU": [
+"SIRION",
+"TERIOS",
+"CUORE",
+"FEROZA"
+],
+"DODGE": [
+"CHALLENGER",
+"CHARGER",
+"DURANGO",
+"RAM"
+],
+"DS AUTOMOBILES": [
+"DS 3",
+"DS 4",
+"DS 7",
+"DS 9"
+],
+"EAGLE": [
+"TALON",
+"VISION"
+],
+"FERRARI": [
+"488",
+"F8",
+"ROMA",
+"PORTOFINO",
+"SF90",
+"296"
+],
+"FIAT": [
+"EGEA",
+"LINEA",
+"PUNTO",
+"PALIO",
+"PANDA",
+"500",
+"BRAVO",
+"MAREA",
+"TEMPRA",
+"UNO",
+"DOBLO",
+"FIORINO"
+],
+"GEELY": [
+"EMGRAND",
+"EC7",
+"GC6"
+],
+"HONDA": [
+"CIVIC",
+"ACCORD",
+"CITY",
+"JAZZ",
+"CR-V",
+"HR-V",
+"ZR-V",
+"PRELUDE",
+"INTEGRA",
+"S2000",
+"NSX"
+],
+"HYUNDAI": [
+"I10",
+"I20",
+"I30",
+"ACCENT",
+"ELANTRA",
+"TUCSON",
+"SANTA FE",
+"KONA",
+"BAYON",
+"IONIQ 5",
+"STARIA"
+],
+"I-GO": [
+"GO-1"
+],
+"IKCO": [
+"SAMAND",
+"RUNNA",
+"DENA"
+],
+"INFINITI": [
+"FX35",
+"QX70",
+"Q50",
+"Q30"
+],
+"JAGUAR": [
+"XE",
+"XF",
+"XJ",
+"F-PACE",
+"E-PACE",
+"I-PACE"
+],
+"JIAYUAN": [
+"KOMRAD",
+"ET"
+],
+"JOYCE": [
+"JOYCE 1"
+],
+"KIA": [
+"PICANTO",
+"RIO",
+"CEED",
+"CERATO",
+"SPORTAGE",
+"SORENTO",
+"STONIC",
+"NIRO",
+"EV6",
+"BONGO"
+],
+"KUBA": [
+"TK-100",
+"BLACKCAT",
+"MODERN"
+],
+"LADA": [
+"NIVA",
+"SAMARA",
+"VEGA",
+"PRIORA"
+],
+"LAMBORGHINI": [
+"URUS",
+"HURACAN",
+"REVUELTO"
+],
+"LANCIA": [
+"DELTA",
+"YPSILON",
+"THEMA"
+],
+"LEAPMOTOR": [
+"T03",
+"C11",
+"C10"
+],
+"LEXUS": [
+"IS",
+"ES",
+"NX",
+"RX",
+"UX",
+"LS"
+],
+"LINCOLN": [
+"NAVIGATOR",
+"AVIATOR",
+"CORSAIR"
+],
+"LOTUS": [
+"ELISE",
+"EXIGE",
+"EMIRA",
+"ELETRE"
+],
+"LUQI": [
+"LQ-50"
+],
+"MARCOS": [
+"MANTIS",
+"MARCOS GT"
+],
+"MASERATI": [
+"GHIBLI",
+"LEVANTE",
+"QUATTROPORTE",
+"GRECALE",
+"MC20"
+],
+"MAZDA": [
+"MAZDA 3",
+"MAZDA 6",
+"CX-3",
+"CX-5",
+"MX-5",
+"RX-8"
+],
+"MCLAREN": [
+"720S",
+"ARTURA",
+"GT",
+"P1"
+],
+"MG": [
+"ZS",
+"HS",
+"MG4",
+"CYBERSTER"
+],
+"MICRO": [
+"MICROLINO"
+],
+"MINI": [
+"COOPER",
+"COUNTRYMAN",
+"CLUBMAN",
+"PACEMAN"
+],
+"MITSUBISHI": [
+"LANCER",
+"ASX",
+"OUTLANDER",
+"PAJERO",
+"L200",
+"SPACE STAR"
+],
+"MORGAN": [
+"PLUS FOUR",
+"PLUS SIX",
+"SUPER 3"
+],
+"MOTOLUX": [
+"FOSFOR",
+"REGAL",
+"BALDIR"
+],
+"NIEVE": [
+"NIEVE 1"
+],
+"NISSAN": [
+"MICRA",
+"NOTE",
+"ALMERA",
+"PRIMERA",
+"PULSAR",
+"QASHQAI",
+"JUKE",
+"X-TRAIL",
+"PATHFINDER",
+"NAVARRA",
+"GT-R"
+],
+"ORTIMOBIL": [
+"ORTI 1"
+],
+"PEUGEOT": [
+"206",
+"207",
+"208",
+"307",
+"308",
+"407",
+"508",
+"2008",
+"3008",
+"5008",
+"RIFTER",
+"PARTNER"
+],
+"PLYMOUTH": [
+"BARRACUDA",
+"ROAD RUNNER",
+"DUSTER"
+],
+"POLESTAR": [
+"POLESTAR 2",
+"POLESTAR 3",
+"POLESTAR 4"
+],
+"PONTIAC": [
+"FIREBIRD",
+"GTO",
+"TRANS AM",
+"SOLSTICE"
+],
+"PORSCHE": [
+"911",
+"CAYENne",
+"MACAN",
+"PANAMERA",
+"TAYCAN",
+"BOXSTER"
+],
+"PROTON": [
+"GEN-2",
+"WIRA",
+"SAVVY",
+"PERSONA"
+],
+"RAINWOLL": [
+"RW-1"
+],
+"REEDER": [
+"REEDER S19",
+"REEDER PIPPO"
+],
+"REGAL RAPTOR": [
+"DAYTONA",
+"BOBBER",
+"RAPTOR"
+],
+"RELIVE": [
+"RELIVE 1"
+],
+"RKS": [
+"BLAZER",
+"RD-8",
+"FRESH"
+],
+"ROEWE": [
+"RX5",
+"EI5"
+],
+"ROLLS-ROYCE": [
+"PHANTOM",
+"GHOST",
+"CULLINAN",
+"WRAITH"
+],
+"ROVER": [
+"25",
+"45",
+"75",
+"STREETWISE"
+],
+"SAAB": [
+"9-3",
+"9-5",
+"900"
+],
+"SAIPA": [
+"SIPA 131",
+"TIBINA"
+],
+"SEAT": [
+"IBIZA",
+"LEON",
+"ARONA",
+"ATECA",
+"TARRACO",
+"TOLEDO"
+],
+"SKODA": [
+"OCTAVIA",
+"SUPERB",
+"FABIA",
+"KODIAQ",
+"KAROQ",
+"KAMIQ",
+"SCALA"
+],
+"SMART": [
+"FORTWO",
+"FORFOUR",
+"#1"
+],
+"SUBARU": [
+"IMPREZA",
+"FORESTER",
+"OUTBACK",
+"XV",
+"BRZ",
+"WRX"
+],
+"SUZUKI": [
+"VITARA",
+"SWIFT",
+"JIMNY",
+"SX4",
+"BALENO"
+],
+"TATA": [
+"INDICA",
+"SAFARI",
+"XENON",
+"ARIA"
+],
+"TESLA": [
+"MODEL 3",
+"MODEL Y",
+"MODEL S",
+"MODEL X",
+"CYBERTRUCK",
+"ROADSTER"
+],
+"THE LONDON TAXI": [
+"TX4",
+"TX5"
+],
+"TOFAŞ": [
+"ŞAHİN",
+"DOĞAN",
+"KARTAL",
+"MURAT 124",
+"SERÇE"
+],
+"TOGG": [
+"T10X",
+"T10F",
+"T8X"
+],
+"TOYOTA": [
+"COROLLA",
+"YARIS",
+"AURIS",
+"AVENSIS",
+"CAMRY",
+"C-HR",
+"RAV4",
+"LAND CRUISER",
+"HILUX",
+"PRIUS",
+"SUPRA"
+],
+"VANDERHALL": [
+"ESTELLA",
+"VENICE"
+],
+"VOLTA": [
+"VM4",
+"APX",
+"VSS"
+],
+"VOLVO": [
+"XC40",
+"XC60",
+"XC90",
+"S60",
+"S90",
+"V60",
+"EX30",
+"EX90"
+],
+"XEV": [
+"YOYO"
+],
+"YUKI": [
+"AMIK",
+"ANDAÇ",
+"DELUXE"
+],
+"ZLIN MOTORS": [
+"ZLIN 1"
+],
+"DİĞER": [
+"DİĞER"
+]
+
+};
+
+window.aracModelleri = aracModelleri;
