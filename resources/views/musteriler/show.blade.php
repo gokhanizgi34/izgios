@@ -34,6 +34,13 @@ Müşteri bilgileri ve araç geçmişi
 
 <div class="actions">
 
+<a href="{{ route('araclar.create', ['musteri_id' => $musteri->id]) }}"
+class="btn-service">
+
+<i class="bi bi-car-front-fill"></i> Araç Ekle
+
+</a>
+
 
 <a href="{{ route('musteriler.edit',$musteri->id) }}"
 class="btn-edit">
@@ -263,6 +270,12 @@ Araç Detay
 
 </a>
 
+<a href="{{ route('servis.kabul', ['arac_id' => $arac->id]) }}" class="vehicle-button vehicle-service">
+
+Servis Kabule Al
+
+</a>
+
 
 
 </div>
@@ -413,6 +426,8 @@ background:#facc15;
 color:#713f12;
 
 }
+
+.btn-service{background:#2563eb;color:#fff;}
 
 
 
@@ -595,6 +610,8 @@ text-decoration:none;
 font-weight:700;
 
 }
+
+.vehicle-service{margin-top:10px;background:#dcfce7;color:#166534;}
 
 
 

@@ -1,0 +1,10 @@
+@extends('layouts.app')
+@section('title','Yeni Müşteri | İZGİOS')
+@section('content')
+<main class="container py-4"><x-servis-yeni-tasarim :adim="1" baslik="Yeni müşteri kartı" aciklama="İletişim bilgisini bir kez kaydedin; araç ve servis kayıtları bu karttan ilerler." />
+@if($errors->any())<div class="alert alert-danger">Lütfen zorunlu alanları kontrol edin.</div>@endif
+<form method="POST" action="{{ route('musteriler.store') }}" class="servis-sayfa-kart">@csrf
+<div class="kart-baslik"><h2>Müşteri bilgileri</h2><p>Servis iletişimi için gereken temel alanlar</p></div>
+<div class="servis-form-grid"><div><label>Ad soyad <span class="text-danger">*</span></label><input class="form-control" name="ad_soyad" value="{{ old('ad_soyad') }}" required autofocus></div><div><label>Telefon <span class="text-danger">*</span></label><input class="form-control" name="telefon" inputmode="tel" value="{{ old('telefon') }}" required></div><div><label>E-posta</label><input class="form-control" type="email" name="email" value="{{ old('email') }}"></div><div><label>Doğum tarihi</label><input class="form-control" type="date" name="dogum_tarihi" value="{{ old('dogum_tarihi') }}"></div><div><label>İkinci telefon</label><input class="form-control" name="telefon2" inputmode="tel" value="{{ old('telefon2') }}"></div><div><label>T.C. kimlik no</label><input class="form-control" name="tc_kimlik_no" inputmode="numeric" value="{{ old('tc_kimlik_no') }}"></div><div class="tam"><label>Adres</label><textarea class="form-control" name="adres">{{ old('adres') }}</textarea></div><div class="tam"><label>Müşteri notu</label><textarea class="form-control" name="notlar" placeholder="Tercihler veya servis için önemli notlar">{{ old('notlar') }}</textarea></div></div>
+<div class="servis-aksiyonlar"><a href="{{ route('musteriler.index') }}" class="btn btn-outline-secondary">Vazgeç</a><button class="btn btn-servis-ana">Kaydet ve araç kartına geç <i class="bi bi-arrow-right"></i></button></div></form></main>
+@endsection

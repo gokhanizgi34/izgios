@@ -1,0 +1,3 @@
+<?php
+use Illuminate\Database\Migrations\Migration;use Illuminate\Database\Schema\Blueprint;use Illuminate\Support\Facades\Schema;
+return new class extends Migration{public function up():void{Schema::create('stok_parca_raf_adresleri',function(Blueprint $t){$t->id();$t->foreignId('stok_parca_id')->constrained('stok_parcalar')->cascadeOnDelete();$t->foreignId('depo_raf_id')->constrained('depo_raflar')->cascadeOnDelete();$t->boolean('ana_konum')->default(true);$t->timestamps();$t->unique(['stok_parca_id','depo_raf_id']);});}public function down():void{Schema::dropIfExists('stok_parca_raf_adresleri');}};

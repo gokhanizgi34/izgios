@@ -17,9 +17,8 @@ class MusteriController extends Controller
      */
     public function index(Request $request)
     {
-
-
         $query = Musteri::with('araclar');
+        $this->firmaKapsami($query);
 
 
 
@@ -75,7 +74,7 @@ class MusteriController extends Controller
 
 
         return view(
-            'musteriler.create'
+            'musteriler.create-v3'
         );
 
 
@@ -112,6 +111,8 @@ class MusteriController extends Controller
 
 
             'email' => 'nullable|email|max:255',
+
+            'dogum_tarihi' => 'nullable|date|before:today',
 
 
             'adres' => 'nullable|string',
@@ -173,7 +174,9 @@ class MusteriController extends Controller
 
 
 
-        Musteri::create($validated);
+        $validated['firma_id'] = $this->aktifFirmaId();
+        $validated['sube_id'] = session('aktif_sube_id') ?: auth()->user()?->firmaPersoneli?->sube_id;
+        $musteri = Musteri::create($validated);
 
 
 
@@ -183,11 +186,11 @@ class MusteriController extends Controller
 
         return redirect()
 
-            ->route('musteriler.index')
+            ->route('araclar.create', ['musteri_id' => $musteri->id])
 
             ->with(
                 'success',
-                'Müşteri başarıyla oluşturuldu.'
+                'Müşteri kaydedildi. Şimdi müşteriye ait araç kartını oluşturun.'
             );
 
 
@@ -206,10 +209,10 @@ class MusteriController extends Controller
      */
     public function show(Musteri $musteri)
     {
-
+        $this->musteriErisiminiDogrula($musteri);
 
         $musteri->load([
-            'araclar'
+            'araclar.servisler'
         ]);
 
 
@@ -236,7 +239,7 @@ class MusteriController extends Controller
      */
     public function edit(Musteri $musteri)
     {
-
+        $this->musteriErisiminiDogrula($musteri);
 
         return view(
             'musteriler.edit',
@@ -259,7 +262,7 @@ class MusteriController extends Controller
      */
     public function update(Request $request, Musteri $musteri)
     {
-
+        $this->musteriErisiminiDogrula($musteri);
 
         $validated = $request->validate([
 
@@ -277,6 +280,8 @@ class MusteriController extends Controller
 
 
             'email' => 'nullable|email|max:255',
+
+            'dogum_tarihi' => 'nullable|date|before:today',
 
 
             'adres' => 'nullable|string',
@@ -379,7 +384,7 @@ class MusteriController extends Controller
      */
     public function destroy(Musteri $musteri)
     {
-
+        $this->musteriErisiminiDogrula($musteri);
 
         $musteri->delete();
 
@@ -396,6 +401,28 @@ class MusteriController extends Controller
             );
 
 
+    }
+
+    private function aktifFirmaId(): ?int
+    {
+        return auth()->user()?->tamSistemYetkisiVarMi()
+            ? (session('aktif_firma_id') ?: null)
+            : (session('aktif_firma_id') ?: auth()->user()?->firmaPersoneli?->firma_id);
+    }
+
+    private function firmaKapsami($query): void
+    {
+        $firmaId = $this->aktifFirmaId();
+        if (! auth()->user()?->tamSistemYetkisiVarMi()) {
+            abort_unless($firmaId, 403, 'Kullanıcının firma bağlantısı bulunamadı.');
+            $query->where('firma_id', $firmaId);
+        }
+    }
+
+    private function musteriErisiminiDogrula(Musteri $musteri): void
+    {
+        if (auth()->user()?->tamSistemYetkisiVarMi()) return;
+        abort_unless((int) $musteri->firma_id === (int) $this->aktifFirmaId(), 403);
     }
 
 

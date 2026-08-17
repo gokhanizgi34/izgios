@@ -27,6 +27,10 @@ class Musteri extends Model
 
     protected $fillable = [
 
+        'firma_id',
+
+        'sube_id',
+
 
         'ad_soyad',
 
@@ -41,6 +45,8 @@ class Musteri extends Model
 
 
         'email',
+
+        'dogum_tarihi',
 
 
         'adres',
@@ -60,6 +66,8 @@ class Musteri extends Model
 
 
     protected $casts = [
+
+        'dogum_tarihi' => 'date',
 
 
         'created_at' => 'datetime',
@@ -94,6 +102,16 @@ class Musteri extends Model
         );
 
 
+    }
+
+    public function firma()
+    {
+        return $this->belongsTo(Firma::class);
+    }
+
+    public function sube()
+    {
+        return $this->belongsTo(Sube::class);
     }
 
 

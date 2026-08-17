@@ -284,6 +284,22 @@ class="form-control-izgios">
 </div>
 
 
+<div>
+
+<label class="form-label-izgios">
+
+Doğum Tarihi
+
+</label>
+
+<input type="date"
+name="dogum_tarihi"
+value="{{ old('dogum_tarihi') }}"
+class="form-control-izgios">
+
+</div>
+
+
 
 
 

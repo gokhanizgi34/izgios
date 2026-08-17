@@ -43,7 +43,17 @@
 
 
 
-<body class="izgios-body">
+@php($aktifTema = auth()->check() ? \Illuminate\Support\Facades\DB::table('kullanici_tercihleri')->where('user_id', auth()->id())->value('tema') : 'acik')
+<body class="izgios-body {{ $aktifTema === 'koyu' ? 'tema-koyu' : '' }} {{ auth()->user()?->isUsta() ? 'role-usta' : '' }}">
+
+<style>
+.tema-koyu{background:#0b1220!important;color:#e5edf7}.tema-koyu .izgios-main,.tema-koyu .izgios-content{background:#0b1220!important}
+.tema-koyu .card,.tema-koyu .firma-card,.tema-koyu .rbox,.tema-koyu .work-card,.tema-koyu .report-panel,.tema-koyu .module-band+*,.tema-koyu .dashboard-box,.tema-koyu .summary-card,.tema-koyu .warehouse .wh-card,.tema-koyu .warehouse .wh-form,.tema-koyu .warehouse .wh-list,.tema-koyu .barcode-tools,.tema-koyu .barcode-list,.tema-koyu .hr-stat,.tema-koyu .hr-panel,.tema-koyu .hr-table,.tema-koyu .report-card{background:#111c2e!important;color:#e5edf7!important;border-color:#263652!important}
+.tema-koyu input,.tema-koyu select,.tema-koyu textarea{background:#0b1525!important;color:#e5edf7!important;border-color:#354563!important}.tema-koyu option{background:#0b1525;color:#e5edf7}
+.tema-koyu .page-header h1,.tema-koyu h1,.tema-koyu h2,.tema-koyu h3,.tema-koyu h4,.tema-koyu strong,.tema-koyu .dashboard-box-header h3,.tema-koyu .box-header h3{color:#f8fafc!important}.tema-koyu .text-muted,.tema-koyu small,.tema-koyu p,.tema-koyu .dashboard-box-header span{color:#aebed2!important}
+.tema-koyu .service-table,.tema-koyu .service-table thead tr,.tema-koyu .service-table tbody tr,.tema-koyu .table,.tema-koyu .table tr,.tema-koyu .table td,.tema-koyu .table th{background:#111c2e!important;color:#e5edf7!important;border-color:#263652!important}.tema-koyu .service-table tbody tr:hover,.tema-koyu .table-hover tbody tr:hover{background:#17263e!important}.tema-koyu .service-table th,.tema-koyu .table th{color:#aebed2!important}.tema-koyu .service-table td,.tema-koyu .table td{color:#e5edf7!important}
+.tema-koyu .list-row,.tema-koyu hr{border-color:#263652!important}.tema-koyu .alert-info{background:#122a4d!important;color:#dbeafe!important;border-color:#2563eb!important}.tema-koyu .izgios-footer{background:#10192a!important;border-color:#263652!important}
+</style>
 
 
 
@@ -109,6 +119,8 @@
         {{-- İÇERİK --}}
 
         <main class="izgios-content">
+
+            @include('components.module-band')
 
             @yield('content')
 
@@ -185,6 +197,8 @@
 
 
         </footer>
+
+        @include('components.genel-asistan')
 
 
 

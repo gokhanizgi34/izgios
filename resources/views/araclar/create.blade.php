@@ -85,7 +85,7 @@ Müşteri Seçiniz
 @foreach($musteriler as $musteri)
 
 
-<option value="{{ $musteri->id }}">
+<option value="{{ $musteri->id }}" @selected(old('musteri_id', $seciliMusteriId ?? null) == $musteri->id)>
 
 {{ $musteri->ad_soyad }}
 

@@ -19,3 +19,7 @@ Artisan::command('inspire', function () {
 
 Schedule::command('izgi:backup')
     ->hourly();
+
+Schedule::command('izgi:dogum-gunu-kutla')
+    ->dailyAt('09:00')
+    ->withoutOverlapping();

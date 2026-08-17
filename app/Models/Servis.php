@@ -22,6 +22,12 @@ class Servis extends Model
 
         'arac_id',
 
+        'firma_id',
+
+        'sube_id',
+
+        'usta_id',
+
         'servis_no',
 
         'servis_tarihi',
@@ -70,7 +76,7 @@ class Servis extends Model
 
         'ruhsat_aracta' => 'boolean',
 
-        'servis_tarihi' => 'date',
+        'servis_tarihi' => 'datetime',
 
         'teslim_tarihi' => 'date',
 
@@ -120,6 +126,16 @@ class Servis extends Model
             'arac_id'
         );
 
+    }
+
+    public function sube()
+    {
+        return $this->belongsTo(Sube::class);
+    }
+
+    public function usta()
+    {
+        return $this->belongsTo(User::class, 'usta_id');
     }
 
 

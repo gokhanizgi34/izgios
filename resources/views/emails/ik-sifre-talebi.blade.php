@@ -1,0 +1,1 @@
+<!doctype html><html lang="tr"><body style="font-family:Arial;color:#17233c"><h2>İZGİOS şifre yenileme talebi</h2><p><strong>{{ $talep->kullanici->tamAdi() }}</strong> ({{ $talep->istek_email }}) şifre yenileme talebinde bulundu.</p><p>İK panelinden talebi onayladığınızda kullanıcıya güvenli şifre oluşturma bağlantısı gönderilir.</p></body></html>

@@ -26,19 +26,22 @@ class ServisKabulController extends Controller
     */
 
 
-    public function create()
+    public function create(Request $request)
     {
 
 
         $araclar = Arac::with('musteri')
             ->orderBy('plaka')
+            ->when(! auth()->user()?->tamSistemYetkisiVarMi(), fn ($q) => $q->where('firma_id', $this->aktifFirmaId()))
             ->get();
 
 
 
+        $seciliAracId = $request->integer('arac_id');
+
         return view(
-            'servisler.kabul',
-            compact('araclar')
+            'servisler.kabul-v3',
+            compact('araclar', 'seciliAracId')
         );
 
 
@@ -80,6 +83,7 @@ class ServisKabulController extends Controller
                 '%'.$plaka.'%'
             )
 
+            ->when(! auth()->user()?->tamSistemYetkisiVarMi(), fn ($q) => $q->where('firma_id', $this->aktifFirmaId()))
             ->limit(20)
 
             ->get();
@@ -121,6 +125,7 @@ class ServisKabulController extends Controller
                 $token
             )
 
+            ->when(! auth()->user()?->tamSistemYetkisiVarMi(), fn ($q) => $q->where('firma_id', $this->aktifFirmaId()))
             ->first();
 
 
@@ -174,14 +179,12 @@ class ServisKabulController extends Controller
     {
 
 
-        $request->validate([
-
-
-            'arac_id'=>'required',
-
-            'musteri_id'=>'required',
-
-
+        $veri = $request->validate([
+            'arac_id' => ['required', 'integer', 'exists:araclar,id'],
+            'musteri_id' => ['required', 'integer', 'exists:musteris,id'],
+            'giris_km' => ['nullable', 'integer', 'min:0'],
+            'sikayet' => ['required', 'string', 'max:5000'],
+            'oncelik' => ['nullable', 'in:Normal,Acil,Bekleyen'],
         ]);
 
 
@@ -193,6 +196,12 @@ class ServisKabulController extends Controller
         $arac = Arac::findOrFail(
             $request->arac_id
         );
+
+        if (! auth()->user()?->tamSistemYetkisiVarMi()) {
+            abort_unless((int) $arac->firma_id === (int) $this->aktifFirmaId(), 403);
+        }
+
+        abort_unless((int) $arac->musteri_id === (int) $veri['musteri_id'], 422, 'Seçilen araç ile müşteri eşleşmiyor. Araç seçimini yenileyin.');
 
 
 
@@ -209,6 +218,10 @@ class ServisKabulController extends Controller
 
             'arac_id'=>
             $request->arac_id,
+
+            'firma_id' => $arac->firma_id ?: $this->aktifFirmaId(),
+
+            'sube_id' => $arac->sube_id ?: session('aktif_sube_id'),
 
 
             'servis_no'=>
@@ -253,7 +266,7 @@ class ServisKabulController extends Controller
 
 
             'ruhsat_aracta'=>
-            $request->ruhsat_aracta,
+            $request->boolean('ruhsat_aracta'),
 
 
 
@@ -287,7 +300,7 @@ class ServisKabulController extends Controller
         {
 
 
-            $arac->son_km =
+            $arac->kilometre =
                 $request->giris_km;
 
 
@@ -320,7 +333,7 @@ class ServisKabulController extends Controller
         return redirect()
 
             ->route(
-                'servisler.show',
+                'servis.islem',
                 $servis->id
             )
 
@@ -331,6 +344,11 @@ class ServisKabulController extends Controller
 
 
 
+    }
+
+    private function aktifFirmaId(): ?int
+    {
+        return session('aktif_firma_id') ?: auth()->user()?->firmaPersoneli?->firma_id;
     }
 
 

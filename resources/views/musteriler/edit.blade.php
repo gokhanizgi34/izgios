@@ -236,6 +236,26 @@ class="form-input">
 </div>
 
 
+<div class="form-group">
+
+
+<label>
+Doğum Tarihi
+</label>
+
+
+<input type="date"
+
+name="dogum_tarihi"
+
+value="{{ old('dogum_tarihi', $musteri->dogum_tarihi?->format('Y-m-d')) }}"
+
+class="form-input">
+
+
+</div>
+
+
 
 
 

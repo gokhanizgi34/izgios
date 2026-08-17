@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Arac;
+use App\Models\Sube;
 
 
 
@@ -46,6 +47,8 @@ class QrServisController extends Controller
 
 
             'servisler.parcalar'
+
+            ,'servisler.sube'
 
 
         ])
@@ -163,9 +166,27 @@ if(
 
 }
 
+        $guncelKm = (int) ($arac->kilometre ?? $arac->servisler->max('giris_km') ?? 0);
+        $bakimPlan = collect(range(1, 10))->map(function ($sira) use ($arac) {
+            $hedefKm = $sira * 20000;
+            $servis = $arac->servisler
+                ->filter(fn ($kayit) => (int) ($kayit->giris_km ?? 0) >= $hedefKm)
+                ->sortBy('giris_km')
+                ->first();
+            return ['sira' => $sira, 'km' => $hedefKm, 'yil' => $sira, 'tamam' => $servis !== null, 'servis' => $servis];
+        });
+
+        $sube = $arac->servisler->first()?->sube
+            ?: Sube::query()->where('aktif', true)->orderBy('id')->first();
+        $whatsappNo = preg_replace('/\D+/', '', (string) ($sube?->whatsapp_no ?: $sube?->telefon));
+        if (str_starts_with($whatsappNo, '0')) {
+            $whatsappNo = '90'.substr($whatsappNo, 1);
+        }
+        $whatsappUrl = strlen($whatsappNo) >= 10 ? 'https://wa.me/'.$whatsappNo : null;
+
         return view(
 
-            'qr.servis',
+            'qr.musteri-servis-v4',
 
             compact(
 
@@ -173,7 +194,9 @@ if(
 
                 'musteri',
 
-                'sonrakiBakim'
+                'sonrakiBakim',
+                'bakimPlan',
+                'whatsappUrl'
 
             )
 

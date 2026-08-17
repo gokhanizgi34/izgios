@@ -1,31 +1,33 @@
 /* =====================================================
    İZGİOS ANA SİSTEM CSS
-   Ortak değişkenler ve temel ayarlar
+   Layout + Sidebar + Topbar
 ===================================================== */
 
 
+/* =====================================================
+   ROOT DEĞİŞKENLER
+===================================================== */
+
 :root {
 
-    --izgios-primary:#2563EB;
+    --izgios-primary:#2563eb;
+    --izgios-primary-dark:#1d4ed8;
 
-    --izgios-primary-hover:#1D4ED8;
-
-    --izgios-gold:#D4AF37;
+    --izgios-gold:#d4af37;
 
     --izgios-dark:#111827;
+    --izgios-sidebar:#0f172a;
 
-    --izgios-bg:#F4F7FB;
+    --izgios-bg:#f4f7fb;
 
-    --izgios-white:#FFFFFF;
+    --izgios-white:#ffffff;
 
-    --izgios-text:#111827;
+    --izgios-text:#1e293b;
+    --izgios-muted:#64748b;
 
-    --izgios-muted:#64748B;
+    --izgios-border:#e5e7eb;
 
-    --izgios-border:#E5E7EB;
-
-
-    --izgios-radius:20px;
+    --izgios-radius:18px;
 
     --izgios-shadow:
     0 10px 30px rgba(15,23,42,.08);
@@ -37,7 +39,7 @@
 
 
 /* =====================================================
-   GLOBAL RESET
+   RESET
 ===================================================== */
 
 
@@ -51,7 +53,12 @@
 
 
 
-html {
+html,
+body {
+
+    margin:0;
+
+    padding:0;
 
     min-height:100%;
 
@@ -61,22 +68,17 @@ html {
 
 body {
 
-    min-height:100vh;
-
-    margin:0;
-
     font-family:
-    'Poppins',
-    'Inter',
+    "Poppins",
+    "Inter",
     Arial,
     sans-serif;
 
-    color:var(--izgios-text);
-
     background:var(--izgios-bg);
 
-}
+    color:var(--izgios-text);
 
+}
 
 
 
@@ -92,7 +94,6 @@ a {
 
 
 
-
 img {
 
     max-width:100%;
@@ -101,12 +102,8 @@ img {
 
 
 
-
-
 button,
-input,
-select,
-textarea {
+input {
 
     font-family:inherit;
 
@@ -117,19 +114,64 @@ textarea {
 
 
 /* =====================================================
-   ORTAK KART SİSTEMİ
+   ANA SİSTEM YAPISI
 ===================================================== */
 
 
-.izgios-card {
+.izgios-sidebar {
 
-    background:var(--izgios-white);
 
-    border-radius:var(--izgios-radius);
+    position:fixed;
 
-    box-shadow:var(--izgios-shadow);
+    left:0;
 
-    border:1px solid var(--izgios-border);
+    top:0;
+
+    width:310px;
+
+    height:100vh;
+
+    background:
+    var(--izgios-sidebar);
+
+    color:white;
+
+    z-index:1000;
+
+    display:flex;
+
+    flex-direction:column;
+
+    overflow-y:auto;
+
+}
+
+
+
+
+.izgios-main {
+
+
+    margin-left:310px;
+
+    min-height:100vh;
+
+    display:flex;
+
+    flex-direction:column;
+
+}
+
+
+
+
+
+.izgios-content {
+
+
+    padding:30px;
+
+    flex:1;
 
 }
 
@@ -138,39 +180,46 @@ textarea {
 
 
 /* =====================================================
-   ORTAK BUTONLAR
+   SIDEBAR LOGO
 ===================================================== */
 
 
-.izgios-btn {
+.sidebar-brand {
 
-    display:inline-flex;
 
-    align-items:center;
+    padding:35px 25px 25px;
 
-    justify-content:center;
-
-    gap:8px;
-
-    border-radius:14px;
-
-    padding:12px 22px;
-
-    font-weight:600;
-
-    cursor:pointer;
-
-    border:none;
-
-    transition:.25s;
+    text-align:center;
 
 }
 
 
 
-.izgios-btn-primary {
+.sidebar-logo {
 
-    background:var(--izgios-primary);
+
+    display:block;
+
+}
+
+
+
+
+.sidebar-logo-text {
+
+
+    font-size:52px;
+
+    font-weight:800;
+
+    letter-spacing:-2px;
+
+}
+
+
+
+.logo-white {
+
 
     color:white;
 
@@ -178,73 +227,24 @@ textarea {
 
 
 
-.izgios-btn-primary:hover {
-
-    background:var(--izgios-primary-hover);
-
-}
+.logo-yellow {
 
 
-
-
-
-
-/* =====================================================
-   FORM ORTAK ALANLARI
-===================================================== */
-
-
-.izgios-input {
-
-    width:100%;
-
-    height:48px;
-
-    border:1px solid var(--izgios-border);
-
-    border-radius:12px;
-
-    padding:0 15px;
-
-    background:white;
-
-    transition:.25s;
-
-}
-
-
-
-.izgios-input:focus {
-
-    outline:none;
-
-    border-color:var(--izgios-primary);
-
-    box-shadow:
-    0 0 0 4px rgba(37,99,235,.10);
+    color:var(--izgios-gold);
 
 }
 
 
 
 
-
-/* =====================================================
-   BADGE / DURUM
-===================================================== */
+.sidebar-logo-subtitle {
 
 
-.izgios-badge {
+    margin-top:12px;
 
-    display:inline-flex;
+    color:#facc15;
 
-    align-items:center;
-
-    padding:5px 12px;
-
-    border-radius:999px;
-
-    font-size:12px;
+    font-size:14px;
 
     font-weight:600;
 
@@ -256,123 +256,330 @@ textarea {
 
 
 /* =====================================================
-   YARDIMCI SINIFLAR
+   SIDEBAR PROFİL
 ===================================================== */
 
 
-.text-muted {
-
-    color:var(--izgios-muted);
-
-}
+.sidebar-profile {
 
 
+    margin:20px;
 
-.shadow-soft {
+    padding:20px;
 
-    box-shadow:var(--izgios-shadow);
-
-    
-}
-
-/* =====================================================
-   İZGİOS FORM SİSTEMİ
-   Bootstrap uyumlu sınıflar
-===================================================== */
-
-
-/* CARD */
-
-.card {
-
-    background:white;
+    background:
+    rgba(255,255,255,.06);
 
     border-radius:20px;
 
-    border:1px solid #e5e7eb;
+    display:flex;
 
-    box-shadow:
-    0 10px 30px rgba(15,23,42,.06);
+    align-items:center;
 
-}
-
-
-.card-body {
-
-    padding:32px;
+    gap:15px;
 
 }
 
 
 
+.profile-icon {
 
 
-/* GRID */
+    width:55px;
 
-.row {
+    height:55px;
 
     display:flex;
 
-    flex-wrap:wrap;
+    align-items:center;
 
-    margin-left:-12px;
+    justify-content:center;
 
-    margin-right:-12px;
-
-}
-
-
-
-.g-4 {
-
-    row-gap:24px;
-
-}
-
-
-
-.col-md-6 {
-
-    width:50%;
-
-    padding-left:12px;
-
-    padding-right:12px;
-
-}
-
-
-
-.col-12 {
-
-    width:100%;
+    font-size:38px;
 
 }
 
 
 
 
+.profile-info {
 
-/* FORM */
 
-.form-control,
-.form-select {
+    display:flex;
 
-    width:100%;
+    flex-direction:column;
 
-    height:52px;
+}
 
-    padding:0 16px;
 
-    border-radius:12px;
 
-    border:1px solid #dbe3ef;
+.profile-info strong {
 
-    background:#fff;
 
     font-size:16px;
 
-    color:#111827;
+}
+
+
+
+.profile-info span {
+
+
+    color:#94a3b8;
+
+    font-size:14px;
+
+}
+
+
+
+
+
+
+/* =====================================================
+   SIDEBAR MENU
+===================================================== */
+
+
+.sidebar-navigation {
+
+
+    padding:10px 18px;
+
+}
+
+
+
+
+
+.sidebar-section {
+
+
+    margin-bottom:28px;
+
+}
+
+
+
+.sidebar-section > span {
+
+
+    display:block;
+
+    margin:0 0 12px 10px;
+
+    color:#64748b;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    letter-spacing:1px;
+
+}
+
+
+
+
+
+
+.sidebar-section a {
+
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    padding:14px 15px;
+
+    border-radius:14px;
+
+    color:#e2e8f0;
+
+    margin-bottom:5px;
+
+    transition:.25s;
+
+}
+
+
+
+
+
+.sidebar-section a i {
+
+
+    width:22px;
+
+    font-size:18px;
+
+}
+
+
+
+.sidebar-section a:hover {
+
+
+    background:
+    rgba(255,255,255,.08);
+
+}
+
+
+
+
+
+.sidebar-section a.active {
+
+
+    background:
+    var(--izgios-primary);
+
+    color:white;
+
+    box-shadow:
+    0 10px 25px rgba(37,99,235,.35);
+
+}
+/* =====================================================
+   SIDEBAR FOOTER
+===================================================== */
+
+
+.sidebar-footer {
+
+
+    margin-top:auto;
+
+    padding:20px;
+
+    border-top:
+
+    1px solid rgba(255,255,255,.08);
+
+}
+
+
+
+.sidebar-user-mini {
+
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    margin-bottom:20px;
+
+}
+
+
+
+.mini-avatar {
+
+
+    width:45px;
+
+    height:45px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:#1e293b;
+
+    color:white;
+
+    font-size:28px;
+
+}
+
+
+
+.mini-info {
+
+
+    display:flex;
+
+    flex-direction:column;
+
+}
+
+
+
+.mini-info strong {
+
+
+    font-size:14px;
+
+    color:white;
+
+}
+
+
+
+.mini-info span {
+
+
+    color:#94a3b8;
+
+    font-size:13px;
+
+}
+
+
+
+.mini-info span i {
+
+
+    color:#22c55e;
+
+    font-size:8px;
+
+    margin-right:5px;
+
+}
+
+
+
+
+
+
+
+.sidebar-footer-menu {
+
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:5px;
+
+}
+
+
+
+.sidebar-footer-menu a {
+
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    padding:10px;
+
+    color:#cbd5e1;
+
+    border-radius:10px;
 
     transition:.2s;
 
@@ -380,70 +587,10 @@ textarea {
 
 
 
-.form-control:focus,
-.form-select:focus {
-
-    outline:none;
-
-    border-color:#2563eb;
-
-    box-shadow:
-    0 0 0 4px rgba(37,99,235,.12);
-
-}
+.sidebar-footer-menu a:hover {
 
 
-
-textarea.form-control {
-
-    height:auto;
-
-    padding:16px;
-
-}
-
-
-
-
-
-.form-control-lg,
-.form-select-lg {
-
-    height:56px;
-
-}
-
-
-
-
-
-/* BUTTON */
-
-.btn {
-
-    display:inline-flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    gap:8px;
-
-    border:none;
-
-    cursor:pointer;
-
-    font-weight:600;
-
-    border-radius:12px;
-
-}
-
-
-
-.btn-primary {
-
-    background:#2563eb;
+    background:rgba(255,255,255,.08);
 
     color:white;
 
@@ -451,121 +598,711 @@ textarea.form-control {
 
 
 
-.btn-primary:hover {
-
-    background:#1d4ed8;
-
-}
+.sidebar-version {
 
 
+    margin-top:25px;
 
-.btn-light {
+    text-align:center;
 
-    background:#f1f5f9;
-
-    color:#334155;
-
-}
-
-
-
-
-
-/* SPACING */
-
-
-.mb-2 {
-
-    margin-bottom:.5rem;
-
-}
-
-
-.mb-4 {
-
-    margin-bottom:1.5rem;
-
-}
-
-
-.mt-4 {
-
-    margin-top:1.5rem;
-
-}
-
-
-.p-5 {
-
-    padding:3rem;
-
-}
-
-
-.px-4 {
-
-    padding-left:1rem;
-
-    padding-right:1rem;
-
-}
-
-
-.px-5 {
-
-    padding-left:3rem;
-
-    padding-right:3rem;
-
-}
-
-
-.py-3 {
-
-    padding-top:.75rem;
-
-    padding-bottom:.75rem;
-
-}
-
-
-
-
-/* FLEX */
-
-.d-flex {
+    color:#64748b;
 
     display:flex;
 
-}
+    flex-direction:column;
 
-
-.justify-content-end {
-
-    justify-content:flex-end;
-
-}
-
-
-.gap-3 {
-
-    gap:1rem;
+    font-size:13px;
 
 }
 
 
 
 
-/* TEXT */
 
-.fw-bold {
 
-    font-weight:700;
+/* =====================================================
+   TOPBAR
+===================================================== */
+
+
+.izgios-topbar {
+
+
+    height:90px;
+
+    background:white;
+
+    border-bottom:
+
+    1px solid var(--izgios-border);
+
+    display:flex;
+
+    align-items:center;
+
+    padding:0 35px;
+
+    gap:35px;
+
+    position:sticky;
+
+    top:0;
+
+    z-index:900;
 
 }
 
 
-.text-muted {
+
+
+
+.mobile-menu-button {
+
+
+    display:none;
+
+    border:0;
+
+    background:none;
+
+    font-size:26px;
+
+}
+
+
+
+
+
+
+/* =====================================================
+   TOPBAR LOGO
+===================================================== */
+
+
+.topbar-brand {
+
+
+    min-width:280px;
+
+}
+
+
+
+.topbar-logo-text {
+
+
+    font-size:38px;
+
+    font-weight:800;
+
+    letter-spacing:-2px;
+
+    line-height:1;
+
+}
+
+
+
+.top-logo-black {
+
+
+    color:#111827;
+
+}
+
+
+
+.top-logo-gold {
+
+
+    color:var(--izgios-gold);
+
+}
+
+
+
+.topbar-logo-subtitle {
+
+
+    margin-top:8px;
+
+    font-size:14px;
+
+    color:#475569;
+
+}
+
+
+
+
+
+
+
+/* =====================================================
+   ARAMA
+===================================================== */
+
+
+.topbar-search {
+
+
+    flex:1;
+
+    max-width:600px;
+
+    height:55px;
+
+    background:#f8fafc;
+
+    border:1px solid var(--izgios-border);
+
+    border-radius:18px;
+
+    display:flex;
+
+    align-items:center;
+
+    padding:0 20px;
+
+    gap:12px;
+
+}
+
+
+
+.topbar-search i {
+
+
+    color:#64748b;
+
+    font-size:20px;
+
+}
+
+
+
+.topbar-search input {
+
+
+    border:0;
+
+    outline:0;
+
+    background:none;
+
+    width:100%;
+
+    font-size:15px;
+
+    color:var(--izgios-text);
+
+}
+
+
+
+.topbar-search input::placeholder {
+
+
+    color:#94a3b8;
+
+}
+
+
+
+
+
+
+
+
+/* =====================================================
+   TOPBAR SAĞ ALAN
+===================================================== */
+
+
+.topbar-actions {
+
+
+    display:flex;
+
+    align-items:center;
+
+    gap:20px;
+
+    margin-left:auto;
+
+}
+
+
+
+
+.topbar-icon {
+
+
+    width:48px;
+
+    height:48px;
+
+    border-radius:15px;
+
+    border:0;
+
+    background:#f1f5f9;
+
+    position:relative;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:20px;
+
+}
+
+
+
+.notification-count {
+
+
+    position:absolute;
+
+    right:5px;
+
+    top:5px;
+
+    background:#ef4444;
+
+    color:white;
+
+    font-size:10px;
+
+    width:17px;
+
+    height:17px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+}
+
+
+
+
+
+
+
+/* =====================================================
+   TARİH SAAT
+===================================================== */
+
+
+.topbar-date-time {
+
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:5px;
+
+    font-size:14px;
+
+}
+
+
+
+.date-item,
+.time-item {
+
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+}
+
+
+
+
+
+
+
+/* =====================================================
+   TOP USER
+===================================================== */
+
+
+.topbar-user {
+
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+}
+
+
+
+.top-user-avatar {
+
+
+    width:55px;
+
+    height:55px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:38px;
+
+    color:#111827;
+
+}
+
+
+
+
+.top-user-info {
+
+
+    display:flex;
+
+    flex-direction:column;
+
+}
+
+
+
+.top-user-info strong {
+
+
+    font-size:16px;
+
+}
+
+
+
+.top-user-info span {
+
+
+    font-size:14px;
+
+    color:#64748b;
+
+}
+/* =====================================================
+   CONTENT AREA
+===================================================== */
+
+
+.izgios-content {
+
+
+    background:#f4f7fb;
+
+    min-height:calc(100vh - 90px);
+
+}
+
+
+
+
+
+
+
+/* =====================================================
+   DASHBOARD ORTAK KUTULAR
+===================================================== */
+
+
+.dashboard-box {
+
+
+    background:white;
+
+    border:1px solid var(--izgios-border);
+
+    border-radius:22px;
+
+    padding:25px;
+
+    box-shadow:
+
+    0 5px 20px rgba(15,23,42,.04);
+
+}
+
+
+
+.box-header {
+
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    margin-bottom:20px;
+
+}
+
+
+
+.box-header h3 {
+
+
+    margin:0;
+
+    font-size:18px;
+
+    font-weight:600;
+
+    color:#0f172a;
+
+}
+
+
+
+.box-header i {
+
+
+    margin-right:8px;
+
+}
+
+
+
+
+
+
+
+
+/* =====================================================
+   KART SİSTEMİ
+===================================================== */
+
+
+.dashboard-grid {
+
+
+    display:grid;
+
+    grid-template-columns:
+
+    repeat(4,1fr);
+
+    gap:25px;
+
+}
+
+
+
+
+.dashboard-card {
+
+
+    background:white;
+
+    border-radius:20px;
+
+    border:1px solid var(--izgios-border);
+
+    padding:25px;
+
+    min-height:140px;
+
+}
+
+
+
+
+.dashboard-card .icon {
+
+
+    width:45px;
+
+    height:45px;
+
+    border-radius:12px;
+
+    background:#eff6ff;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    margin-bottom:15px;
+
+    color:var(--izgios-primary);
+
+    font-size:20px;
+
+}
+
+
+
+.dashboard-card span {
+
+
+    display:block;
+
+    color:#64748b;
+
+    font-size:14px;
+
+}
+
+
+
+.dashboard-card strong {
+
+
+    display:block;
+
+    font-size:34px;
+
+    margin-top:10px;
+
+    color:#0f172a;
+
+}
+
+
+
+
+
+
+
+/* =====================================================
+   SYSTEM PANEL
+===================================================== */
+
+
+.system-grid {
+
+
+    display:grid;
+
+    grid-template-columns:
+
+    repeat(4,1fr);
+
+    gap:20px;
+
+}
+
+
+
+.system-card {
+
+
+    background:#f8fafc;
+
+    padding:20px;
+
+    border-radius:16px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:8px;
+
+}
+
+
+
+.system-card span {
+
+
+    color:#64748b;
+
+    font-size:14px;
+
+}
+
+
+
+.system-card strong {
+
+
+    font-size:18px;
+
+}
+
+
+
+
+.status-active {
+
+
+    color:#16a34a !important;
+
+}
+
+
+
+
+
+
+
+/* =====================================================
+   LİSANS
+===================================================== */
+
+
+.license-content {
+
+
+    display:flex;
+
+    gap:25px;
+
+}
+
+
+
+.license-content div {
+
+
+    flex:1;
+
+    background:#f8fafc;
+
+    padding:20px;
+
+    border-radius:16px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:10px;
+
+}
+
+
+
+.license-content span {
+
 
     color:#64748b;
 
@@ -573,12 +1310,320 @@ textarea.form-control {
 
 
 
-@media(max-width:768px){
 
-    .col-md-6{
 
-        width:100%;
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+
+.izgios-footer {
+
+
+    background:white;
+
+    border-top:
+
+    1px solid var(--izgios-border);
+
+    padding:20px 30px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    color:#64748b;
+
+    font-size:14px;
+
+}
+
+
+
+.footer-left,
+.footer-right {
+
+
+    display:flex;
+
+    gap:8px;
+
+}
+
+
+
+
+
+
+
+/* =====================================================
+   MODAL
+===================================================== */
+
+
+.izgios-modal-box {
+
+
+    display:none;
+
+    position:fixed;
+
+    left:50%;
+
+    top:50%;
+
+    transform:translate(-50%,-50%);
+
+    width:500px;
+
+    max-width:90%;
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:30px;
+
+    box-shadow:0 25px 70px rgba(0,0,0,.2);
+
+    z-index:2000;
+
+}
+
+
+
+.modal-close {
+
+
+    position:absolute;
+
+    right:20px;
+
+    top:20px;
+
+    border:0;
+
+    background:none;
+
+    cursor:pointer;
+
+}
+
+
+
+
+
+
+
+/* =====================================================
+   LOADER
+===================================================== */
+
+
+.loader-circle {
+
+
+    width:40px;
+
+    height:40px;
+
+    border-radius:50%;
+
+    border:4px solid #e5e7eb;
+
+    border-top-color:
+
+    var(--izgios-primary);
+
+    animation:
+
+    izgiosSpin 1s linear infinite;
+
+}
+
+
+
+@keyframes izgiosSpin {
+
+
+    from {
+
+        transform:rotate(0deg);
 
     }
+
+
+    to {
+
+        transform:rotate(360deg);
+
+    }
+
+}
+
+
+
+
+
+
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+
+@media(max-width:1200px){
+
+
+    .dashboard-grid {
+
+
+        grid-template-columns:
+
+        repeat(2,1fr);
+
+    }
+
+
+    .system-grid {
+
+
+        grid-template-columns:
+
+        repeat(2,1fr);
+
+    }
+
+
+}
+
+
+
+
+
+@media(max-width:900px){
+
+
+
+    .izgios-sidebar {
+
+
+        transform:translateX(-100%);
+
+    }
+
+
+
+    .izgios-sidebar.active {
+
+
+        transform:translateX(0);
+
+    }
+
+
+
+
+    .izgios-main {
+
+
+        margin-left:0;
+
+    }
+
+
+
+    .mobile-menu-button {
+
+
+        display:block;
+
+    }
+
+
+
+    .izgios-topbar {
+
+
+        padding:0 15px;
+
+        gap:15px;
+
+    }
+
+
+
+    .topbar-brand {
+
+
+        display:none;
+
+    }
+
+
+
+    .topbar-search {
+
+
+        display:none;
+
+    }
+
+
+
+    .dashboard-grid {
+
+
+        grid-template-columns:1fr;
+
+    }
+
+
+
+    .license-content {
+
+
+        flex-direction:column;
+
+    }
+
+
+}
+
+
+
+
+
+
+@media(max-width:600px){
+
+
+    .izgios-content {
+
+
+        padding:15px;
+
+    }
+
+
+    .system-grid {
+
+
+        grid-template-columns:1fr;
+
+    }
+
+
+
+    .topbar-user {
+
+
+        display:none;
+
+    }
+
 
 }

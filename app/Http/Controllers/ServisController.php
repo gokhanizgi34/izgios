@@ -22,21 +22,27 @@ class ServisController extends Controller
     {
 
 
-        $servisler = Servis::with([
+        $sorgu = Servis::with([
 
             'musteri',
             'arac'
 
-        ])
+        ]);
 
-        ->latest()
+        if (auth()->user()?->isUsta()) {
+            $sorgu->where('usta_id', auth()->id());
+        }
 
-        ->get();
+        if (! auth()->user()?->tamSistemYetkisiVarMi()) {
+            $sorgu->where('firma_id', $this->aktifFirmaId());
+        }
+
+        $servisler = $sorgu->latest()->get();
 
 
 
         return view(
-            'servisler.index',
+            'servisler.index-v3',
             compact('servisler')
         );
 
@@ -53,25 +59,7 @@ class ServisController extends Controller
      */
     public function create()
     {
-
-
-        $musteriler = Musteri::orderBy('ad_soyad')
-            ->get();
-
-
-
-        $araclar = Arac::orderBy('plaka')
-            ->get();
-
-
-
-        return view(
-            'servisler.create',
-            compact(
-                'musteriler',
-                'araclar'
-            )
-        );
+        return redirect()->route('servis.kabul');
 
 
     }
@@ -89,15 +77,7 @@ class ServisController extends Controller
     {
 
 
-        $request->validate([
-
-
-            'musteri_id' => 'required',
-
-            'arac_id' => 'required',
-
-
-        ]);
+        $veri = $this->baglantiyiDogrula($request);
 
 
 
@@ -106,9 +86,13 @@ class ServisController extends Controller
 
 
 
-        $servis->musteri_id = $request->musteri_id;
+        $servis->musteri_id = $veri['musteri_id'];
 
-        $servis->arac_id = $request->arac_id;
+        $servis->arac_id = $veri['arac_id'];
+
+        $servis->firma_id = $veri['firma_id'];
+
+        $servis->sube_id = $veri['sube_id'];
 
 
         $servis->servis_no =
@@ -165,10 +149,7 @@ class ServisController extends Controller
 
         return redirect()
 
-            ->route(
-                'servisler.show',
-                $servis->id
-            )
+            ->route('servis.islem', $servis->id)
 
             ->with(
                 'success',
@@ -195,18 +176,23 @@ class ServisController extends Controller
         $servis = Servis::with([
 
             'musteri',
-            'arac'
+            'arac',
+            'islemler',
+            'parcalar',
+            'fotograflar'
 
         ])
 
         ->findOrFail($id);
+
+        $this->servisErisiminiDogrula($servis);
 
 
 
 
 
         return view(
-            'servisler.show',
+            'servisler.show-v2',
             compact('servis')
         );
 
@@ -228,15 +214,16 @@ class ServisController extends Controller
 
 
         $servis = Servis::findOrFail($id);
+        $this->servisErisiminiDogrula($servis);
 
 
 
-        $musteriler = Musteri::orderBy('ad_soyad')
+        $musteriler = Musteri::query()->when(! auth()->user()?->tamSistemYetkisiVarMi(), fn ($q) => $q->where('firma_id', $this->aktifFirmaId()))->orderBy('ad_soyad')
             ->get();
 
 
 
-        $araclar = Arac::orderBy('plaka')
+        $araclar = Arac::query()->when(! auth()->user()?->tamSistemYetkisiVarMi(), fn ($q) => $q->where('firma_id', $this->aktifFirmaId()))->orderBy('plaka')
             ->get();
 
 
@@ -271,33 +258,24 @@ class ServisController extends Controller
 
 
         $servis = Servis::findOrFail($id);
+        $this->servisErisiminiDogrula($servis);
 
 
 
 
-        $request->validate([
-
-
-            'musteri_id' => 'required',
-
-            'arac_id' => 'required',
-
-            'durum' => 'required',
-
-
-        ]);
+        $veri = $this->baglantiyiDogrula($request, true);
 
 
 
 
 
         $servis->musteri_id =
-            $request->musteri_id;
+            $veri['musteri_id'];
 
 
 
         $servis->arac_id =
-            $request->arac_id;
+            $veri['arac_id'];
 
 
 
@@ -380,6 +358,7 @@ class ServisController extends Controller
 
 
         $servis = Servis::findOrFail($id);
+        $this->servisErisiminiDogrula($servis);
 
 
 
@@ -406,24 +385,12 @@ public function musteriAra(Request $request)
     $arama = $request->arama;
 
 
-    $musteriler = Musteri::where(
-            'tc_kimlik_no',
-            'like',
-            "%".$arama."%"
-        )
-
-        ->orWhere(
-            'telefon',
-            'like',
-            "%".$arama."%"
-        )
-
-        ->orWhere(
-            'ad_soyad',
-            'like',
-            "%".$arama."%"
-        )
-
+    $musteriler = Musteri::where(function ($query) use ($arama) {
+            $query->where('tc_kimlik_no', 'like', "%{$arama}%")
+                ->orWhere('telefon', 'like', "%{$arama}%")
+                ->orWhere('ad_soyad', 'like', "%{$arama}%");
+        })
+        ->when(! auth()->user()?->tamSistemYetkisiVarMi(), fn ($q) => $q->where('firma_id', $this->aktifFirmaId()))
         ->limit(10)
 
         ->get();
@@ -458,7 +425,40 @@ public function musteriAra(Request $request)
             );
 
     }
+
+    private function baglantiyiDogrula(Request $request, bool $durumZorunlu = false): array
+    {
+        $kurallar = [
+            'musteri_id' => ['required', 'integer', 'exists:musteris,id'],
+            'arac_id' => ['required', 'integer', 'exists:araclar,id'],
+        ];
+
+        if ($durumZorunlu) {
+            $kurallar['durum'] = ['required', 'string', 'max:50'];
+        }
+
+        $veri = $request->validate($kurallar);
+        $arac = Arac::findOrFail($veri['arac_id']);
+        if (! auth()->user()?->tamSistemYetkisiVarMi()) {
+            abort_unless((int) $arac->firma_id === (int) $this->aktifFirmaId(), 403);
+        }
+        abort_unless((int) $arac->musteri_id === (int) $veri['musteri_id'], 422, 'Seçilen araç, seçilen müşteriye ait değil.');
+        $veri['firma_id'] = $arac->firma_id ?: $this->aktifFirmaId();
+        $veri['sube_id'] = $arac->sube_id ?: session('aktif_sube_id');
+        return $veri;
+    }
+
+    private function aktifFirmaId(): ?int
+    {
+        return session('aktif_firma_id') ?: auth()->user()?->firmaPersoneli?->firma_id;
+    }
+
+    private function servisErisiminiDogrula(Servis $servis): void
+    {
+        if (auth()->user()?->tamSistemYetkisiVarMi()) return;
+        abort_unless((int) $servis->firma_id === (int) $this->aktifFirmaId(), 403);
+        if (auth()->user()?->isUsta()) abort_unless((int) $servis->usta_id === (int) auth()->id(), 403);
+    }
    
 
 }
-

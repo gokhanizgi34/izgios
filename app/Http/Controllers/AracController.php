@@ -32,6 +32,7 @@ class AracController extends Controller
 
 
         $query = Arac::with('musteri');
+        $this->firmaKapsami($query);
 
 if($request->filled('plaka'))
 {
@@ -71,7 +72,7 @@ if($request->filled('plaka'))
 
 
         return view(
-            'araclar.index',
+            'araclar.index-v2',
             compact('araclar')
         );
 
@@ -92,19 +93,23 @@ if($request->filled('plaka'))
     */
 
 
-    public function create()
+    public function create(Request $request)
     {
 
 
-        $musteriler = Musteri::orderBy(
+        $musteriler = Musteri::query();
+        $this->firmaKapsamiMusteri($musteriler);
+        $musteriler = $musteriler->orderBy(
             'ad_soyad'
         )->get();
 
 
 
+        $seciliMusteriId = $request->integer('musteri_id');
+
         return view(
-            'araclar.create',
-            compact('musteriler')
+            'araclar.create-v3',
+            compact('musteriler', 'seciliMusteriId')
         );
 
 
@@ -130,10 +135,14 @@ if($request->filled('plaka'))
 
 
         $validated = $this->validation($request);
+        $musteri = Musteri::findOrFail($validated['musteri_id']);
+        $this->musteriErisiminiDogrula($musteri);
+        $validated['firma_id'] = $musteri->firma_id;
+        $validated['sube_id'] = $musteri->sube_id;
 
 
 
-        DB::transaction(function() use ($validated){
+        DB::transaction(function() use ($validated, &$arac){
 
 
 
@@ -143,7 +152,7 @@ if($request->filled('plaka'))
 
 
 
-            Arac::create(
+            $arac = Arac::create(
                 $validated
             );
 
@@ -155,11 +164,11 @@ if($request->filled('plaka'))
 
         return redirect()
 
-            ->route('araclar.index')
+            ->route('servis.kabul', ['arac_id' => $arac->id])
 
             ->with(
                 'success',
-                'Araç başarıyla kaydedildi.'
+                'Araç kartı kaydedildi. Servis kabul bilgilerini tamamlayın.'
             );
 
 
@@ -182,10 +191,10 @@ if($request->filled('plaka'))
 
     public function show(Arac $arac)
     {
-
+        $this->aracErisiminiDogrula($arac);
 
         $arac->load(
-            'musteri'
+            ['musteri', 'servisler' => fn ($query) => $query->latest('servis_tarihi')]
         );
 
 
@@ -215,9 +224,10 @@ if($request->filled('plaka'))
 
     public function edit(Arac $arac)
     {
-
-
-        $musteriler = Musteri::orderBy(
+        $this->aracErisiminiDogrula($arac);
+        $musteriler = Musteri::query();
+        $this->firmaKapsamiMusteri($musteriler);
+        $musteriler = $musteriler->orderBy(
             'ad_soyad'
         )->get();
 
@@ -251,9 +261,12 @@ if($request->filled('plaka'))
 
     public function update(Request $request, Arac $arac)
     {
-
-
+        $this->aracErisiminiDogrula($arac);
         $validated = $this->validation($request);
+        $musteri = Musteri::findOrFail($validated['musteri_id']);
+        $this->musteriErisiminiDogrula($musteri);
+        $validated['firma_id'] = $musteri->firma_id;
+        $validated['sube_id'] = $musteri->sube_id;
 
 
 
@@ -296,7 +309,7 @@ if($request->filled('plaka'))
 
     public function destroy(Arac $arac)
     {
-
+        $this->aracErisiminiDogrula($arac);
 
         $arac->delete();
 
@@ -333,7 +346,7 @@ if($request->filled('plaka'))
 
     public function qr(Arac $arac)
     {
-
+        $this->aracErisiminiDogrula($arac);
 
         if(!$arac->qr_token)
         {
@@ -604,6 +617,43 @@ if($request->filled('plaka'))
         ]);
 
 
+    }
+
+    private function aktifFirmaId(): ?int
+    {
+        return auth()->user()?->tamSistemYetkisiVarMi()
+            ? (session('aktif_firma_id') ?: null)
+            : (session('aktif_firma_id') ?: auth()->user()?->firmaPersoneli?->firma_id);
+    }
+
+    private function firmaKapsami($query): void
+    {
+        if (! auth()->user()?->tamSistemYetkisiVarMi()) {
+            $firmaId = $this->aktifFirmaId();
+            abort_unless($firmaId, 403, 'Kullanıcının firma bağlantısı bulunamadı.');
+            $query->where('firma_id', $firmaId);
+        }
+    }
+
+    private function firmaKapsamiMusteri($query): void
+    {
+        if (! auth()->user()?->tamSistemYetkisiVarMi()) {
+            $query->where('firma_id', $this->aktifFirmaId());
+        }
+    }
+
+    private function musteriErisiminiDogrula(Musteri $musteri): void
+    {
+        if (! auth()->user()?->tamSistemYetkisiVarMi()) {
+            abort_unless((int) $musteri->firma_id === (int) $this->aktifFirmaId(), 403);
+        }
+    }
+
+    private function aracErisiminiDogrula(Arac $arac): void
+    {
+        if (! auth()->user()?->tamSistemYetkisiVarMi()) {
+            abort_unless((int) $arac->firma_id === (int) $this->aktifFirmaId(), 403);
+        }
     }
 
 

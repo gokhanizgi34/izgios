@@ -1,3 +1,5 @@
+@php($aktifFirma = auth()->user()?->firmaPersoneli?->firma)
+
 <header class="izgios-topbar">
 
 
@@ -52,7 +54,7 @@
 
             <div class="topbar-logo-subtitle">
 
-                İzgi Oto Servis Yönetim Sistemi
+                {{ $aktifFirma?->unvan ?? 'İzgi Oto Servis Yönetim Sistemi' }}
 
             </div>
 
@@ -193,7 +195,7 @@
 
                 <strong>
 
-                    Gökhan İzgi
+                {{ auth()->user()?->tamAdi() ?: 'Oturum Açılmadı' }}
 
                 </strong>
 
@@ -201,7 +203,7 @@
 
                 <span>
 
-                    Yönetici
+                {{ auth()->user()?->rolAdi() ?: 'Giriş yapınız' }}
 
                 </span>
 

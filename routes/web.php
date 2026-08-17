@@ -1,109 +1,216 @@
 <?php
 
+
 use Illuminate\Support\Facades\Route;
+
+
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MusteriController;
 use App\Http\Controllers\AracController;
 use App\Http\Controllers\ServisController;
-use App\Http\Controllers\ServisKabulController;
-use App\Models\ServisFotograf;
 use App\Http\Controllers\ServisIslemController;
+use App\Http\Controllers\ServisKabulController;
 use App\Http\Controllers\QrServisController;
+use App\Http\Controllers\KullaniciController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\AyarController;
+use App\Http\Controllers\SistemHataController;
+use App\Http\Controllers\DestekController;
+use App\Http\Controllers\SohbetController;
+use App\Http\Controllers\YapayZekaKontrolController;
+use App\Http\Controllers\SifreYonetimController;
+use App\Http\Controllers\GelistirmeMerkeziController;
+use App\Http\Controllers\TicariController;
+use App\Http\Controllers\MuhasebeMerkeziController;
+use App\Http\Controllers\GenelMuhasebeController;
+use App\Http\Controllers\MuhasebeAsistanController;
+use App\Http\Controllers\DepoController;
+use App\Http\Controllers\HesapController;
+use App\Http\Controllers\IkController;
+use App\Http\Controllers\RaporController;
+use App\Http\Controllers\OperasyonController;
+use App\Http\Controllers\IletisimAyarController;
+
+use App\Http\Controllers\FirmaYonetimController;
+use App\Http\Controllers\SubeController;
+
+
+
+
 
 /*
 |--------------------------------------------------------------------------
-| İZGİ OS
-| Web Routes
+| ANA SAYFA
 |--------------------------------------------------------------------------
 */
 
-
-/*
-|--------------------------------------------------------------------------
-| Ana Sayfa
-|--------------------------------------------------------------------------
-*/
 
 Route::get('/', function () {
 
-    return redirect()->route('dashboard');
+    return redirect()
+        ->route('dashboard');
 
 });
 
 
 
-/*
-|--------------------------------------------------------------------------
-| Dashboard
-|--------------------------------------------------------------------------
-*/
 
-Route::get('/dashboard', [DashboardController::class,'index'])
-    ->name('dashboard');
 
 
 
 /*
 |--------------------------------------------------------------------------
-| Müşteriler
+| DASHBOARD
 |--------------------------------------------------------------------------
 */
+
+
+Route::get(
+    '/dashboard',
+    [DashboardController::class,'index']
+)
+->name('dashboard');
+
+Route::get('/ticari', [MuhasebeMerkeziController::class, 'index'])->name('ticari.index');
+Route::get('/ticari/genel-muhasebe', [GenelMuhasebeController::class, 'index'])->name('ticari.genel-muhasebe');
+Route::post('/ticari/genel-muhasebe/hesaplar', [GenelMuhasebeController::class, 'hesapKaydet'])->name('ticari.genel-muhasebe.hesap');
+Route::post('/ticari/genel-muhasebe/donemler', [GenelMuhasebeController::class, 'donemKaydet'])->name('ticari.genel-muhasebe.donem');
+Route::post('/ticari/genel-muhasebe/boyutlar', [GenelMuhasebeController::class, 'boyutKaydet'])->name('ticari.genel-muhasebe.boyut');
+Route::post('/ticari/genel-muhasebe/yevmiye', [GenelMuhasebeController::class, 'yevmiyeKaydet'])->name('ticari.genel-muhasebe.yevmiye');
+Route::get('/ticari/cari-hesaplar', [MuhasebeMerkeziController::class, 'cariler'])->name('ticari.cari');
+Route::post('/ticari/cari-hesaplar', [MuhasebeMerkeziController::class, 'cariKaydet'])->name('ticari.cari.kaydet');
+Route::get('/ticari/muhasebe-fisleri', [MuhasebeMerkeziController::class, 'fisler'])->name('ticari.fisler');
+Route::post('/ticari/muhasebe-fisleri', [TicariController::class, 'fisKaydet'])->name('ticari.fisler.kaydet');
+Route::get('/ticari/entegrasyonlar', [TicariController::class, 'apiAyarlari'])->name('ticari.entegrasyonlar');
+Route::get('/ticari/{tur}', [MuhasebeMerkeziController::class, 'belgeler'])->whereIn('tur',['teklif','fatura'])->name('ticari.belgeler');
+Route::post('/ticari/{tur}', [MuhasebeMerkeziController::class, 'belgeKaydet'])->whereIn('tur',['teklif','fatura'])->name('ticari.belge.kaydet');
+Route::post('/ticari/asistan', [MuhasebeAsistanController::class, 'yanitla'])->name('ticari.asistan');
+Route::post('/asistan/yanitla', [MuhasebeAsistanController::class, 'yanitla'])->name('asistan.yanitla');
+Route::view('/sss', 'sss.index')->name('sss.index');
+Route::get('/ayarlar/api-entegrasyonlari', [TicariController::class, 'apiAyarlari'])->name('ticari.api');
+Route::post('/ayarlar/api-entegrasyonlari', [TicariController::class, 'apiKaydet'])->name('ticari.api.kaydet');
+Route::get('/ayarlar/iletisim-merkezi', [IletisimAyarController::class, 'index'])->name('ayarlar.iletisim');
+Route::post('/ayarlar/iletisim-merkezi', [IletisimAyarController::class, 'kaydet'])->name('ayarlar.iletisim.kaydet');
+Route::get('/depo', [DepoController::class, 'index'])->name('depo.index');
+Route::post('/depo/parca', [DepoController::class, 'parcaKaydet'])->name('depo.parca');
+Route::post('/depo/hareket', [DepoController::class, 'hareketKaydet'])->name('depo.hareket');
+Route::get('/depo/barkod', [DepoController::class, 'barkod'])->name('depo.barkod');
+Route::post('/depo/depolar', [DepoController::class, 'depoKaydet'])->name('depo.depo.kaydet');
+Route::post('/depo/raflar', [DepoController::class, 'rafKaydet'])->name('depo.raf.kaydet');
+Route::post('/depo/raf-adresle', [DepoController::class, 'rafAta'])->name('depo.raf.ata');
+Route::get('/operasyon/randevular', [OperasyonController::class, 'randevular'])->name('operasyon.randevular');
+Route::post('/operasyon/randevular', [OperasyonController::class, 'randevuKaydet'])->name('operasyon.randevular.kaydet');
+Route::get('/operasyon/sigorta-kasko', [OperasyonController::class, 'sigorta'])->name('operasyon.sigorta');
+Route::post('/operasyon/sigorta-kasko', [OperasyonController::class, 'sigortaKaydet'])->name('operasyon.sigorta.kaydet');
+Route::get('/operasyon/b2b-siparisler', [OperasyonController::class, 'b2b'])->name('operasyon.b2b');
+Route::post('/operasyon/b2b-siparisler', [OperasyonController::class, 'b2bKaydet'])->name('operasyon.b2b.kaydet');
+Route::get('/raporlar', [RaporController::class, 'index'])->name('raporlar.index');
+Route::post('/raporlar/al', [RaporController::class, 'al'])->name('raporlar.al');
+
+
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| MÜŞTERİLER
+|--------------------------------------------------------------------------
+*/
+
 
 Route::resource(
     'musteriler',
     MusteriController::class
 )
 ->parameters([
+
     'musteriler'=>'musteri'
+
 ]);
 
 
-Route::get(
-    'araclar/{arac}/qr',
-    [AracController::class, 'qr']
-)->name('araclar.qr');
+
+
+
+
+
 
 /*
 |--------------------------------------------------------------------------
-| Araçlar
+| ARAÇLAR
 |--------------------------------------------------------------------------
-|
-| Tek resource olacak.
-|
 */
+
 
 Route::resource(
     'araclar',
     AracController::class
 )
 ->parameters([
+
     'araclar'=>'arac'
+
 ]);
+
+
+
+Route::get(
+    'araclar/{arac}/qr',
+    [AracController::class,'qr']
+)
+->name('araclar.qr');
+
+
+
+Route::get(
+    '/arac/{token}',
+    [AracController::class,'qrShow']
+)
+->name('araclar.qr.show');
+
+
+
+
+
 
 
 
 /*
 |--------------------------------------------------------------------------
-| Servisler
+| SERVİS
 |--------------------------------------------------------------------------
 */
+
 
 Route::resource(
     'servisler',
     ServisController::class
 );
 
-Route::get(
-    '/arac/{token}',
-    [AracController::class,'qrShow']
-)->name('araclar.qr.show');
+Route::get('/servisler/{servis}/islem', [ServisIslemController::class, 'show'])->name('servis.islem');
+Route::post('/servisler/{servis}/uzerine-al', [ServisIslemController::class, 'uzerineAl'])->name('servis.uzerine.al');
+Route::post('/servisler/{servis}/durum', [ServisIslemController::class, 'durumGuncelle'])->name('servis.islem.durum');
+Route::post('/servisler/{servis}/hatirlatma', [ServisIslemController::class, 'hatirlatmaGuncelle'])->name('servis.hatirlatma.guncelle');
+Route::post('/servisler/{servis}/islemler', [ServisIslemController::class, 'islemEkle'])->name('servis.islem.ekle');
+Route::patch('/servisler/{servis}/islemler/{islem}', [ServisIslemController::class, 'islemGuncelle'])->name('servis.islem.guncelle');
+Route::delete('/servisler/{servis}/islemler/{islem}', [ServisIslemController::class, 'islemSil'])->name('servis.islem.sil');
+Route::post('/servisler/{servis}/parcalar', [ServisIslemController::class, 'parcaEkle'])->name('servis.parca.ekle');
+Route::post('/servisler/{servis}/hasarlar', [ServisIslemController::class, 'hasarEkle'])->name('servis.hasar.ekle');
+Route::post('/servisler/{servis}/fotograflar', [ServisIslemController::class, 'fotografEkle'])->name('servis.fotograf.ekle');
+
+
+
+
+
 
 
 
 /*
 |--------------------------------------------------------------------------
-| Servis Araç Kabul
+| SERVİS KABUL
 |--------------------------------------------------------------------------
 */
 
@@ -116,25 +223,12 @@ Route::get(
 
 
 
-
-
 Route::post(
     '/servis-kabul',
     [ServisKabulController::class,'store']
 )
 ->name('servis.kabul.store');
 
-
-
-
-
-
-
-/*
-|--------------------------------------------------------------------------
-| Servis Kabul Araç Arama
-|--------------------------------------------------------------------------
-*/
 
 
 Route::get(
@@ -145,10 +239,6 @@ Route::get(
 
 
 
-
-
-
-
 Route::get(
     '/servis-kabul/qr-bul',
     [ServisKabulController::class,'qrBul']
@@ -156,21 +246,476 @@ Route::get(
 ->name('servis.qr.bul');
 
 
-Route::get(
-'/qr-servis/{token}',
-[QrServisController::class,'show']
-)
-->name('qr.servis');
-
-/*
-|--------------------------------------------------------------------------
-| QR Servis Görüntüleme
-|--------------------------------------------------------------------------
-*/
-
 
 Route::get(
     '/qr-servis/{token}',
     [QrServisController::class,'show']
 )
 ->name('qr.servis.show');
+
+/*
+|--------------------------------------------------------------------------
+| KULLANICI YÖNETİMİ
+|--------------------------------------------------------------------------
+*/
+
+
+Route::resource(
+    'kullanicilar',
+    KullaniciController::class
+)
+->parameters([
+
+    'kullanicilar'=>'kullanici'
+
+])
+->except([
+
+    'show',
+    'destroy'
+
+]);
+
+Route::get('/kullanicilar/aktifler', [KullaniciController::class, 'aktifler'])
+    ->name('kullanicilar.aktifler');
+
+Route::get('/kullanicilar/pasifler', [KullaniciController::class, 'pasifler'])
+    ->name('kullanicilar.pasifler');
+
+
+
+
+Route::patch(
+    '/kullanicilar/{kullanici}/pasif',
+    [KullaniciController::class,'pasifYap']
+)
+->name('kullanicilar.pasif');
+
+
+
+Route::patch(
+    '/kullanicilar/{kullanici}/aktif',
+    [KullaniciController::class,'aktifYap']
+)
+->name('kullanicilar.aktif');
+
+
+
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| AUTH
+|--------------------------------------------------------------------------
+*/
+
+
+Route::get(
+    '/login',
+    [LoginController::class,'showLogin']
+)
+->name('login');
+
+Route::get('/demo', [LoginController::class, 'demo'])
+    ->name('demo');
+
+
+
+Route::post(
+    '/login',
+    [LoginController::class,'login']
+)
+->name('login.post');
+
+
+
+Route::post(
+    '/logout',
+    [LoginController::class,'logout']
+)
+->name('logout');
+
+Route::get('/hesabim/profil', [HesapController::class, 'profil'])->name('hesap.profil');
+Route::put('/hesabim/profil', [HesapController::class, 'profilGuncelle'])->name('hesap.profil.update');
+Route::get('/hesabim/tercihler', [HesapController::class, 'tercihler'])->name('hesap.tercihler');
+Route::put('/hesabim/tercihler', [HesapController::class, 'tercihGuncelle'])->name('hesap.tercihler.update');
+
+Route::get('/sifremi-unuttum', [SifreYonetimController::class, 'talepFormu'])->name('password.request');
+Route::post('/sifremi-unuttum', [SifreYonetimController::class, 'talepOlustur'])->name('password.email');
+Route::get('/sifre-sifirla/{token}', [SifreYonetimController::class, 'sifirlaFormu'])->name('password.reset');
+Route::post('/sifre-sifirla', [SifreYonetimController::class, 'sifirla'])->name('password.update');
+Route::get('/hesabim/sifre', [SifreYonetimController::class, 'kendiSifreFormu'])->name('hesap.sifre');
+Route::post('/hesabim/sifre', [SifreYonetimController::class, 'kendiSifreGuncelle'])->name('hesap.sifre.update');
+Route::get('/ayarlar/ik/sifre-talepleri', [SifreYonetimController::class, 'ikTalepleri'])->name('ik.sifre.talepleri');
+Route::get('/ayarlar/ik', [IkController::class, 'index'])->name('ik.index');
+Route::post('/ayarlar/ik/ozluk', [IkController::class, 'ozlukKaydet'])->name('ik.ozluk.kaydet');
+Route::post('/ayarlar/ik/bordro', [IkController::class, 'bordroKaydet'])->name('ik.bordro.kaydet');
+Route::patch('/ayarlar/ik/sifre-talepleri/{talep}', [SifreYonetimController::class, 'ikOnayla'])->name('ik.sifre.onayla');
+Route::get('/ayarlar/ik/iletisim', [SifreYonetimController::class, 'ikAyarFormu'])->name('ik.iletisim');
+Route::put('/ayarlar/ik/iletisim', [SifreYonetimController::class, 'ikAyarKaydet'])->name('ik.iletisim.update');
+
+
+
+
+
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| AYARLAR
+|--------------------------------------------------------------------------
+*/
+
+
+Route::get(
+    '/ayarlar',
+    [AyarController::class,'index']
+)
+->name('ayarlar.index');
+
+Route::get('/ayarlar/qr-iletisim', [AyarController::class, 'qrIletisim'])->name('ayarlar.qr.iletisim');
+Route::post('/ayarlar/qr-iletisim', [AyarController::class, 'qrIletisimKaydet'])->name('ayarlar.qr.iletisim.kaydet');
+Route::get('/ayarlar/{grup}-ayarlari', [AyarController::class, 'yonetimAyarlari'])->whereIn('grup', ['bildirim', 'servis', 'sistem'])->name('ayarlar.yonetim');
+Route::post('/ayarlar/{grup}-ayarlari', [AyarController::class, 'yonetimAyarlariKaydet'])->whereIn('grup', ['bildirim', 'servis', 'sistem'])->name('ayarlar.yonetim.kaydet');
+Route::get('/ayarlar/kdv-urun-gruplari', [AyarController::class, 'kdvGruplari'])->name('ayarlar.kdv.gruplari');
+Route::post('/ayarlar/kdv-urun-gruplari', [AyarController::class, 'kdvGrubuKaydet'])->name('ayarlar.kdv.gruplari.kaydet');
+
+Route::view('/ayarlar/roller', 'ayarlar.roller-kurumsal')
+    ->name('ayarlar.roller');
+
+Route::get('/sistem-hatalari', [SistemHataController::class, 'index'])
+    ->name('sistem.hatalari');
+Route::post('/sistem-hatalari/yapay-zeka-tara', [SistemHataController::class, 'yapayZekaTara'])
+    ->name('sistem.hatalari.yapayzeka');
+Route::post('/sistem-hatalari/cozum-planini-onayla', [SistemHataController::class, 'cozumPlaniniOnayla'])->name('sistem.hatalari.onayla');
+
+Route::get('/destek', [DestekController::class, 'index'])->name('destek.index');
+Route::get('/destek/yeni', [DestekController::class, 'create'])->name('destek.create');
+Route::post('/destek', [DestekController::class, 'store'])->name('destek.store');
+Route::patch('/destek/{talep}/durum', [DestekController::class, 'durumGuncelle'])->name('destek.durum');
+
+Route::get('/sohbet', [SohbetController::class, 'index'])->name('sohbet.index');
+Route::post('/sohbet/oda', [SohbetController::class, 'odaOlustur'])->name('sohbet.oda.store');
+Route::post('/sohbet/{oda}/mesaj', [SohbetController::class, 'mesajGonder'])->name('sohbet.mesaj.store');
+
+Route::get('/yapay-zeka-kontrol', [YapayZekaKontrolController::class, 'index'])->name('yapayzeka.index');
+
+Route::get('/gelistirme-merkezi', [GelistirmeMerkeziController::class, 'index'])->name('gelistirme.index');
+Route::post('/gelistirme-merkezi', [GelistirmeMerkeziController::class, 'store'])->name('gelistirme.store');
+Route::get('/gelistirme-merkezi/{talep}', [GelistirmeMerkeziController::class, 'show'])->name('gelistirme.show');
+Route::post('/gelistirme-merkezi/{talep}/mesaj', [GelistirmeMerkeziController::class, 'mesajGonder'])->name('gelistirme.mesaj');
+Route::post('/gelistirme-merkezi/{talep}/yapay-zeka', [GelistirmeMerkeziController::class, 'yapayZekaYaniti'])->name('gelistirme.yapayzeka');
+Route::patch('/gelistirme-merkezi/{talep}/onayla', [GelistirmeMerkeziController::class, 'onayla'])->name('gelistirme.onayla');
+Route::patch('/gelistirme-merkezi/{talep}/durum', [GelistirmeMerkeziController::class, 'durumGuncelle'])->name('gelistirme.durum');
+
+
+
+
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| FİRMA YÖNETİMİ
+|--------------------------------------------------------------------------
+*/
+
+
+Route::prefix('ayarlar')
+->group(function(){
+
+
+
+    Route::prefix('firma')
+    ->group(function(){
+
+
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Firma Liste
+        |--------------------------------------------------------------------------
+        */
+
+
+        Route::get(
+            '/',
+            [FirmaYonetimController::class,'index']
+        )
+        ->name('firma.index');
+
+
+
+
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Firma Oluştur
+        |--------------------------------------------------------------------------
+        */
+
+
+        Route::get(
+            '/create',
+            [FirmaYonetimController::class,'create']
+        )
+        ->name('firma.create');
+
+
+
+
+
+        Route::post(
+            '/',
+            [FirmaYonetimController::class,'store']
+        )
+        ->name('firma.store');
+
+
+
+
+
+
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Firma Düzenleme
+        |--------------------------------------------------------------------------
+        */
+
+
+        Route::get(
+            '/{firma}/edit',
+            [FirmaYonetimController::class,'edit']
+        )
+        ->name('firma.edit');
+
+
+
+
+
+        Route::put(
+            '/{firma}',
+            [FirmaYonetimController::class,'update']
+        )
+        ->name('firma.update');
+
+
+
+
+
+
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Firma Aktif Pasif
+        |--------------------------------------------------------------------------
+        */
+
+
+        Route::patch(
+            '/{firma}/durum',
+            [FirmaYonetimController::class,'durumDegistir']
+        )
+        ->name('firma.durum');
+
+
+
+        Route::delete(
+            '/{firma}',
+            [FirmaYonetimController::class,'destroy']
+        )
+        ->name('firma.destroy');
+
+
+
+
+
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Firma Kartı
+        |--------------------------------------------------------------------------
+        */
+
+
+        Route::get(
+            '/{firma}',
+            [FirmaYonetimController::class,'show']
+        )
+        ->name('firma.show');
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | ŞUBE YÖNETİMİ
+        |--------------------------------------------------------------------------
+        */
+
+
+        
+Route::prefix('{firma}/sube')
+->group(function(){
+
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Şube Liste
+    |--------------------------------------------------------------------------
+    */
+
+
+    Route::get(
+        '/',
+        [SubeController::class,'index']
+    )
+    ->name('sube.index');
+
+
+
+
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Yeni Şube
+    |--------------------------------------------------------------------------
+    */
+
+
+    Route::get(
+        '/create',
+        [SubeController::class,'create']
+    )
+    ->name('sube.create');
+
+
+
+
+
+    Route::post(
+        '/',
+        [SubeController::class,'store']
+    )
+    ->name('sube.store');
+
+
+
+
+
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Şube Detay
+    |--------------------------------------------------------------------------
+    */
+
+
+    Route::get(
+        '/{sube}',
+        [SubeController::class,'show']
+    )
+    ->name('sube.show');
+
+
+
+
+
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Şube Düzenleme
+    |--------------------------------------------------------------------------
+    */
+
+
+    Route::get(
+        '/{sube}/edit',
+        [SubeController::class,'edit']
+    )
+    ->name('sube.edit');
+
+
+
+
+
+    Route::put(
+        '/{sube}',
+        [SubeController::class,'update']
+    )
+    ->name('sube.update');
+
+
+
+
+
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Şube Aktif Pasif
+    |--------------------------------------------------------------------------
+    */
+
+
+    Route::patch(
+        '/{sube}/durum',
+        [SubeController::class,'durumDegistir']
+    )
+    ->name('sube.durum');
+
+
+
+    Route::delete(
+        '/{sube}',
+        [SubeController::class,'destroy']
+    )
+    ->name('sube.destroy');
+
+
+
+
+
+});
+
+
+
+
+
+    });
+
+
+
+});

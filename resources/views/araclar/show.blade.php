@@ -35,6 +35,12 @@ Araç dijital kimlik kartı
 
 <div class="actions">
 
+<a href="{{ route('servis.kabul', ['arac_id' => $arac->id]) }}" class="btn-service">
+
+<i class="bi bi-clipboard2-plus"></i> Servis Kabule Al
+
+</a>
+
 
 <a href="{{ route('araclar.edit',$arac->id) }}"
 class="btn-edit">
@@ -508,60 +514,15 @@ QR oluşturulacak.
 
 
 
-<div class="service-empty">
-
-
-🚧
-
-
-<br>
-
-
-Servis modülü bağlantısı hazırlanıyor.
-
-
-<br><br>
-
-
-Burada ilerleyen aşamada:
-
-
-<ul>
-
-
-<li>
-Servis kayıtları
-</li>
-
-
-<li>
-Yapılan işlemler
-</li>
-
-
-<li>
-Değişen parçalar
-</li>
-
-
-<li>
-İşlem fotoğrafları
-</li>
-
-
-<li>
-Usta notları
-</li>
-
-
-</ul>
-
-
-
-görüntülenecek.
-
-
-</div>
+@forelse($arac->servisler as $servis)
+<a class="service-history-row" href="{{ route('servisler.show', $servis->id) }}">
+    <span><strong>{{ $servis->servis_no }}</strong><small>{{ optional($servis->servis_tarihi)->format('d.m.Y H:i') ?? $servis->created_at->format('d.m.Y H:i') }}</small></span>
+    <span>{{ number_format($servis->giris_km ?? 0, 0, ',', '.') }} KM</span>
+    <span class="service-state">{{ $servis->durum }}</span>
+</a>
+@empty
+<div class="service-empty">Bu araç için henüz servis kabul veya iş emri kaydı yok. <a href="{{ route('servis.kabul', ['arac_id' => $arac->id]) }}">İlk servis kabulünü başlatın.</a></div>
+@endforelse
 
 
 
@@ -668,6 +629,8 @@ background:#ede9fe;
 color:#6d28d9;
 
 }
+
+.btn-service{background:#2563eb;color:#fff;}
 
 
 
@@ -822,6 +785,8 @@ line-height:1.7;
 
 
 }
+
+.service-history-row{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:15px 0;border-bottom:1px solid #e5e7eb;text-decoration:none;color:#1e293b}.service-history-row:last-child{border-bottom:0}.service-history-row small{display:block;margin-top:4px;color:#64748b}.service-state{padding:5px 10px;border-radius:999px;background:#e0f2fe;color:#0369a1;font-size:12px;font-weight:700}
 
 
 
