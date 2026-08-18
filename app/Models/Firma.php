@@ -15,6 +15,10 @@ class Firma extends Model
         'vergi_no',
         'telefon',
         'email',
+
+        'google_yorum_linki',
+
+        'logo_yolu',
         'adres',
         'aktif',
         'merkez_goster',

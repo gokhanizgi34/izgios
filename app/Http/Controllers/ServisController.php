@@ -30,7 +30,15 @@ class ServisController extends Controller
         ]);
 
         if (auth()->user()?->isUsta()) {
-            $sorgu->where('usta_id', auth()->id());
+            // Usta yalnız kendi üzerine aldığı işi çalışabilir. Ancak henüz
+            // sahiplenilmemiş, kendi firmasına ait açık işleri de listede
+            // görmelidir ki "İş emrini üzerime al" akışını başlatabilsin.
+            // Önceki dar filtre, boş usta_id'li iş emirlerini tamamen
+            // gizlediği için firma ustası yeni kabul edilen aracı göremiyordu.
+            $sorgu->where(function ($sorgu) {
+                $sorgu->where('usta_id', auth()->id())
+                    ->orWhereNull('usta_id');
+            });
         }
 
         if (! auth()->user()?->tamSistemYetkisiVarMi()) {

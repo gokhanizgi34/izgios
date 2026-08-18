@@ -1,44 +1,7 @@
-@php($aktifFirma = auth()->user()?->firmaPersoneli?->firma)
+@php($aktifFirma = auth()->user()?->firmaPersoneli?->firma ?? (session('aktif_firma_id') ? \App\Models\Firma::find(session('aktif_firma_id')) : null))
 
 <aside class="izgios-sidebar"
        id="izgios-sidebar">
-    {{-- ================================================= --}}
-    {{-- LOGO --}}
-    {{-- ================================================= --}}
-
-    <div class="sidebar-brand">
-
-        <a href="{{ route('dashboard') }}"
-           class="sidebar-logo">
-
-            <div class="sidebar-logo-text">
-
-                <span class="logo-white">
-
-                    {{ $aktifFirma ? mb_strtoupper(mb_substr($aktifFirma->unvan, 0, 4)) : 'İZGİ' }}
-
-                </span>
-
-                <span class="logo-yellow">
-
-                    {{ $aktifFirma ? '' : 'OS' }}
-
-                </span>
-
-            </div>
-
-            <div class="sidebar-logo-subtitle">
-
-                {{ $aktifFirma?->unvan ?? 'İzgi Oto Servis Yönetim Sistemi' }}
-
-            </div>
-
-        </a>
-
-    </div>
-
-
-
     {{-- ================================================= --}}
     {{-- USER --}}
     {{-- ================================================= --}}
@@ -120,7 +83,7 @@
         @if(auth()->user()?->tamSistemYetkisiVarMi() || auth()->user()?->isAdmin() || auth()->user()?->isUsta() || auth()->user()?->isOfis())
         <div class="sidebar-section">
             <span>SERVİS</span>
-            @if(auth()->user()?->tamSistemYetkisiVarMi() || auth()->user()?->isAdmin() || auth()->user()?->isOfis())
+            @if(auth()->user()?->tamSistemYetkisiVarMi() || auth()->user()?->isAdmin() || auth()->user()?->isOfis() || auth()->user()?->isUsta())
             <a href="{{ route('musteriler.index') }}" class="{{ request()->routeIs('musteriler.*') ? 'active' : '' }}">
                 <i class="bi bi-people-fill"></i><label>Müşteriler</label>
             </a>
@@ -165,9 +128,6 @@
     </a>
     <a href="{{ route('ticari.fisler') }}" class="{{ request()->routeIs('ticari.fisler*') ? 'active' : '' }}">
         <i class="bi bi-receipt"></i><label>Muhasebe Fişleri</label>
-    </a>
-    <a href="{{ route('operasyon.sigorta') }}" class="{{ request()->routeIs('operasyon.sigorta*') ? 'active' : '' }}">
-        <i class="bi bi-shield-check"></i><label>Sigorta / Kasko</label>
     </a>
 </div>
 @endif
@@ -298,6 +258,12 @@
     @endif
 </div>
         @endif
+        <div class="sidebar-section">
+            <span>BİLGİ MERKEZİ</span>
+            <a href="{{ route('sss.index') }}" class="{{ request()->routeIs('sss.*') ? 'active' : '' }}">
+                <i class="bi bi-question-circle-fill"></i><label>Sık Sorulan Sorular</label>
+            </a>
+        </div>
     </nav>
 
 

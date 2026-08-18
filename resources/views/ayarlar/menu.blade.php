@@ -58,9 +58,16 @@
 
         <article class="settings-menu__card">
             <div class="settings-menu__icon"><i class="bi bi-plug-fill"></i></div>
-            <h2>Muhasebe Entegrasyonları</h2>
-            <p>Logo, Paraşüt, e-Fatura ve diğer muhasebe bağlantılarını firma bazında yönetin.</p>
-            <a href="{{ route('ticari.entegrasyonlar') }}">Entegrasyon ayarlarını aç <i class="bi bi-arrow-right"></i></a>
+            <h2>API ve Entegrasyonlar</h2>
+            <p>WhatsApp, SMS, e-posta, muhasebe, banka, GİB/e-Fatura ve yapay zekâ erişim bilgilerini firma bazında yönetin.</p>
+            <a href="{{ route('ticari.api') }}">Entegrasyon ayarlarını aç <i class="bi bi-arrow-right"></i></a>
+        </article>
+
+        <article class="settings-menu__card">
+            <div class="settings-menu__icon"><i class="bi bi-send-check-fill"></i></div>
+            <h2>İletişim ve Hatırlatma</h2>
+            <p>Randevu, servis, bakım, evrak ve özel gün mesajlarında kullanılacak kanalları ve şablonları seçin.</p>
+            <a href="{{ route('ayarlar.iletisim') }}">Mesaj akışlarını düzenle <i class="bi bi-arrow-right"></i></a>
         </article>
 
         <article class="settings-menu__card">

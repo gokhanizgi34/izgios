@@ -1,4 +1,4 @@
-@php($aktifFirma = auth()->user()?->firmaPersoneli?->firma)
+@php($aktifFirma = auth()->user()?->firmaPersoneli?->firma ?? (session('aktif_firma_id') ? \App\Models\Firma::find(session('aktif_firma_id')) : null))
 
 <header class="izgios-topbar">
 
@@ -26,42 +26,22 @@
 
 
     <div class="topbar-brand">
-
-
-        <a href="{{ route('dashboard') }}">
-
-
-            <div class="topbar-logo-text">
-
-
-                <span class="top-logo-black">
-
-                    İZGİ
-
-                </span>
-
-
-                <span class="top-logo-gold">
-
-                    OS
-
-                </span>
-
-
-            </div>
-
-
-
-            <div class="topbar-logo-subtitle">
-
-                {{ $aktifFirma?->unvan ?? 'İzgi Oto Servis Yönetim Sistemi' }}
-
-            </div>
-
-
+        <a href="{{ route('dashboard') }}" class="topbar-company-identity" aria-label="{{ $aktifFirma?->unvan ?? 'İzgiOS' }} çalışma alanı">
+            <span class="topbar-company-logo-box">
+                @if ($aktifFirma?->logo_yolu)
+                    <img src="{{ asset('storage/'.$aktifFirma->logo_yolu) }}" alt="{{ $aktifFirma->unvan }} logosu">
+                @else
+                    <span class="topbar-logo-text">
+                        <span class="top-logo-black">İZGİ</span>
+                        <span class="top-logo-gold">OS</span>
+                    </span>
+                @endif
+            </span>
+            <span class="topbar-company-copy">
+                <small>ÇALIŞMA ALANI</small>
+                <strong>{{ $aktifFirma?->unvan ?? 'İzgi Oto Servis Yönetim Sistemi' }}</strong>
+            </span>
         </a>
-
-
     </div>
 
 

@@ -20,6 +20,8 @@ class ServisIslem extends Model
 
         'servis_id',
 
+        'kategori',
+
         'islem_adi',
 
         'aciklama',

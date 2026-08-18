@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\DervisBilgiBankasiServisi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -13,10 +14,18 @@ class MuhasebeAsistanController extends Controller
         abort_unless(auth()->check(), 403);
         $veri = $request->validate(['mesaj' => ['required', 'string', 'max:2000']]);
         $mesaj = $this->maskele($veri['mesaj']);
+        $bilgiBankasi = app(DervisBilgiBankasiServisi::class);
+        $bilgiCevabi = $bilgiBankasi->cevap($bilgiBankasi->eslestir($mesaj));
+
+        if ($bilgiCevabi) {
+            return response()->json(['yanit' => $bilgiCevabi['cozum']]);
+        }
 
         if (config('services.izgios_ai.provider') !== 'openai' || blank(config('services.izgios_ai.key'))) {
-            return response()->json(['yanit' => 'Yapay zekâ bağlantısı henüz yapılandırılmamış. İZGİOS içindeki müşteri, araç, servis kabul, iş emirleri, depo, muhasebe, raporlar ve ayarlar için sayfa içi yönlendirme kullanabilirsiniz; teknik sorunlarda Destek Merkezi’nden talep oluşturun.']);
+            return response()->json(['yanit' => 'Bilgi Merkezi’nde bu soru için hazır bir yanıt bulunamadı. Sol menüdeki Sık Sorulan Sorular sayfasını açın; teknik sorunlarda Destek Merkezi’nden ekran adı ve hata koduyla talep oluşturun.']);
         }
+
+        $sssBaglami = $bilgiBankasi->asistanBaglami();
 
         $istem = <<<TEXT
 Sen İZGİOS Genel Asistanısın. Türkçe, kısa ve kurumsal yanıt ver.
@@ -24,6 +33,9 @@ Sen İZGİOS Genel Asistanısın. Türkçe, kısa ve kurumsal yanıt ver.
 Asla işlem yapma, veri silme, belge oluşturma, dış sisteme gönderme veya muhasebe/hukuk hükmü verme. İşlem gerektiğinde kullanıcıya hangi menüye gideceğini ve hangi alanları kontrol edeceğini söyle.
 Çözümsüz kalan teknik hata, veri uyuşmazlığı veya yetki sorununda kullanıcıdan hata kodu ve ekran adresini isteyip Destek Merkezi'ne yönlendir.
 Kişisel veri, API anahtarı veya gizli bilgiyi isteme. Yanıt en fazla 6 kısa maddeden oluşsun.
+
+Bilgi Merkezi cevapları (uygun olduğunda bunları doğrudan temel al):
+{$sssBaglami}
 
 Kullanıcı mesajı: {$mesaj}
 TEXT;

@@ -10,6 +10,7 @@ use App\Models\Musteri;
 use App\Models\Arac;
 use App\Models\Servis;
 use App\Models\ServisFotograf;
+use App\Services\IletisimOtomasyonServisi;
 
 use Intervention\Image\Laravel\Facades\Image;
 
@@ -323,6 +324,8 @@ class ServisKabulController extends Controller
             $servis
 
         );
+
+        app(IletisimOtomasyonServisi::class)->servisKabulEdildi($servis);
 
 
 

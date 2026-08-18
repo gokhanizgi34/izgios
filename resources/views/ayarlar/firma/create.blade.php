@@ -60,7 +60,7 @@ Sisteme yeni firma kaydı ekleyin
 
 
 
-<form method="POST"
+<form method="POST" enctype="multipart/form-data"
 
 action="{{ route('firma.store') }}">
 
@@ -217,6 +217,50 @@ value="{{ old('email') }}"
 
 placeholder="E-posta">
 
+
+</div>
+
+
+
+<div class="form-group">
+
+
+
+<label class="form-label-izgios">
+
+Google yorum bağlantısı
+
+</label>
+
+
+
+<input
+
+type="url"
+
+name="google_yorum_linki"
+
+class="form-control-izgios"
+
+value="{{ old('google_yorum_linki') }}"
+
+placeholder="https://g.page/r/.../review">
+
+<small class="text-muted">Araç teslim teşekkür mesajlarında müşteriye gönderilir.</small>
+
+
+
+</div>
+
+
+
+<div class="form-group">
+
+<label class="form-label-izgios">Firma logosu</label>
+
+<input type="file" name="logo" class="form-control-izgios" accept="image/png,image/jpeg,image/webp">
+
+<small class="text-muted">PNG, JPG veya WebP · en fazla 2 MB · önerilen ölçü 600 × 240 px (yatay, şeffaf PNG tercih edilir).</small>
 
 </div>
 

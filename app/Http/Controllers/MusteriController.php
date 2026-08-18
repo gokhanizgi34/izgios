@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Musteri;
+use App\Models\Firma;
+use App\Models\Sube;
+use App\Services\CariAktarimServisi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 
 
@@ -71,11 +75,13 @@ class MusteriController extends Controller
      */
     public function create()
     {
+        $firmaId = $this->aktifFirmaId();
+        $firmalar = auth()->user()?->tamSistemYetkisiVarMi()
+            ? Firma::where('aktif', true)->orderBy('unvan')->get()
+            : Firma::where('id', $firmaId)->where('aktif', true)->get();
+        $subeler = Sube::where('aktif', true)->whereIn('firma_id', $firmalar->pluck('id'))->orderBy('sube_adi')->get();
 
-
-        return view(
-            'musteriler.create-v3'
-        );
+        return view('musteriler.create-v3', compact('firmalar', 'subeler', 'firmaId'));
 
 
     }
@@ -96,6 +102,10 @@ class MusteriController extends Controller
 
 
         $validated = $request->validate([
+
+            'firma_id' => ['nullable', 'integer', 'exists:firmas,id'],
+
+            'sube_id' => ['nullable', 'integer', 'exists:subes,id'],
 
 
             'ad_soyad' => 'required|string|max:255',
@@ -174,9 +184,15 @@ class MusteriController extends Controller
 
 
 
-        $validated['firma_id'] = $this->aktifFirmaId();
-        $validated['sube_id'] = session('aktif_sube_id') ?: auth()->user()?->firmaPersoneli?->sube_id;
-        $musteri = Musteri::create($validated);
+        $firmaId = $this->kayitFirmaId($request, $validated['firma_id'] ?? null);
+        $subeId = $this->kayitSubeId($firmaId, $validated['sube_id'] ?? null);
+        $validated['firma_id'] = $firmaId;
+        $validated['sube_id'] = $subeId;
+
+        DB::transaction(function () use ($validated, &$musteri) {
+            $musteri = Musteri::create($validated);
+            app(CariAktarimServisi::class)->musteriKarti($musteri);
+        });
 
 
 
@@ -241,9 +257,15 @@ class MusteriController extends Controller
     {
         $this->musteriErisiminiDogrula($musteri);
 
+        $firmaId = $musteri->firma_id ?: $this->aktifFirmaId();
+        $firmalar = auth()->user()?->tamSistemYetkisiVarMi()
+            ? Firma::where('aktif', true)->orderBy('unvan')->get()
+            : Firma::where('id', $firmaId)->where('aktif', true)->get();
+        $subeler = Sube::where('aktif', true)->whereIn('firma_id', $firmalar->pluck('id'))->orderBy('sube_adi')->get();
+
         return view(
             'musteriler.edit',
-            compact('musteri')
+            compact('musteri', 'firmalar', 'subeler', 'firmaId')
         );
 
 
@@ -265,6 +287,10 @@ class MusteriController extends Controller
         $this->musteriErisiminiDogrula($musteri);
 
         $validated = $request->validate([
+
+            'firma_id' => ['nullable', 'integer', 'exists:firmas,id'],
+
+            'sube_id' => ['nullable', 'integer', 'exists:subes,id'],
 
 
             'ad_soyad' => 'required|string|max:255',
@@ -291,6 +317,13 @@ class MusteriController extends Controller
 
 
         ]);
+
+        if (auth()->user()?->tamSistemYetkisiVarMi()) {
+            $validated['firma_id'] = $this->kayitFirmaId($request, $validated['firma_id'] ?? $musteri->firma_id);
+            $validated['sube_id'] = $this->kayitSubeId($validated['firma_id'], $validated['sube_id'] ?? $musteri->sube_id);
+        } else {
+            unset($validated['firma_id'], $validated['sube_id']);
+        }
 
 
 
@@ -349,6 +382,7 @@ class MusteriController extends Controller
 
 
         $musteri->update($validated);
+        app(CariAktarimServisi::class)->musteriKarti($musteri->fresh());
 
 
 
@@ -408,6 +442,34 @@ class MusteriController extends Controller
         return auth()->user()?->tamSistemYetkisiVarMi()
             ? (session('aktif_firma_id') ?: null)
             : (session('aktif_firma_id') ?: auth()->user()?->firmaPersoneli?->firma_id);
+    }
+
+    private function kayitFirmaId(Request $request, mixed $istenenFirmaId): int
+    {
+        if (auth()->user()?->tamSistemYetkisiVarMi()) {
+            $firmaId = (int) ($istenenFirmaId ?: session('aktif_firma_id'));
+            if (! $firmaId) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'firma_id' => 'Müşteri kaydı için firma seçmelisiniz.',
+                ]);
+            }
+        } else {
+            $firmaId = (int) auth()->user()?->firmaPersoneli?->firma_id;
+        }
+
+        abort_unless(Firma::where('id', $firmaId)->where('aktif', true)->exists(), 403, 'Geçerli ve aktif bir firma seçilmelidir.');
+        return $firmaId;
+    }
+
+    private function kayitSubeId(int $firmaId, mixed $istenenSubeId): ?int
+    {
+        $subeId = $istenenSubeId ?: (auth()->user()?->tamSistemYetkisiVarMi() ? null : auth()->user()?->firmaPersoneli?->sube_id);
+        if (! $subeId) {
+            return null;
+        }
+
+        abort_unless(Sube::where('id', $subeId)->where('firma_id', $firmaId)->where('aktif', true)->exists(), 403, 'Seçilen şube firmaya ait değil.');
+        return (int) $subeId;
     }
 
     private function firmaKapsami($query): void

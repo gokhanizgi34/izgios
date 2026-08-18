@@ -31,6 +31,7 @@ use App\Http\Controllers\IkController;
 use App\Http\Controllers\RaporController;
 use App\Http\Controllers\OperasyonController;
 use App\Http\Controllers\IletisimAyarController;
+use App\Http\Controllers\CiktiController;
 
 use App\Http\Controllers\FirmaYonetimController;
 use App\Http\Controllers\SubeController;
@@ -74,11 +75,15 @@ Route::get(
 
 Route::get('/ticari', [MuhasebeMerkeziController::class, 'index'])->name('ticari.index');
 Route::get('/ticari/genel-muhasebe', [GenelMuhasebeController::class, 'index'])->name('ticari.genel-muhasebe');
+Route::get('/ticari/genel-muhasebe/mizan/excel', [GenelMuhasebeController::class, 'mizanExcel'])->name('ticari.genel-muhasebe.mizan.excel');
 Route::post('/ticari/genel-muhasebe/hesaplar', [GenelMuhasebeController::class, 'hesapKaydet'])->name('ticari.genel-muhasebe.hesap');
 Route::post('/ticari/genel-muhasebe/donemler', [GenelMuhasebeController::class, 'donemKaydet'])->name('ticari.genel-muhasebe.donem');
 Route::post('/ticari/genel-muhasebe/boyutlar', [GenelMuhasebeController::class, 'boyutKaydet'])->name('ticari.genel-muhasebe.boyut');
 Route::post('/ticari/genel-muhasebe/yevmiye', [GenelMuhasebeController::class, 'yevmiyeKaydet'])->name('ticari.genel-muhasebe.yevmiye');
 Route::get('/ticari/cari-hesaplar', [MuhasebeMerkeziController::class, 'cariler'])->name('ticari.cari');
+Route::get('/ciktilar/{tur}/{id}', [CiktiController::class, 'yazdir'])->name('ciktilar.yazdir');
+Route::get('/ciktilar/{tur}/{id}/excel', [CiktiController::class, 'excel'])->name('ciktilar.excel');
+Route::post('/ciktilar/{tur}/{id}/gonder', [CiktiController::class, 'gonder'])->name('ciktilar.gonder');
 Route::post('/ticari/cari-hesaplar', [MuhasebeMerkeziController::class, 'cariKaydet'])->name('ticari.cari.kaydet');
 Route::get('/ticari/muhasebe-fisleri', [MuhasebeMerkeziController::class, 'fisler'])->name('ticari.fisler');
 Route::post('/ticari/muhasebe-fisleri', [TicariController::class, 'fisKaydet'])->name('ticari.fisler.kaydet');
@@ -101,6 +106,7 @@ Route::post('/depo/raflar', [DepoController::class, 'rafKaydet'])->name('depo.ra
 Route::post('/depo/raf-adresle', [DepoController::class, 'rafAta'])->name('depo.raf.ata');
 Route::get('/operasyon/randevular', [OperasyonController::class, 'randevular'])->name('operasyon.randevular');
 Route::post('/operasyon/randevular', [OperasyonController::class, 'randevuKaydet'])->name('operasyon.randevular.kaydet');
+Route::post('/operasyon/randevular/{randevu}/servise-al', [OperasyonController::class, 'randevuyuServiseAl'])->name('operasyon.randevular.servise-al');
 Route::get('/operasyon/sigorta-kasko', [OperasyonController::class, 'sigorta'])->name('operasyon.sigorta');
 Route::post('/operasyon/sigorta-kasko', [OperasyonController::class, 'sigortaKaydet'])->name('operasyon.sigorta.kaydet');
 Route::get('/operasyon/b2b-siparisler', [OperasyonController::class, 'b2b'])->name('operasyon.b2b');
@@ -195,6 +201,7 @@ Route::post('/servisler/{servis}/uzerine-al', [ServisIslemController::class, 'uz
 Route::post('/servisler/{servis}/durum', [ServisIslemController::class, 'durumGuncelle'])->name('servis.islem.durum');
 Route::post('/servisler/{servis}/hatirlatma', [ServisIslemController::class, 'hatirlatmaGuncelle'])->name('servis.hatirlatma.guncelle');
 Route::post('/servisler/{servis}/islemler', [ServisIslemController::class, 'islemEkle'])->name('servis.islem.ekle');
+Route::post('/servisler/{servis}/periyodik-bakimlar', [ServisIslemController::class, 'periyodikBakimEkle'])->name('servis.periyodik-bakim.ekle');
 Route::patch('/servisler/{servis}/islemler/{islem}', [ServisIslemController::class, 'islemGuncelle'])->name('servis.islem.guncelle');
 Route::delete('/servisler/{servis}/islemler/{islem}', [ServisIslemController::class, 'islemSil'])->name('servis.islem.sil');
 Route::post('/servisler/{servis}/parcalar', [ServisIslemController::class, 'parcaEkle'])->name('servis.parca.ekle');
@@ -398,11 +405,14 @@ Route::post('/sistem-hatalari/cozum-planini-onayla', [SistemHataController::clas
 Route::get('/destek', [DestekController::class, 'index'])->name('destek.index');
 Route::get('/destek/yeni', [DestekController::class, 'create'])->name('destek.create');
 Route::post('/destek', [DestekController::class, 'store'])->name('destek.store');
+Route::post('/destek/{talep}/mesaj', [DestekController::class, 'mesajGonder'])->name('destek.mesaj');
 Route::patch('/destek/{talep}/durum', [DestekController::class, 'durumGuncelle'])->name('destek.durum');
+Route::patch('/destek/{talep}/geri-bildirim', [DestekController::class, 'geriBildirim'])->name('destek.geri-bildirim');
 
 Route::get('/sohbet', [SohbetController::class, 'index'])->name('sohbet.index');
 Route::post('/sohbet/oda', [SohbetController::class, 'odaOlustur'])->name('sohbet.oda.store');
 Route::post('/sohbet/{oda}/mesaj', [SohbetController::class, 'mesajGonder'])->name('sohbet.mesaj.store');
+Route::get('/sohbet/{oda}/mesajlar', [SohbetController::class, 'mesajlarJson'])->name('sohbet.mesajlar');
 
 Route::get('/yapay-zeka-kontrol', [YapayZekaKontrolController::class, 'index'])->name('yapayzeka.index');
 

@@ -10,6 +10,9 @@ use App\Models\ServisIslem;
 use App\Models\ServisParca;
 use App\Models\ServisFotograf;
 use App\Models\AracHasar;
+use App\Services\IletisimOtomasyonServisi;
+use App\Services\ServisMuhasebeAktarimServisi;
+use Illuminate\Support\Facades\DB;
 
 
 
@@ -52,13 +55,22 @@ class ServisIslemController extends Controller
             $ustaUzerineAlabilir = $servis->usta_id === null;
         }
 
+        $gununIsleri = Servis::query()
+            ->with(['arac:id,plaka,marka,model'])
+            ->where('firma_id', $servis->firma_id)
+            ->when(auth()->user()?->isUsta(), fn ($q) => $q->where('usta_id', auth()->id()))
+            ->whereNotIn('durum', ['Tamamlandı'])
+            ->latest('servis_tarihi')
+            ->limit(6)
+            ->get();
+
 
 
         return view(
 
             'servisler.islem-v9',
 
-            ['servis' => $servis, 'hasarlar' => AracHasar::where('servis_id', $servis->id)->latest()->get(), 'ustaUzerineAlabilir' => $ustaUzerineAlabilir]
+            ['servis' => $servis, 'hasarlar' => AracHasar::where('servis_id', $servis->id)->latest()->get(), 'ustaUzerineAlabilir' => $ustaUzerineAlabilir, 'stokParcalar' => DB::table('stok_parcalar')->where('firma_id', $servis->firma_id)->where('aktif', true)->orderBy('parca_adi')->get(), 'gununIsleri' => $gununIsleri]
 
         );
 
@@ -80,13 +92,34 @@ class ServisIslemController extends Controller
     {
         $this->islemYetkisi($servis);
         $veri = $request->validate(['durum' => ['required', 'in:Bekliyor,İşlemde,Teslime Hazır,Tamamlandı'], 'usta_notu' => ['nullable', 'string', 'max:5000']]);
+        $oncekiDurum = $servis->durum;
         $servis->update(array_filter($veri, fn ($deger) => $deger !== null));
+        $guncelServis = $servis->fresh();
+        app(IletisimOtomasyonServisi::class)->servisDurumuDegisti($guncelServis, $oncekiDurum, $guncelServis->durum);
+        if ($guncelServis->durum === 'Tamamlandı') {
+            app(ServisMuhasebeAktarimServisi::class)->aktar($guncelServis);
+        }
         return back()->with('success', 'Servis durumu güncellendi.');
     }
 
     public function hatirlatmaGuncelle(Request $request, Servis $servis)
     {
         $this->islemYetkisi($servis);
+
+        // Çoklu firma öncesinden kalan kayıtlar için, işlem yapılan çalışma
+        // alanının firma bağlantısını bir kez onar. Firma yoksa rastgele
+        // atama yapılmaz; kullanıcıya açık yönlendirme verilir.
+        if (! $servis->firma_id) {
+            $firmaId = (int) ($request->integer('firma_id') ?: session('aktif_firma_id') ?: auth()->user()?->firmaPersoneli?->firma_id);
+            if (! $firmaId) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'firma_id' => 'Bu eski servis kaydı bir firmaya bağlı değil. Hatırlatma oluşturmak için önce ilgili firma çalışma alanını seçin.',
+                ]);
+            }
+
+            $servis->update(['firma_id' => $firmaId]);
+            $servis->refresh();
+        }
 
         $veri = $request->validate([
             'bakim_periyodu' => ['nullable', 'integer', 'min:1', 'max:120'],
@@ -101,15 +134,17 @@ class ServisIslemController extends Controller
         }
 
         $servis->update($veri);
+        $servis->refresh();
+        app(IletisimOtomasyonServisi::class)->periyodikBakimPlanla($servis);
 
-        return back()->with('success', 'Periyodik bakım hatırlatması kaydedildi.');
+        return back()->with('success', 'Periyodik bakım hatırlatması kaydedildi; bakım randevusu ile 15, 7, 4, 3 ve 1 gün öncesi / 5, 10, 15 ve 20 gün gecikme iletişim planı oluşturuldu.');
     }
 
     public function islemEkle(Request $request, Servis $servis)
     {
         $this->islemYetkisi($servis);
         $veri = $request->validate(['islem_adi' => ['required', 'string', 'max:255'], 'aciklama' => ['nullable', 'string', 'max:2000'], 'tutar' => ['nullable', 'numeric', 'min:0']]);
-        ServisIslem::create(array_merge($veri, ['servis_id' => $servis->id, 'tutar' => $veri['tutar'] ?? 0, 'durum' => 'tamamlandi']));
+        ServisIslem::create(array_merge($veri, ['servis_id' => $servis->id, 'kategori' => 'servis', 'tutar' => $veri['tutar'] ?? 0, 'durum' => 'tamamlandi']));
         $this->tutarlariGuncelle($servis);
         return back()->with('success', 'Servis işlemi eklendi.');
     }
@@ -145,11 +180,59 @@ class ServisIslemController extends Controller
     public function parcaEkle(Request $request, Servis $servis)
     {
         $this->islemYetkisi($servis);
-        $veri = $request->validate(['parca_adi' => ['required', 'string', 'max:255'], 'adet' => ['required', 'integer', 'min:1'], 'birim_fiyat' => ['nullable', 'numeric', 'min:0'], 'aciklama' => ['nullable', 'string', 'max:1000']]);
-        $birimFiyat = (float) ($veri['birim_fiyat'] ?? 0);
-        ServisParca::create(array_merge($veri, ['servis_id' => $servis->id, 'birim_fiyat' => $birimFiyat, 'toplam_fiyat' => $veri['adet'] * $birimFiyat]));
+        $veri = $request->validate(['stok_parca_id' => ['nullable', 'integer', 'exists:stok_parcalar,id'], 'parca_adi' => ['nullable', 'required_without:stok_parca_id', 'string', 'max:255'], 'adet' => ['required', 'integer', 'min:1'], 'birim_fiyat' => ['nullable', 'numeric', 'min:0'], 'aciklama' => ['nullable', 'string', 'max:1000']]);
+
+        DB::transaction(function () use ($veri, $servis) {
+            $stokParca = null;
+            if (! empty($veri['stok_parca_id'])) {
+                $stokParca = DB::table('stok_parcalar')->lockForUpdate()->where('id', $veri['stok_parca_id'])->where('firma_id', $servis->firma_id)->first();
+                abort_unless($stokParca, 403, 'Seçilen parça bu firmaya ait değil.');
+                if ($stokParca->stok_miktari < $veri['adet']) {
+                    abort(422, 'Seçilen parça için yeterli stok yok.');
+                }
+            }
+
+            $parcaAdi = $stokParca?->parca_adi ?: $veri['parca_adi'];
+            $birimFiyat = filled($veri['birim_fiyat'] ?? null)
+                ? (float) $veri['birim_fiyat']
+                : (float) (($stokParca?->satis_fiyati ?: $stokParca?->alis_fiyati) ?: 0);
+
+            ServisParca::create([
+                'servis_id' => $servis->id,
+                'stok_parca_id' => $stokParca?->id,
+                'parca_adi' => $parcaAdi,
+                'adet' => $veri['adet'],
+                'birim_fiyat' => $birimFiyat,
+                'toplam_fiyat' => $veri['adet'] * $birimFiyat,
+                'aciklama' => $veri['aciklama'] ?? ($stokParca ? 'Stoktan kullanıldı · OEM: '.$stokParca->oem_no : null),
+            ]);
+
+            if ($stokParca) {
+                DB::table('stok_parcalar')->where('id', $stokParca->id)->decrement('stok_miktari', $veri['adet'], ['updated_at' => now()]);
+                DB::table('stok_hareketleri')->insert(['stok_parca_id' => $stokParca->id, 'yon' => 'cikis', 'miktar' => $veri['adet'], 'birim_alis_fiyati' => 0, 'toplam_tutar' => 0, 'referans' => $servis->servis_no ?: 'Servis #'.$servis->id, 'aciklama' => 'Servis iş emrinde kullanıldı.', 'olusturan_id' => auth()->id(), 'created_at' => now(), 'updated_at' => now()]);
+            }
+        });
         $this->tutarlariGuncelle($servis);
         return back()->with('success', 'Kullanılan parça eklendi.');
+    }
+
+    public function periyodikBakimEkle(Request $request, Servis $servis)
+    {
+        $this->islemYetkisi($servis);
+        $bakimlar = [
+            'motor_yagi' => 'Motor yağı bakımı', 'yag_filtresi' => 'Yağ filtresi bakımı',
+            'hava_filtresi' => 'Hava filtresi bakımı', 'polen_filtresi' => 'Polen filtresi bakımı',
+            'yakit_filtresi' => 'Yakıt filtresi bakımı', 'triger_seti' => 'Triger seti bakımı',
+            'devirdaim' => 'Devirdaim pompası bakımı', 'sanziman_yagi' => 'Şanzıman yağı bakımı',
+            'fren_bakimi' => 'Fren bakımı', 'balata_disk' => 'Balata ve disk bakımı',
+            'amortisor' => 'Amortisör kontrolü', 'lastik_rotasyon' => 'Lastik rotasyonu',
+            'aku_bakimi' => 'Akü bakımı', 'klima_bakimi' => 'Klima bakımı',
+            'lpg_filtre' => 'LPG filtre bakımı', 'genel_kontrol' => 'Periyodik genel kontrol',
+        ];
+        $veri = $request->validate(['bakim_turu' => ['required', 'in:'.implode(',', array_keys($bakimlar))], 'bakim_durumu' => ['nullable', 'in:degistirildi,kontrol_edildi'], 'tutar' => ['nullable', 'numeric', 'min:0'], 'aciklama' => ['nullable', 'string', 'max:2000']]);
+        ServisIslem::create(['servis_id' => $servis->id, 'kategori' => 'periyodik_bakim', 'islem_adi' => $bakimlar[$veri['bakim_turu']], 'tutar' => $veri['tutar'] ?? 0, 'aciklama' => $veri['aciklama'] ?? null, 'durum' => $veri['bakim_durumu'] ?? 'degistirildi']);
+        $this->tutarlariGuncelle($servis);
+        return back()->with('success', 'Periyodik bakım kalemi eklendi.');
     }
 
     public function hasarEkle(Request $request, Servis $servis)

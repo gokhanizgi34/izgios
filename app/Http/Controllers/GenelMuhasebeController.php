@@ -65,6 +65,34 @@ class GenelMuhasebeController extends Controller
         return back()->with('success', 'Hesap planı kaydedildi.');
     }
 
+    public function mizanExcel(Request $request)
+    {
+        $this->yetki();
+        $firmalar = $this->firmalar();
+        $firmaId = $this->firmaId($request, $firmalar);
+        $this->varsayilanTanimlariOlustur($firmaId);
+
+        $mizan = DB::table('muhasebe_yevmiye_satirlari as s')
+            ->join('muhasebe_yevmiye_fisleri as f', 'f.id', '=', 's.muhasebe_yevmiye_fis_id')
+            ->join('muhasebe_hesap_planlari as h', 'h.id', '=', 's.muhasebe_hesap_plan_id')
+            ->where('f.firma_id', $firmaId)->where('f.durum', 'onaylandi')
+            ->groupBy('h.id', 'h.kod', 'h.ad', 'h.sinif', 'h.normal_bakiye')
+            ->select('h.kod', 'h.ad', 'h.sinif', DB::raw('SUM(s.borc) as borc_toplam'), DB::raw('SUM(s.alacak) as alacak_toplam'))
+            ->orderBy('h.kod')->get();
+
+        return response()->streamDownload(function () use ($mizan) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['MİZAN RAPORU'], ';');
+            fputcsv($out, ['Hesap kodu', 'Hesap adı', 'Sınıf', 'Borç', 'Alacak', 'Bakiye'], ';');
+            foreach ($mizan as $satir) {
+                $bakiye = (float) $satir->borc_toplam - (float) $satir->alacak_toplam;
+                fputcsv($out, [$satir->kod, $satir->ad, $satir->sinif, number_format($satir->borc_toplam, 2, ',', '.'), number_format($satir->alacak_toplam, 2, ',', '.'), number_format(abs($bakiye), 2, ',', '.').' '.($bakiye < 0 ? 'Alacak' : 'Borç')], ';');
+            }
+            fclose($out);
+        }, 'mizan-'.now()->format('Ymd-His').'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
     public function donemKaydet(Request $request)
     {
         $firmaId = $this->firmaId($request, $this->firmalar());
@@ -192,9 +220,10 @@ class GenelMuhasebeController extends Controller
     private function varsayilanTanimlariOlustur(int $firmaId): void
     {
         $hesaplar = [
-            ['100', 'Kasa', 'varlik', 'borc'], ['102', 'Bankalar', 'varlik', 'borc'], ['120', 'Alıcılar', 'varlik', 'borc'], ['153', 'Ticari Mallar', 'varlik', 'borc'], ['191', 'İndirilecek KDV', 'varlik', 'borc'],
-            ['320', 'Satıcılar', 'borc', 'alacak'], ['360', 'Ödenecek Vergi ve Fonlar', 'borc', 'alacak'], ['391', 'Hesaplanan KDV', 'borc', 'alacak'],
-            ['500', 'Sermaye', 'sermaye', 'alacak'], ['600', 'Yurt İçi Satışlar', 'gelir', 'alacak'], ['602', 'Diğer Gelirler', 'gelir', 'alacak'], ['621', 'Satılan Ticari Mallar Maliyeti', 'gider', 'borc'], ['770', 'Genel Yönetim Giderleri', 'gider', 'borc'], ['780', 'Finansman Giderleri', 'gider', 'borc'],
+            ['100','Kasa','varlik','borc'],['101','Alınan Çekler','varlik','borc'],['102','Bankalar','varlik','borc'],['103','Verilen Çekler ve Ödeme Emirleri','varlik','borc'],['108','Diğer Hazır Değerler','varlik','borc'],['120','Alıcılar','varlik','borc'],['121','Alacak Senetleri','varlik','borc'],['126','Verilen Depozito ve Teminatlar','varlik','borc'],['128','Şüpheli Ticari Alacaklar','varlik','borc'],['131','Ortaklardan Alacaklar','varlik','borc'],['136','Diğer Çeşitli Alacaklar','varlik','borc'],['150','İlk Madde ve Malzeme','varlik','borc'],['151','Yarı Mamuller','varlik','borc'],['152','Mamuller','varlik','borc'],['153','Ticari Mallar','varlik','borc'],['157','Diğer Stoklar','varlik','borc'],['159','Verilen Sipariş Avansları','varlik','borc'],['180','Gelecek Aylara Ait Giderler','varlik','borc'],['191','İndirilecek KDV','varlik','borc'],['193','Peşin Ödenen Vergiler ve Fonlar','varlik','borc'],
+            ['300','Banka Kredileri','borc','alacak'],['320','Satıcılar','borc','alacak'],['321','Borç Senetleri','borc','alacak'],['326','Alınan Depozito ve Teminatlar','borc','alacak'],['331','Ortaklara Borçlar','borc','alacak'],['335','Personele Borçlar','borc','alacak'],['336','Diğer Çeşitli Borçlar','borc','alacak'],['340','Alınan Sipariş Avansları','borc','alacak'],['360','Ödenecek Vergi ve Fonlar','borc','alacak'],['361','Ödenecek Sosyal Güvenlik Kesintileri','borc','alacak'],['391','Hesaplanan KDV','borc','alacak'],['397','Sayım ve Tesellüm Fazlaları','borc','alacak'],
+            ['500','Sermaye','sermaye','alacak'],['540','Yasal Yedekler','sermaye','alacak'],['570','Geçmiş Yıllar Kârları','sermaye','alacak'],['580','Geçmiş Yıllar Zararları','sermaye','borc'],['590','Dönem Net Kârı','sermaye','alacak'],['591','Dönem Net Zararı','sermaye','borc'],
+            ['600','Yurt İçi Satışlar','gelir','alacak'],['601','Yurt Dışı Satışlar','gelir','alacak'],['602','Diğer Gelirler','gelir','alacak'],['610','Satıştan İadeler','gelir','borc'],['611','Satış İskontoları','gelir','borc'],['621','Satılan Ticari Mallar Maliyeti','gider','borc'],['622','Satılan Hizmet Maliyeti','gider','borc'],['631','Pazarlama Satış ve Dağıtım Giderleri','gider','borc'],['632','Genel Yönetim Giderleri','gider','borc'],['642','Faiz Gelirleri','gelir','alacak'],['646','Kambiyo Kârları','gelir','alacak'],['653','Komisyon Giderleri','gider','borc'],['654','Karşılık Giderleri','gider','borc'],['656','Kambiyo Zararları','gider','borc'],['660','Kısa Vadeli Borçlanma Giderleri','gider','borc'],['689','Diğer Olağandışı Gider ve Zararlar','gider','borc'],['770','Genel Yönetim Giderleri','gider','borc'],['760','Pazarlama Satış ve Dağıtım Giderleri','gider','borc'],['780','Finansman Giderleri','gider','borc'],
         ];
         foreach ($hesaplar as [$kod, $ad, $sinif, $bakiye]) {
             DB::table('muhasebe_hesap_planlari')->updateOrInsert(['firma_id' => $firmaId, 'kod' => $kod], ['ad' => $ad, 'sinif' => $sinif, 'normal_bakiye' => $bakiye, 'aktif' => true, 'updated_at' => now(), 'created_at' => now()]);

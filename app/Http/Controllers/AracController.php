@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 
 use App\Models\Arac;
 use App\Models\Musteri;
+use App\Services\CariAktarimServisi;
 
 
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -137,6 +138,11 @@ if($request->filled('plaka'))
         $validated = $this->validation($request);
         $musteri = Musteri::findOrFail($validated['musteri_id']);
         $this->musteriErisiminiDogrula($musteri);
+        if (! $musteri->firma_id) {
+            return back()->withInput()->withErrors([
+                'musteri_id' => 'Bu müşteri eski bir kayıttır ve firma bağlantısı yoktur. Müşteri kartından firma bağlantısını tamamlayın.',
+            ]);
+        }
         $validated['firma_id'] = $musteri->firma_id;
         $validated['sube_id'] = $musteri->sube_id;
 
@@ -158,6 +164,7 @@ if($request->filled('plaka'))
 
 
         });
+        app(CariAktarimServisi::class)->musteriKarti($musteri->fresh());
 
 
 
@@ -265,6 +272,11 @@ if($request->filled('plaka'))
         $validated = $this->validation($request);
         $musteri = Musteri::findOrFail($validated['musteri_id']);
         $this->musteriErisiminiDogrula($musteri);
+        if (! $musteri->firma_id) {
+            return back()->withInput()->withErrors([
+                'musteri_id' => 'Bu müşterinin firma bağlantısı yoktur. Araç kaydedilmeden önce müşteri kartını güncelleyin.',
+            ]);
+        }
         $validated['firma_id'] = $musteri->firma_id;
         $validated['sube_id'] = $musteri->sube_id;
 
@@ -273,6 +285,7 @@ if($request->filled('plaka'))
         $arac->update(
             $validated
         );
+        app(CariAktarimServisi::class)->musteriKarti($musteri->fresh());
 
 
 

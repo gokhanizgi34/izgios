@@ -64,7 +64,7 @@ Firma Düzenle
 
 
 
-<form method="POST"
+<form method="POST" enctype="multipart/form-data"
 
 id="firma-guncelle-form"
 
@@ -222,6 +222,54 @@ class="form-control-izgios"
 
 value="{{ old('email',$firma->email) }}">
 
+
+</div>
+
+
+
+<div class="form-group">
+
+
+
+<label class="form-label-izgios">
+
+Google yorum bağlantısı
+
+</label>
+
+
+
+<input
+
+type="url"
+
+name="google_yorum_linki"
+
+class="form-control-izgios"
+
+value="{{ old('google_yorum_linki',$firma->google_yorum_linki) }}"
+
+placeholder="https://g.page/r/.../review">
+
+<small class="text-muted">Araç teslim teşekkür mesajlarında müşteriye gönderilir.</small>
+
+
+
+</div>
+
+
+
+<div class="form-group">
+
+<label class="form-label-izgios">Firma logosu</label>
+
+@if ($firma->logo_yolu)
+    <div class="mb-2"><img src="{{ asset('storage/'.$firma->logo_yolu) }}" alt="{{ $firma->unvan }} logosu" style="max-width:220px;max-height:88px;object-fit:contain;border:1px solid #d7e2ef;border-radius:10px;padding:8px;background:#fff"></div>
+@endif
+
+<input type="file" name="logo" class="form-control-izgios" accept="image/png,image/jpeg,image/webp">
+
+<small class="text-muted">PNG, JPG veya WebP · en fazla 2 MB · önerilen ölçü 600 × 240 px (yatay, şeffaf PNG tercih edilir).</small>
 
 </div>
 

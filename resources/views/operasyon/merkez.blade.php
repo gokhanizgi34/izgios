@@ -1,11 +1,137 @@
 @extends('layouts.app')
-@section('title', $modul==='randevu'?'Randevu ve Ajanda':($modul==='sigorta'?'Sigorta / Kasko':'B2B Siparişleri'))
+
+@section('title', $modul === 'randevu' ? 'Randevu ve Ajanda' : ($modul === 'sigorta' ? 'Sigorta / Kasko' : 'B2B Siparişleri'))
+
 @section('content')
-<section class="container" style="max-width:1350px"><header class="p-4 rounded-4 text-white mb-3" style="background:linear-gradient(115deg,#102a50,#0f766e)"><h1 class="h3 mb-1">@if($modul==='randevu')<i class="bi bi-calendar-week"></i> Randevu ve Servis Ajandası @elseif($modul==='sigorta')<i class="bi bi-shield-check"></i> Sigorta / Kasko Hasar Takibi @else<i class="bi bi-cart-check"></i> B2B Sipariş Merkezi @endif</h1><p class="mb-0">Firma ve şube kapsamlı kayıtlar; ilgili müşteri, araç ve operasyon süreciyle birlikte izlenir.</p></header>
-@if(session('success'))<div class="alert alert-success">{{session('success')}}</div>@endif @if($errors->any())<div class="alert alert-danger">{{ $errors->first() }}</div>@endif
-<div class="row g-3"><div class="col-lg-5"><div class="card"><div class="card-body"><h2 class="h5">@if($modul==='randevu')Yeni randevu @elseif($modul==='sigorta')Yeni hasar dosyası @else>Yeni B2B siparişi @endif</h2>
-@if($modul==='randevu')<form method="post" action="{{route('operasyon.randevular.kaydet')}}">@csrf @include('operasyon.partials.iliskiler')<label>Hizmet türü</label><select name="hizmet_turu"><option>Periyodik Bakım</option><option>Yağ Değişimi</option><option>Mekanik Onarım</option><option>Elektrik ve Elektronik</option><option>Kaporta / Boya</option><option>Lastik / Rot Balans</option></select><label>Başlangıç</label><input type="datetime-local" name="baslangic" value="{{now()->format('Y-m-d\\TH:i')}}" required><label>Durum</label><select name="durum"><option value="planlandi">Planlandı</option><option value="teyitli">Teyitli</option><option value="iptal">İptal</option><option value="tamamlandi">Tamamlandı</option></select><label>Notlar</label><textarea name="notlar"></textarea><button class="btn btn-primary mt-3">Ajandaya Ekle</button></form>
-@elseif($modul==='sigorta')<form method="post" action="{{route('operasyon.sigorta.kaydet')}}">@csrf @include('operasyon.partials.iliskiler')<label>Hasar dosya no</label><input name="dosya_no" required><label>Sigorta firması</label><select name="sigorta_firmasi_id"><option value="">Seçiniz</option>@foreach($sigortalar as $s)<option value="{{$s->id}}">{{$s->unvan}}</option>@endforeach</select><label>Durum</label><select name="durum"><option value="acik">Açık</option><option value="ekspertiz">Ekspertiz</option><option value="onaylandi">Onaylandı</option><option value="odendi">Ödendi</option><option value="kapandi">Kapandı</option></select><label>Onaylı tutar</label><input type="number" step=".01" name="onayli_tutar" value="0"><label>Açıklama</label><textarea name="aciklama"></textarea><button class="btn btn-primary mt-3">Hasar Dosyası Aç</button></form>
-@else<form method="post" action="{{route('operasyon.b2b.kaydet')}}">@csrf<label>Alıcı firma / bayi</label><input name="alici_unvan" required><label>Stok ürünü</label><select name="stok_parca_id"><option value="">Serbest ürün satırı</option>@foreach($parcalar as $p)<option value="{{$p->id}}">{{$p->parca_adi}} · {{$p->oem_no}}</option>@endforeach</select><label>Ürün adı</label><input name="urun_adi" required><div class="row"><div class="col"><label>Miktar</label><input type="number" step=".01" name="miktar" required></div><div class="col"><label>Birim fiyat</label><input type="number" step=".01" name="birim_fiyat" required></div></div><label>Durum</label><select name="durum"><option value="taslak">Taslak</option><option value="onaylandi">Onaylandı</option><option value="hazirlaniyor">Hazırlanıyor</option><option value="kargoda">Kargoda</option><option value="tamamlandi">Tamamlandı</option><option value="iptal">İptal</option></select><button class="btn btn-primary mt-3">Siparişi Kaydet</button></form>@endif</div></div></div>
-<div class="col-lg-7"><div class="card"><div class="card-body table-responsive"><h2 class="h5">Kayıtlar</h2><table class="table align-middle"><thead><tr>@if($modul==='randevu')<th>Tarih</th><th>Müşteri / Araç</th><th>Hizmet</th><th>Durum</th>@elseif($modul==='sigorta')<th>Dosya</th><th>Sigorta / Araç</th><th>Tutar</th><th>Durum</th>@else<th>Sipariş no</th><th>Alıcı</th><th>Tutar</th><th>Durum</th>@endif</tr></thead><tbody>@forelse($kayitlar as $k)<tr>@if($modul==='randevu')<td>{{\Carbon\Carbon::parse($k->baslangic)->format('d.m.Y H:i')}}</td><td>{{$k->ad_soyad ?: '-'}}<small class="d-block">{{$k->plaka ?: '-'}}</small></td><td>{{$k->hizmet_turu}}</td><td>{{$k->durum}}</td>@elseif($modul==='sigorta')<td>{{$k->dosya_no}}</td><td>{{$k->sigorta_unvan ?: 'Firma seçilmedi'}}<small class="d-block">{{$k->plaka ?: '-'}}</small></td><td>₺{{number_format($k->onayli_tutar,2,',','.')}}</td><td>{{$k->durum}}</td>@else<td>{{$k->siparis_no}}</td><td>{{$k->alici_unvan}}</td><td>₺{{number_format($k->toplam_tutar,2,',','.')}}</td><td>{{$k->durum}}</td>@endif</tr>@empty<tr><td colspan="4" class="text-muted">Henüz kayıt yok.</td></tr>@endforelse</tbody></table></div></div></div></div></section>
+<style>
+    .op-center { max-width: 1380px; margin: 0 auto; }
+    .op-hero { padding: 28px 32px; border-radius: 24px; color: #fff; background: linear-gradient(115deg, #112a51, #137f74); box-shadow: 0 18px 40px rgba(15, 42, 81, .14); }
+    .op-hero h1 { font-size: clamp(1.35rem, 2.2vw, 1.9rem); margin: 0 0 7px; font-weight: 800; }
+    .op-hero p { margin: 0; color: rgba(255,255,255,.84); }
+    .op-grid { display: grid; grid-template-columns: minmax(300px, .85fr) minmax(0, 1.35fr); gap: 22px; margin-top: 22px; align-items: start; }
+    .op-card { overflow: hidden; background: var(--bs-body-bg, #fff); border: 1px solid #dbe5f1; border-radius: 22px; box-shadow: 0 12px 32px rgba(16,42,81,.07); }
+    .op-card-head { padding: 19px 23px; border-bottom: 1px solid #e8eef6; background: linear-gradient(100deg, #f7faff, #fffdf5); }
+    .op-card-head h2 { margin: 0; color: #102a50; font-size: 1.08rem; font-weight: 800; }
+    .op-card-head p { margin: 4px 0 0; color: #68809f; font-size: .9rem; }
+    .op-card-body { padding: 22px; }
+    .op-form .form-label { display: block; margin: 0 0 7px; font-size: .86rem; color: #17345d; font-weight: 750; }
+    .op-form .form-control, .op-form .form-select { min-height: 46px; border: 1px solid #cbd9e9; border-radius: 12px; color: #102a50; background: var(--bs-body-bg, #fff); box-shadow: none; }
+    .op-form textarea.form-control { min-height: 95px; padding-top: 12px; resize: vertical; }
+    .op-form .form-control:focus, .op-form .form-select:focus { border-color: #e5bb2c; box-shadow: 0 0 0 .22rem rgba(229,187,44,.18); }
+    .op-form .field-gap { margin-bottom: 16px; }
+    .op-form .btn-submit { width: 100%; min-height: 47px; border: 0; border-radius: 12px; color: #102a50; font-weight: 800; background: #e5bb2c; }
+    .appointment-list { display: grid; gap: 12px; }
+    .appointment-row { display: grid; grid-template-columns: 88px minmax(135px, 1.1fr) minmax(130px, 1fr) auto; gap: 16px; align-items: center; padding: 14px; border: 1px solid #dce6f1; border-radius: 16px; background: var(--bs-body-bg, #fff); }
+    .appointment-date { min-height: 67px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 13px; color: #102a50; background: #fff8dd; text-align: center; }
+    .appointment-date strong { font-size: 1.08rem; line-height: 1.1; }
+    .appointment-date span { margin-top: 4px; font-size: .72rem; font-weight: 700; }
+    .appointment-person strong, .appointment-service strong { display: block; color: #102a50; font-size: .94rem; }
+    .appointment-person span, .appointment-service span { display: block; margin-top: 4px; color: #6a7f9d; font-size: .8rem; }
+    .appointment-status { white-space: nowrap; padding: 7px 10px; border-radius: 999px; color: #265b42; background: #e5f7eb; font-weight: 800; font-size: .78rem; text-transform: capitalize; }
+    .appointment-status[data-status="iptal"] { color: #9d3333; background: #ffe7e7; }
+    .appointment-status[data-status="planlandi"] { color: #235c9e; background: #e8f1ff; }
+    .appointment-status[data-status="teyitli"] { color: #7b5612; background: #fff4d0; }
+    .appointment-empty { padding: 40px 20px; border: 1px dashed #c8d6e7; border-radius: 16px; color: #6a7f9d; text-align: center; }
+    @media (max-width: 990px) { .op-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 650px) { .op-hero { padding: 22px 19px; border-radius: 18px; } .op-card-body { padding: 16px; } .appointment-row { grid-template-columns: 72px 1fr; gap: 12px; } .appointment-service { grid-column: 2; } .appointment-status { grid-column: 2; justify-self: start; } }
+    body.dark-theme .op-card, body.dark-mode .op-card { border-color: #314158; }
+    body.dark-theme .op-card-head, body.dark-mode .op-card-head { background: #17243a; border-color: #314158; }
+    body.dark-theme .op-card-head h2, body.dark-mode .op-card-head h2, body.dark-theme .appointment-person strong, body.dark-mode .appointment-person strong, body.dark-theme .appointment-service strong, body.dark-mode .appointment-service strong { color: #f3f7ff; }
+</style>
+
+<section class="container op-center">
+    <header class="op-hero">
+        <h1>
+            @if($modul === 'randevu') <i class="bi bi-calendar-week"></i> Randevu ve Servis Ajandası
+            @elseif($modul === 'sigorta') <i class="bi bi-shield-check"></i> Sigorta / Kasko Hasar Takibi
+            @else <i class="bi bi-cart-check"></i> B2B Sipariş Merkezi
+            @endif
+        </h1>
+        <p>Firma ve şube kapsamlı kayıtlar; ilgili müşteri, araç ve operasyon süreciyle birlikte izlenir.</p>
+    </header>
+
+    @if(session('success')) <div class="alert alert-success mt-3">{{ session('success') }}</div> @endif
+    @if($errors->any()) <div class="alert alert-danger mt-3">{{ $errors->first() }}</div> @endif
+
+    <div class="op-grid">
+        <article class="op-card">
+            <div class="op-card-head">
+                <h2>@if($modul === 'randevu') Yeni randevu @elseif($modul === 'sigorta') Yeni hasar dosyası @else Yeni B2B siparişi @endif</h2>
+                <p>@if($modul === 'randevu') Müşteri ve aracı seçip ajandaya ekleyin. @else Kayıt bilgilerini tamamlayın. @endif</p>
+            </div>
+            <div class="op-card-body op-form">
+                @if($modul === 'randevu')
+                    <form method="post" action="{{ route('operasyon.randevular.kaydet') }}">
+                        @csrf
+                        <div class="field-gap">
+                            <label class="form-label" for="musteri_id">Müşteri</label>
+                            <select id="musteri_id" name="musteri_id" class="form-select"><option value="">Müşteri seçiniz</option>@foreach($musteriler as $m)<option value="{{ $m->id }}">{{ $m->ad_soyad }}</option>@endforeach</select>
+                        </div>
+                        <div class="field-gap">
+                            <label class="form-label" for="arac_id">Araç</label>
+                            <select id="arac_id" name="arac_id" class="form-select"><option value="">Araç seçiniz</option>@foreach($araclar as $a)<option value="{{ $a->id }}">{{ $a->plaka }} · {{ $a->marka }} {{ $a->model }}</option>@endforeach</select>
+                        </div>
+                        <div class="field-gap">
+                            <label class="form-label" for="hizmet_turu">Hizmet türü</label>
+                            <select id="hizmet_turu" name="hizmet_turu" class="form-select" required><option>Periyodik Bakım</option><option>Yağ Değişimi</option><option>Mekanik Onarım</option><option>Elektrik ve Elektronik</option><option>Kaporta / Boya</option><option>Lastik / Rot Balans</option></select>
+                        </div>
+                        <div class="field-gap">
+                            <label class="form-label" for="baslangic">Randevu tarihi ve saati</label>
+                            <input id="baslangic" class="form-control" type="datetime-local" name="baslangic" value="{{ now()->format('Y-m-d\\TH:i') }}" required>
+                        </div>
+                        <div class="field-gap">
+                            <label class="form-label" for="durum">Durum</label>
+                            <select id="durum" name="durum" class="form-select"><option value="planlandi">Planlandı</option><option value="teyitli">Teyitli</option><option value="iptal">İptal</option><option value="tamamlandi">Tamamlandı</option></select>
+                        </div>
+                        <div class="field-gap">
+                            <label class="form-label" for="notlar">Randevu notu</label>
+                            <textarea id="notlar" name="notlar" class="form-control" placeholder="Talep, servis notu veya müşteriye iletilecek bilgiyi yazın."></textarea>
+                        </div>
+                        <button class="btn-submit" type="submit"><i class="bi bi-calendar-plus"></i> Ajandaya Ekle</button>
+                    </form>
+                @elseif($modul === 'sigorta')
+                    <form method="post" action="{{ route('operasyon.sigorta.kaydet') }}">@csrf
+                        <div class="field-gap"><label class="form-label">Hasar dosya no</label><input class="form-control" name="dosya_no" required></div>
+                        <div class="field-gap"><label class="form-label">Sigorta firması</label><select class="form-select" name="sigorta_firmasi_id"><option value="">Seçiniz</option>@foreach($sigortalar as $s)<option value="{{ $s->id }}">{{ $s->unvan }}</option>@endforeach</select></div>
+                        <div class="field-gap"><label class="form-label">Durum</label><select class="form-select" name="durum"><option value="acik">Açık</option><option value="ekspertiz">Ekspertiz</option><option value="onaylandi">Onaylandı</option><option value="odendi">Ödendi</option><option value="kapandi">Kapandı</option></select></div>
+                        <div class="field-gap"><label class="form-label">Onaylı tutar</label><input class="form-control" type="number" step=".01" name="onayli_tutar" value="0"></div>
+                        <div class="field-gap"><label class="form-label">Açıklama</label><textarea class="form-control" name="aciklama"></textarea></div>
+                        <button class="btn-submit" type="submit">Hasar Dosyası Aç</button>
+                    </form>
+                @else
+                    <form method="post" action="{{ route('operasyon.b2b.kaydet') }}">@csrf
+                        <div class="field-gap"><label class="form-label">Alıcı firma / bayi</label><input class="form-control" name="alici_unvan" required></div>
+                        <div class="field-gap"><label class="form-label">Stok ürünü</label><select class="form-select" name="stok_parca_id"><option value="">Serbest ürün satırı</option>@foreach($parcalar as $p)<option value="{{ $p->id }}">{{ $p->parca_adi }} · {{ $p->oem_no }}</option>@endforeach</select></div>
+                        <div class="field-gap"><label class="form-label">Ürün adı</label><input class="form-control" name="urun_adi" required></div>
+                        <div class="row g-2"><div class="col-6 field-gap"><label class="form-label">Miktar</label><input class="form-control" type="number" step=".01" name="miktar" required></div><div class="col-6 field-gap"><label class="form-label">Birim fiyat</label><input class="form-control" type="number" step=".01" name="birim_fiyat" required></div></div>
+                        <div class="field-gap"><label class="form-label">Durum</label><select class="form-select" name="durum"><option value="taslak">Taslak</option><option value="onaylandi">Onaylandı</option><option value="hazirlaniyor">Hazırlanıyor</option><option value="kargoda">Kargoda</option><option value="tamamlandi">Tamamlandı</option><option value="iptal">İptal</option></select></div>
+                        <button class="btn-submit" type="submit">Siparişi Kaydet</button>
+                    </form>
+                @endif
+            </div>
+        </article>
+
+        <article class="op-card">
+            <div class="op-card-head"><h2>Kayıtlar</h2><p>Güncel operasyon kayıtlarını buradan takip edin.</p></div>
+            <div class="op-card-body">
+                @if($modul === 'randevu')
+                    <div class="appointment-list">
+                        @forelse($kayitlar as $k)
+                            <article class="appointment-row">
+                                <div class="appointment-date"><strong>{{ \Carbon\Carbon::parse($k->baslangic)->format('d.m') }}</strong><span>{{ \Carbon\Carbon::parse($k->baslangic)->format('H:i') }}</span></div>
+                                <div class="appointment-person"><strong>{{ $k->ad_soyad ?: 'Müşteri seçilmedi' }}</strong><span><i class="bi bi-car-front"></i> {{ $k->plaka ?: 'Araç seçilmedi' }}</span></div>
+                                <div class="appointment-service"><strong>{{ $k->hizmet_turu }}</strong><span>{{ $k->notlar ?: 'Ek randevu notu yok.' }}</span></div>
+                                <span class="appointment-status" data-status="{{ $k->durum }}">{{ str_replace('_', ' ', $k->durum) }}</span>
+                            </article>
+                        @empty
+                            <div class="appointment-empty"><i class="bi bi-calendar-x d-block fs-3 mb-2"></i>Henüz randevu kaydı yok.</div>
+                        @endforelse
+                    </div>
+                @else
+                    <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr>@if($modul === 'sigorta')<th>Dosya</th><th>Sigorta / Araç</th><th>Tutar</th><th>Durum</th>@else<th>Sipariş no</th><th>Alıcı</th><th>Tutar</th><th>Durum</th>@endif</tr></thead><tbody>@forelse($kayitlar as $k)<tr>@if($modul === 'sigorta')<td>{{ $k->dosya_no }}</td><td>{{ $k->sigorta_unvan ?: 'Firma seçilmedi' }}<small class="d-block">{{ $k->plaka ?: '-' }}</small></td><td>₺{{ number_format($k->onayli_tutar, 2, ',', '.') }}</td><td>{{ $k->durum }}</td>@else<td>{{ $k->siparis_no }}</td><td>{{ $k->alici_unvan }}</td><td>₺{{ number_format($k->toplam_tutar, 2, ',', '.') }}</td><td>{{ $k->durum }}</td>@endif</tr>@empty<tr><td colspan="4" class="text-muted">Henüz kayıt yok.</td></tr>@endforelse</tbody></table></div>
+                @endif
+            </div>
+        </article>
+    </div>
+</section>
 @endsection

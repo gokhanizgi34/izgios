@@ -54,7 +54,7 @@ class MuhasebeMerkeziController extends Controller
     {
         $firmalar=$this->firmalar(); $firmaId=$this->firmaId($request); $arama=trim((string)$request->input('ara')); $tip=$request->input('tip');
         $q=DB::table('cari_hesaplar')->where('firma_id',$firmaId);
-        if ($arama !== '') $q->where(fn($x)=>$x->where('unvan','like',"%{$arama}%")->orWhere('vergi_no','like',"%{$arama}%")->orWhere('telefon','like',"%{$arama}%"));
+        if ($arama !== '') $q->where(fn($x)=>$x->where('unvan','like',"%{$arama}%")->orWhere('plaka','like',"%{$arama}%")->orWhere('vergi_no','like',"%{$arama}%")->orWhere('telefon','like',"%{$arama}%"));
         if (in_array($tip,['musteri','tedarikci','diger'],true)) $q->where('tip',$tip);
         $cariler=$q->orderByDesc('aktif')->orderBy('unvan')->get();
         $cariOzet=['borc'=>(float)$cariler->filter(fn($x)=>(float)$x->bakiye<0)->sum(fn($x)=>abs((float)$x->bakiye)),'alacak'=>(float)$cariler->filter(fn($x)=>(float)$x->bakiye>0)->sum('bakiye'),'aktif'=>$cariler->where('aktif',true)->count()];
@@ -63,7 +63,7 @@ class MuhasebeMerkeziController extends Controller
 
     public function cariKaydet(Request $request)
     {
-        $id=$this->firmaId($request); $v=$request->validate(['tip'=>['required','in:musteri,tedarikci,diger'],'unvan'=>['required','string','max:255'],'telefon'=>['nullable','string','max:30'],'email'=>['nullable','email','max:255'],'vergi_no'=>['nullable','string','max:20']]);
+        $id=$this->firmaId($request); $v=$request->validate(['tip'=>['required','in:musteri,tedarikci,diger'],'unvan'=>['required','string','max:255'],'plaka'=>['nullable','string','max:20'],'telefon'=>['nullable','string','max:30'],'email'=>['nullable','email','max:255'],'vergi_no'=>['nullable','string','max:20']]);
         DB::table('cari_hesaplar')->insert([...$v,'firma_id'=>$id,'bakiye'=>0,'aktif'=>true,'created_at'=>now(),'updated_at'=>now()]);
         return back()->with('success','Cari kart oluşturuldu.');
     }
@@ -72,15 +72,21 @@ class MuhasebeMerkeziController extends Controller
     {
         $firmalar=$this->firmalar(); $firmaId=$this->firmaId($request);
         $cariler=DB::table('cari_hesaplar')->where('firma_id',$firmaId)->where('aktif',true)->orderBy('unvan')->get();
-        $fisler=DB::table('muhasebe_fisleri')->leftJoin('muhasebe_fis_satirlari','muhasebe_fis_satirlari.muhasebe_fis_id','=','muhasebe_fisleri.id')->where('muhasebe_fisleri.firma_id',$firmaId)->select('muhasebe_fisleri.*','muhasebe_fis_satirlari.urun_adi','muhasebe_fis_satirlari.birim_fiyat','muhasebe_fis_satirlari.kdv_orani','muhasebe_fis_satirlari.kdv_dahil_tutar')->latest('fis_tarihi')->get();
+        $fisler=DB::table('muhasebe_fisleri')
+            ->leftJoin('cari_hesaplar', 'cari_hesaplar.id', '=', 'muhasebe_fisleri.cari_hesap_id')
+            ->where('muhasebe_fisleri.firma_id',$firmaId)
+            ->select('muhasebe_fisleri.*', 'cari_hesaplar.unvan as cari_unvan')
+            ->latest('muhasebe_fisleri.fis_tarihi')
+            ->get();
+        $fisSatirlari=DB::table('muhasebe_fis_satirlari')->whereIn('muhasebe_fis_id',$fisler->pluck('id'))->orderBy('id')->get()->groupBy('muhasebe_fis_id');
         $kdvGruplari=DB::table('kdv_urun_gruplari')->where('aktif',true)->orderBy('grup_adi')->get();
-        return view('ticari.fisler-v3',compact('firmalar','firmaId','cariler','fisler','kdvGruplari'));
+        return view('ticari.fisler-v3',compact('firmalar','firmaId','cariler','fisler','fisSatirlari','kdvGruplari'));
     }
 
     public function belgeler(Request $request, string $tur)
     {
         $this->yetki(); abort_unless(in_array($tur,['teklif','fatura'],true),404); $firmalar=$this->firmalar(); $firmaId=$this->firmaId($request); $arama=trim((string)$request->input('ara')); $durum=$request->input('durum'); $tablo=$tur==='teklif'?'teklifler':'faturalar';
-        $q=DB::table($tablo)->where('firma_id',$firmaId); if($arama!=='')$q->where(fn($x)=>$x->where('musteri_unvan','like',"%{$arama}%")->orWhere($tur==='teklif'?'teklif_no':'fatura_no','like',"%{$arama}%")); if($durum)$q->where('durum',$durum);
+        $q=DB::table($tablo)->leftJoin('cari_hesaplar','cari_hesaplar.id','=',$tablo.'.cari_hesap_id')->where($tablo.'.firma_id',$firmaId)->select($tablo.'.*','cari_hesaplar.plaka as cari_plaka'); if($arama!=='')$q->where(fn($x)=>$x->where($tablo.'.musteri_unvan','like',"%{$arama}%")->orWhere('cari_hesaplar.plaka','like',"%{$arama}%")->orWhere($tur==='teklif'?'teklif_no':'fatura_no','like',"%{$arama}%")); if($durum)$q->where($tablo.'.durum',$durum);
         $kayitlar=$q->latest('tarih')->get(); $cariler=DB::table('cari_hesaplar')->where('firma_id',$firmaId)->where('aktif',true)->orderBy('unvan')->get();
         return view('ticari.belgeler-v3',compact('tur','firmalar','firmaId','kayitlar','cariler','arama','durum'));
     }

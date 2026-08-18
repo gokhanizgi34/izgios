@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Firma;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class FirmaYonetimController extends Controller
 {
@@ -25,12 +26,15 @@ class FirmaYonetimController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate($this->rules());
+        unset($validated['logo']);
 
-        Firma::create([
+        $firma = Firma::create([
             ...$validated,
             'merkez_goster' => $request->boolean('merkez_goster'),
             'aktif' => true,
         ]);
+
+        $this->logoKaydet($request, $firma);
 
         return redirect()->route('firma.index')->with('success', 'Firma oluşturuldu.');
     }
@@ -50,11 +54,14 @@ class FirmaYonetimController extends Controller
     public function update(Request $request, Firma $firma)
     {
         $validated = $request->validate($this->rules());
+        unset($validated['logo']);
 
         $firma->update([
             ...$validated,
             'merkez_goster' => $request->boolean('merkez_goster'),
         ]);
+
+        $this->logoKaydet($request, $firma);
 
         return redirect()->route('firma.show', $firma)->with('success', 'Firma güncellendi.');
     }
@@ -84,7 +91,24 @@ class FirmaYonetimController extends Controller
             'vergi_no' => ['nullable', 'string', 'max:50'],
             'telefon' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
+            'google_yorum_linki' => ['nullable', 'url', 'max:1000'],
+            'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048', 'dimensions:max_width=1600,max_height=800'],
             'adres' => ['nullable', 'string'],
         ];
+    }
+
+    private function logoKaydet(Request $request, Firma $firma): void
+    {
+        if (! $request->hasFile('logo')) {
+            return;
+        }
+
+        if ($firma->logo_yolu) {
+            Storage::disk('public')->delete($firma->logo_yolu);
+        }
+
+        $firma->update([
+            'logo_yolu' => $request->file('logo')->store('firmalar/logolar', 'public'),
+        ]);
     }
 }

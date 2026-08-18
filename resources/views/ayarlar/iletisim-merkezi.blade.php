@@ -72,7 +72,7 @@
                     <input id="{{ $key }}_saat" class="form-control" type="time" name="{{ $key }}_saat" value="{{ substr($ayar?->gonderim_saati ?? '09:00', 0, 5) }}">
 
                     <label for="{{ $key }}_sablon">Varsayılan mesaj şablonu</label>
-                    <textarea id="{{ $key }}_sablon" class="form-control" name="{{ $key }}_sablon" placeholder="{musteri_adi}, {plaka}, {firma_adi}, {servis_no}">{{ $ayar?->sablon ?? $varsayilanSablon }}</textarea>
+                    <textarea id="{{ $key }}_sablon" class="form-control" name="{{ $key }}_sablon" placeholder="{musteri_adi}, {plaka}, {firma_adi}, {servis_no}, {firma_telefonu}, {qr_takip_linki}, {yorum_linki}">{{ $ayar?->sablon ?? $varsayilanSablon }}</textarea>
                 </article>
             @endforeach
         </div>

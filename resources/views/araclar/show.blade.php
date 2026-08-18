@@ -84,7 +84,7 @@ class="btn-back">
 
 
 
-<div class="card vehicle-head">
+<div class="card vehicle-head kurumsal-kart">
 
 
 
@@ -121,7 +121,7 @@ class="btn-back">
 
 
 
-<div class="card">
+<div class="card kurumsal-kart">
 
 
 <div class="card-title">
@@ -212,7 +212,7 @@ E-Mail
 
 
 
-<div class="card">
+<div class="card kurumsal-kart">
 
 
 <div class="card-title">
@@ -322,7 +322,7 @@ KM
 
 </div>
 
-<div class="card">
+<div class="card kurumsal-kart">
 
 
 <div class="card-title">
@@ -438,7 +438,7 @@ Motor No
 
 
 
-<div class="card">
+<div class="card kurumsal-kart">
 
 
 <div class="card-title">
@@ -501,7 +501,7 @@ QR oluşturulacak.
 
 
 
-<div class="card">
+<div class="card kurumsal-kart">
 
 
 <div class="card-title">

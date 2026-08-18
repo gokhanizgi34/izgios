@@ -176,6 +176,27 @@ if(
             return ['sira' => $sira, 'km' => $hedefKm, 'yil' => $sira, 'tamam' => $servis !== null, 'servis' => $servis];
         });
 
+        $periyodikBakimlar = $arac->servisler
+            ->flatMap(fn ($servis) => $servis->islemler
+                ->where('kategori', 'periyodik_bakim')
+                ->map(fn ($islem) => ['servis' => $servis, 'islem' => $islem]))
+            ->sortByDesc(fn ($kayit) => $kayit['servis']->servis_tarihi ?? $kayit['servis']->created_at)
+            ->values();
+
+        // QR servis sekmesi yalnızca iş emrindeki "Yapılan İşlemler"
+        // kayıtlarından, bakım sekmesi ise yalnız periyodik bakım kayıtlarından beslenir.
+        $servisIslemleri = $arac->servisler
+            ->map(function ($servis) {
+                return [
+                    'servis' => $servis,
+                    'islemler' => $servis->islemler
+                        ->where('kategori', '!=', 'periyodik_bakim')
+                        ->values(),
+                ];
+            })
+            ->filter(fn ($kayit) => $kayit['islemler']->isNotEmpty())
+            ->values();
+
         $sube = $arac->servisler->first()?->sube
             ?: Sube::query()->where('aktif', true)->orderBy('id')->first();
         $whatsappNo = preg_replace('/\D+/', '', (string) ($sube?->whatsapp_no ?: $sube?->telefon));
@@ -196,6 +217,8 @@ if(
 
                 'sonrakiBakim',
                 'bakimPlan',
+                'periyodikBakimlar',
+                'servisIslemleri',
                 'whatsappUrl'
 
             )

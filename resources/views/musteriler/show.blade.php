@@ -95,7 +95,7 @@ class="btn-back">
 
 
 
-<div class="card">
+<div class="card kurumsal-kart">
 
 
 <div class="card-title">
@@ -220,7 +220,7 @@ Notlar
 
 
 
-<div class="card">
+<div class="card kurumsal-kart">
 
 
 <div class="card-title">

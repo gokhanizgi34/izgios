@@ -8,17 +8,29 @@ use Illuminate\Support\Facades\Log;
 
 class YapayZekaDestekServisi
 {
+    public function __construct(private readonly DervisBilgiBankasiServisi $bilgiBankasi)
+    {
+    }
+
     public function analizEt(DestekTalebi $talep): array
     {
+        $bilgiCevabi = $this->bilgiBankasi->cevap(
+            $this->bilgiBankasi->eslestir($talep->baslik . "\n" . $talep->mesaj)
+        );
+
+        if ($bilgiCevabi) {
+            return ['durum' => 'cozum_onerildi', 'ozet' => $bilgiCevabi['ozet'], 'cozum' => $bilgiCevabi['cozum']];
+        }
+
         if (config('services.izgios_ai.provider') !== 'openai' || blank(config('services.izgios_ai.key'))) {
-            return ['durum' => 'bekliyor', 'ozet' => 'Yapay zekâ entegrasyonu yapılandırılmamış.', 'cozum' => null];
+            return ['durum' => 'sistem_yoneticisine_yonlendirildi', 'ozet' => 'Derviş, bu konu için Bilgi Merkezi eşleşmesi bulamadı.', 'cozum' => 'Talep Sistem Yöneticisi inceleme kuyruğuna alındı. Ekran adresi, yapılan adım ve varsa hata kodunu ekleyin.'];
         }
 
         $metin = $this->hassasVeriyiMaskele($talep->baslik . "\n" . $talep->mesaj);
         $istem = <<<TEXT
-Sen İZGİOS oto servis otomasyonu için güvenli destek asistanısın.
+Sen Derviş'sin: İZGİOS oto servis otomasyonunun güvenli destek asistanısın.
 Destek talebini Türkçe değerlendir. Kod değiştirme, veri silme, sunucu komutu, ödeme veya dış sistem işlemi önerme.
-Basit kullanıcı sorunlarında kısa, uygulanabilir çözüm öner. Teknik hata, güvenlik, veri kaybı, ödeme veya birden fazla firmayı etkileyen sorunlarda Sistem Yöneticisine yönlendir ve güvenli işlem planı öner.
+Basit kullanıcı sorunlarında kısa, uygulanabilir çözüm öner ve ilgili İZGİOS modülünü belirt. Teknik hata, güvenlik, veri kaybı, ödeme veya birden fazla firmayı etkileyen sorunlarda Sistem Yöneticisine yönlendir ve güvenli işlem planı öner. Asla sorunu çözdüğünü, kod değiştirdiğini veya sistemde işlem yaptığını iddia etme.
 Yalnızca aşağıdaki üç satırı üret:
 DURUM: COZUM_ONERILDI veya SISTEM_YONETICISINE_YONLENDIR
 OZET: en fazla 180 karakter
@@ -44,6 +56,41 @@ TEXT;
         } catch (\Throwable $hata) {
             Log::warning('İZGİOS AI destek bağlantı hatası.', ['talep_id' => $talep->id, 'sebep' => $hata->getMessage()]);
             return ['durum' => 'sistem_yoneticisine_yonlendirildi', 'ozet' => 'Yapay zekâ hizmetine ulaşılamadı.', 'cozum' => 'Talep Sistem Yöneticisi inceleme kuyruğuna alındı.'];
+        }
+    }
+
+    public function yanitlaMesaj(DestekTalebi $talep, string $mesaj): string
+    {
+        $bilgiCevabi = $this->bilgiBankasi->cevap($this->bilgiBankasi->eslestir($mesaj));
+
+        if ($bilgiCevabi) {
+            return $bilgiCevabi['cozum'];
+        }
+
+        if (config('services.izgios_ai.provider') !== 'openai' || blank(config('services.izgios_ai.key'))) {
+            return 'Bu mesaj için Bilgi Merkezi’nde doğrudan bir yanıt bulunamadı. Ekran adresini, yaptığınız son adımı ve varsa hata kodunu paylaşın; Sistem Yöneticisi inceleme kuyruğuna aktarılır.';
+        }
+
+        $metin = $this->hassasVeriyiMaskele($mesaj);
+        $istem = <<<TEXT
+Sen Derviş'sin: İZGİOS oto servis otomasyonunun güvenli destek asistanısın.
+Türkçe, kısa ve doğrudan yanıt ver. Kod, veri, sunucu veya dış sistem üzerinde işlem yapma ve yaptığını iddia etme.
+Kullanıcıya kontrol edeceği ekranı ve adımları söyle. Çözemediğin teknik bir sorun varsa Sistem Yöneticisinin talep konuşmasını inceleyeceğini belirt.
+Talep başlığı: {$talep->baslik}
+Kullanıcı mesajı: {$metin}
+TEXT;
+
+        try {
+            $yanit = Http::acceptJson()->withToken(config('services.izgios_ai.key'))->timeout(30)
+                ->post('https://api.openai.com/v1/responses', ['model' => config('services.izgios_ai.model', 'gpt-5.6'), 'input' => $istem]);
+            $cevap = data_get($yanit->json(), 'output.0.content.0.text') ?? data_get($yanit->json(), 'output_text');
+
+            return filled($cevap)
+                ? mb_strimwidth(trim($cevap), 0, 1800, '…', 'UTF-8')
+                : 'Yanıt hazırlanamıyor. Mesajınız Sistem Yöneticisi inceleme kuyruğunda bekliyor.';
+        } catch (\Throwable $hata) {
+            Log::warning('İZGİOS AI destek mesaj yanıtı hatası.', ['talep_id' => $talep->id, 'sebep' => $hata->getMessage()]);
+            return 'Derviş şu an yanıt üretemedi. Mesajınız Sistem Yöneticisi inceleme kuyruğunda bekliyor.';
         }
     }
 

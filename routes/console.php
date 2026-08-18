@@ -23,3 +23,27 @@ Schedule::command('izgi:backup')
 Schedule::command('izgi:dogum-gunu-kutla')
     ->dailyAt('09:00')
     ->withoutOverlapping();
+
+Schedule::command('izgi:iletisim-kuyrugunu-isle')
+    ->everyMinute()
+    ->withoutOverlapping();
+
+Artisan::command('izgi:destek-zaman-asimini-kapat', function () {
+    $adet = \App\Models\DestekTalebi::query()
+        ->where('durum', 'ai_yonlendirildi')
+        ->whereNull('kullanici_geri_bildirimi')
+        ->whereNotNull('son_yanit_at')
+        ->where('son_yanit_at', '<=', now()->subMinutes(30))
+        ->update([
+            'durum' => 'zaman_asimiyla_kapatildi',
+            'ai_durum' => 'zaman_asimiyla_kapatildi',
+            'zaman_asimi_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+    $this->info("{$adet} destek talebi zaman aşımıyla kapatıldı.");
+})->purpose('Derviş çözüm önerisine 30 dakika yanıt gelmeyen destek taleplerini kapatır.');
+
+Schedule::command('izgi:destek-zaman-asimini-kapat')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
