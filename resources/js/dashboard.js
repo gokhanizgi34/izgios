@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         document.body.classList.toggle("menu-open");
+        menuButton.setAttribute("aria-expanded", sidebar.classList.contains("open") ? "true" : "false");
 
 
     }
@@ -59,6 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
             overlay.classList.remove("active");
 
             document.body.classList.remove("menu-open");
+            menuButton.setAttribute("aria-expanded", "false");
 
 
         });

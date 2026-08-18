@@ -93,22 +93,6 @@
 
 
 
-        {{-- MOBİL MENU --}}
-
-        <button 
-            id="mobile-menu-btn"
-            class="mobile-menu-btn">
-
-            <i class="bi bi-list"></i>
-
-        </button>
-
-
-
-
-
-
-
         {{-- TOPBAR --}}
 
         @include('components.topbar')

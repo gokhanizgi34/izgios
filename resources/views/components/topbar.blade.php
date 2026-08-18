@@ -8,7 +8,12 @@
     {{-- ================================================= --}}
 
 
-    <button class="mobile-menu-button">
+    <button id="mobile-menu-btn"
+            class="mobile-menu-button"
+            type="button"
+            aria-label="Menüyü aç veya kapat"
+            aria-controls="izgios-sidebar"
+            aria-expanded="false">
 
 
         <i class="bi bi-list"></i>
