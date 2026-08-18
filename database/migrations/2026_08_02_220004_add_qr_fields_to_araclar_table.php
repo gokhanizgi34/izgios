@@ -11,22 +11,22 @@ return new class extends Migration
 
     public function up(): void
     {
+        if (! Schema::hasColumn('araclar', 'qr_token')) {
+            Schema::table('araclar', function (Blueprint $table) {
+                $table->uuid('qr_token')
+                    ->nullable()
+                    ->unique()
+                    ->after('notlar');
+            });
+        }
 
-        Schema::table('araclar', function (Blueprint $table) {
-
-
-            $table->uuid('qr_token')
-                ->nullable()
-                ->unique()
-                ->after('notlar');
-
-
-            $table->timestamp('qr_created_at')
-                ->nullable()
-                ->after('qr_token');
-
-
-        });
+        if (! Schema::hasColumn('araclar', 'qr_created_at')) {
+            Schema::table('araclar', function (Blueprint $table) {
+                $table->timestamp('qr_created_at')
+                    ->nullable()
+                    ->after('qr_token');
+            });
+        }
 
 
     }
@@ -38,16 +38,16 @@ return new class extends Migration
     {
 
 
-        Schema::table('araclar', function (Blueprint $table) {
+        $columns = array_values(array_filter([
+            Schema::hasColumn('araclar', 'qr_token') ? 'qr_token' : null,
+            Schema::hasColumn('araclar', 'qr_created_at') ? 'qr_created_at' : null,
+        ]));
 
-
-            $table->dropColumn([
-                'qr_token',
-                'qr_created_at'
-            ]);
-
-
-        });
+        if ($columns !== []) {
+            Schema::table('araclar', function (Blueprint $table) use ($columns) {
+                $table->dropColumn($columns);
+            });
+        }
 
 
     }
