@@ -145,6 +145,11 @@ if($request->filled('plaka'))
         }
         $validated['firma_id'] = $musteri->firma_id;
         $validated['sube_id'] = $musteri->sube_id;
+        $validated['plaka'] = $this->plakaNormalize($validated['plaka']);
+
+        if ($this->plakaMevcutMu($validated['firma_id'], $validated['plaka'])) {
+            return back()->withInput()->withErrors(['plaka' => 'Bu plaka aynı firmada zaten kayıtlıdır.']);
+        }
 
 
 
@@ -279,6 +284,11 @@ if($request->filled('plaka'))
         }
         $validated['firma_id'] = $musteri->firma_id;
         $validated['sube_id'] = $musteri->sube_id;
+        $validated['plaka'] = $this->plakaNormalize($validated['plaka']);
+
+        if ($this->plakaMevcutMu($validated['firma_id'], $validated['plaka'], $arac->id)) {
+            return back()->withInput()->withErrors(['plaka' => 'Bu plaka aynı firmada zaten kayıtlıdır.']);
+        }
 
 
 
@@ -636,6 +646,20 @@ if($request->filled('plaka'))
         ]);
 
 
+    }
+
+    private function plakaNormalize(string $plaka): string
+    {
+        return preg_replace('/[^0-9A-ZÇĞİÖŞÜ]/u', '', mb_strtoupper(trim($plaka), 'UTF-8')) ?: '';
+    }
+
+    private function plakaMevcutMu(int $firmaId, string $plaka, ?int $haricId = null): bool
+    {
+        return Arac::query()
+            ->where('firma_id', $firmaId)
+            ->when($haricId, fn ($query) => $query->whereKeyNot($haricId))
+            ->pluck('plaka')
+            ->contains(fn ($kayitliPlaka) => $this->plakaNormalize($kayitliPlaka) === $plaka);
     }
 
     private function aktifFirmaId(): ?int

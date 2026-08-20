@@ -99,6 +99,9 @@
                 <i class="bi bi-tools"></i><label>İş Emirleri</label>
             </a>
             @endif
+            <a href="{{ route('operasyon.randevular') }}" class="{{ request()->routeIs('operasyon.randevular*') ? 'active' : '' }}">
+                <i class="bi bi-calendar-week-fill"></i><label>Randevu ve Ajanda</label>
+            </a>
         </div>
         @endif
         {{-- ================================================= --}}

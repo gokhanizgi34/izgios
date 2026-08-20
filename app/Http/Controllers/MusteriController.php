@@ -190,6 +190,11 @@ class MusteriController extends Controller
         $subeId = $this->kayitSubeId($firmaId, $validated['sube_id'] ?? null);
         $validated['firma_id'] = $firmaId;
         $validated['sube_id'] = $subeId;
+        $validated = $this->musteriKimlikAlanlariniNormalize($validated);
+
+        if ($hatalar = $this->musteriBenzersizlikHatalari($validated, $firmaId)) {
+            return back()->withInput()->withErrors($hatalar);
+        }
 
         DB::transaction(function () use ($validated, &$musteri) {
             $musteri = Musteri::create($validated);
@@ -327,6 +332,13 @@ class MusteriController extends Controller
             unset($validated['firma_id'], $validated['sube_id']);
         }
 
+        $firmaId = (int) ($validated['firma_id'] ?? $musteri->firma_id);
+        $validated = $this->musteriKimlikAlanlariniNormalize($validated);
+
+        if ($hatalar = $this->musteriBenzersizlikHatalari($validated, $firmaId, $musteri->id)) {
+            return back()->withInput()->withErrors($hatalar);
+        }
+
 
 
 
@@ -444,6 +456,56 @@ class MusteriController extends Controller
         return auth()->user()?->tamSistemYetkisiVarMi()
             ? (session('aktif_firma_id') ?: null)
             : (session('aktif_firma_id') ?: auth()->user()?->firmaPersoneli?->firma_id);
+    }
+
+    private function musteriKimlikAlanlariniNormalize(array $veri): array
+    {
+        $veri['tc_kimlik_no'] = preg_replace('/\D+/', '', $veri['tc_kimlik_no'] ?? '') ?: null;
+        $veri['telefon'] = preg_replace('/\D+/', '', $veri['telefon'] ?? '') ?: null;
+        $veri['telefon2'] = preg_replace('/\D+/', '', $veri['telefon2'] ?? '') ?: null;
+        $veri['email'] = isset($veri['email']) && trim($veri['email']) !== '' ? mb_strtolower(trim($veri['email']), 'UTF-8') : null;
+
+        return $veri;
+    }
+
+    private function musteriBenzersizlikHatalari(array $veri, int $firmaId, ?int $haricId = null): array
+    {
+        $hatalar = [];
+        $telefonlar = array_values(array_unique(array_filter([$veri['telefon'] ?? null, $veri['telefon2'] ?? null])));
+
+        if (empty($veri['telefon'])) {
+            $hatalar['telefon'] = 'Geçerli bir telefon numarası girilmelidir.';
+        }
+
+        if (! empty($veri['telefon2']) && $veri['telefon2'] === ($veri['telefon'] ?? null)) {
+            $hatalar['telefon2'] = 'İkinci telefon, birinci telefonla aynı olamaz.';
+        }
+
+        $kayitlar = Musteri::query()
+            ->where('firma_id', $firmaId)
+            ->when($haricId, fn ($query) => $query->whereKeyNot($haricId))
+            ->get(['tc_kimlik_no', 'telefon', 'telefon2', 'email']);
+
+        foreach ($kayitlar as $kayit) {
+            $kayitliTc = preg_replace('/\D+/', '', $kayit->tc_kimlik_no ?? '');
+            $kayitliTelefonlar = array_filter([
+                preg_replace('/\D+/', '', $kayit->telefon ?? ''),
+                preg_replace('/\D+/', '', $kayit->telefon2 ?? ''),
+            ]);
+            $kayitliEmail = mb_strtolower(trim($kayit->email ?? ''), 'UTF-8');
+
+            if (! empty($veri['tc_kimlik_no']) && $veri['tc_kimlik_no'] === $kayitliTc) {
+                $hatalar['tc_kimlik_no'] = 'Bu TC kimlik numarası aynı firmada zaten kayıtlıdır.';
+            }
+            if (! empty($veri['email']) && $veri['email'] === $kayitliEmail) {
+                $hatalar['email'] = 'Bu e-posta adresi aynı firmada zaten kayıtlıdır.';
+            }
+            if (array_intersect($telefonlar, $kayitliTelefonlar)) {
+                $hatalar['telefon'] = 'Bu telefon numarası aynı firmada zaten kayıtlıdır.';
+            }
+        }
+
+        return $hatalar;
     }
 
     private function musteriKayitYetkisi(): void
