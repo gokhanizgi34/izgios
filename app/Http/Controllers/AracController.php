@@ -324,6 +324,12 @@ if($request->filled('plaka'))
     {
         $this->aracErisiminiDogrula($arac);
 
+        if ($arac->servisler()->exists()) {
+            return redirect()
+                ->route('araclar.index')
+                ->with('error', 'Servis geçmişi bulunan araç silinemez. Yalnızca hatalı ve işlem görmemiş araç kayıtları silinebilir.');
+        }
+
         $arac->delete();
 
 

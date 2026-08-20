@@ -53,7 +53,7 @@
                         <span class="api-card__icon"><i class="bi {{ $ikon }}"></i></span>
                         <div class="flex-grow-1"><div class="d-flex justify-content-between gap-2"><h2>{{ $ad }}</h2><span class="badge text-bg-{{ $hazir ? 'success' : 'secondary' }}">{{ $hazir ? 'Yapılandırıldı' : 'Yapılandırılmadı' }}</span></div><p>{{ $aciklama }}</p></div>
                     </div>
-                    <form method="POST" action="{{ route('ticari.api.kaydet') }}" autocapitalize="none" spellcheck="false">
+                    <form method="POST" action="{{ route('ticari.api.kaydet') }}" autocapitalize="none" spellcheck="false" data-preserve-case>
                         @csrf
                         <input type="hidden" name="firma_id" value="{{ $firmaId }}">
                         <input type="hidden" name="saglayici" value="{{ $kod }}">

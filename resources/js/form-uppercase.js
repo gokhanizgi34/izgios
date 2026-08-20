@@ -14,6 +14,10 @@ document.addEventListener("input", function(e){
         return;
     }
 
+    if(alan.closest('[data-preserve-case]')){
+        return;
+    }
+
 
 
     const type = alan.getAttribute("type");
