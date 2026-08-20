@@ -88,6 +88,11 @@
 @import "./form-standard.css";
 @import "./corporate-system.css";
 
+/* Kurumsal tema tablet görünümünde ana alanı sabit menü genişliğinden kurtarır. */
+@media(max-width:1024px){
+    .izgios-main{margin-left:0;}
+}
+
 
 
 

@@ -16,7 +16,11 @@
             aria-expanded="false">
 
 
-        <i class="bi bi-list"></i>
+        <span class="hamburger-icon" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
 
 
     </button>

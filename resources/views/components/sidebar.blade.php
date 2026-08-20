@@ -357,9 +357,9 @@
 
     </div>
 <button id="sidebar-close"
-        class="sidebar-close">
-
-
+        class="sidebar-close"
+        type="button"
+        aria-label="Menüyü kapat">
+    <span aria-hidden="true">&times;</span>
 </button>
 </aside>
-
