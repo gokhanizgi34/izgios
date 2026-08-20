@@ -81,7 +81,9 @@ class AracDijitalKimlikTest extends TestCase
             'giris_km' => 20000,
         ]);
         ServisIslem::create(['servis_id' => $servis->id, 'kategori' => 'servis', 'islem_adi' => 'Rot ayarı']);
+        ServisIslem::create(['servis_id' => $servis->id, 'kategori' => 'servis', 'islem_adi' => 'Balans ayarı']);
         ServisIslem::create(['servis_id' => $servis->id, 'kategori' => 'periyodik_bakim', 'islem_adi' => 'Motor Yağı']);
+        ServisIslem::create(['servis_id' => $servis->id, 'kategori' => 'periyodik_bakim', 'islem_adi' => 'Yağ Filtresi']);
         \DB::table('muhasebe_entegrasyonlari')->insert([
             'firma_id' => $firma->id,
             'saglayici' => 'whatsapp',
@@ -97,11 +99,15 @@ class AracDijitalKimlikTest extends TestCase
             ->assertOk()
             ->assertSee('Araç Dijital Kimliği')
             ->assertSee('Rot ayarı')
+            ->assertSee('Balans ayarı')
+            ->assertSee('2 işlem')
             ->assertDontSee('Motor Yağı');
 
         $this->get(route('araclar.qr.show', [$arac->qr_token, 'ekran' => 'bakim']))
             ->assertOk()
             ->assertSee('Motor Yağı')
+            ->assertSee('Yağ Filtresi')
+            ->assertSee('2 bakım işlemi')
             ->assertDontSee('Rot ayarı')
             ->assertDontSee('Sırada')
             ->assertSee('https://wa.me/905320000000', false);

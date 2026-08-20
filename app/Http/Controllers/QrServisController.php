@@ -143,21 +143,35 @@ class QrServisController extends Controller
             ->flatMap(fn ($servis) => $servis->islemler
                 ->where('kategori', 'periyodik_bakim')
                 ->map(fn ($islem) => ['servis' => $servis, 'islem' => $islem]))
-            ->sortByDesc(fn ($kayit) => $kayit['servis']->servis_tarihi ?? $kayit['servis']->created_at)
+            ->groupBy(fn ($kayit) => (int) ($kayit['servis']->giris_km ?? 0))
+            ->map(function ($kayitlar, $km) {
+                $servisler = $kayitlar->pluck('servis')->unique('id');
+                return [
+                    'km' => (int) $km,
+                    'tarih' => $servisler->max(fn ($servis) => $servis->servis_tarihi ?? $servis->created_at),
+                    'islemler' => $kayitlar->pluck('islem')->values(),
+                ];
+            })
+            ->sortByDesc('km')
             ->values();
 
         // QR servis sekmesi yalnızca iş emrindeki "Yapılan İşlemler"
         // kayıtlarından, bakım sekmesi ise yalnız periyodik bakım kayıtlarından beslenir.
         $servisIslemleri = $arac->servisler
-            ->map(function ($servis) {
+            ->flatMap(fn ($servis) => $servis->islemler
+                ->where('kategori', '!=', 'periyodik_bakim')
+                ->map(fn ($islem) => ['servis' => $servis, 'islem' => $islem]))
+            ->groupBy(fn ($kayit) => (int) ($kayit['servis']->giris_km ?? 0))
+            ->map(function ($kayitlar, $km) {
+                $servisler = $kayitlar->pluck('servis')->unique('id');
                 return [
-                    'servis' => $servis,
-                    'islemler' => $servis->islemler
-                        ->where('kategori', '!=', 'periyodik_bakim')
-                        ->values(),
+                    'km' => (int) $km,
+                    'tarih' => $servisler->max(fn ($servis) => $servis->servis_tarihi ?? $servis->created_at),
+                    'servis_nolari' => $servisler->pluck('servis_no')->filter()->unique()->implode(' · '),
+                    'islemler' => $kayitlar->pluck('islem')->values(),
                 ];
             })
-            ->filter(fn ($kayit) => $kayit['islemler']->isNotEmpty())
+            ->sortByDesc('km')
             ->values();
 
         $firmaId = (int) ($arac->servisler->first()?->firma_id ?: $arac->firma_id);
