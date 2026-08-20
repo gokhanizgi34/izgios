@@ -186,6 +186,8 @@ class ServisKabulController extends Controller
             'giris_km' => ['nullable', 'integer', 'min:0'],
             'sikayet' => ['required', 'string', 'max:5000'],
             'oncelik' => ['nullable', 'in:Normal,Acil,Bekleyen'],
+            'fotograflar' => ['nullable', 'array'],
+            'fotograflar.*' => ['nullable', 'image', 'max:2048'],
         ]);
 
 

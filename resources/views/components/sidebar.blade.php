@@ -87,11 +87,6 @@
             <a href="{{ route('musteriler.index') }}" class="{{ request()->routeIs('musteriler.*') ? 'active' : '' }}">
                 <i class="bi bi-people-fill"></i><label>Müşteriler</label>
             </a>
-            @if(auth()->user()?->isUsta())
-            <a href="{{ route('musteriler.create') }}" class="{{ request()->routeIs('musteriler.create') ? 'active' : '' }}">
-                <i class="bi bi-person-plus-fill"></i><label>Yeni Müşteri</label>
-            </a>
-            @endif
             @endif
             <a href="{{ route('araclar.index') }}" class="{{ request()->routeIs('araclar.*') ? 'active' : '' }}">
                 <i class="bi bi-car-front-fill"></i><label>Araçlar</label>
@@ -102,9 +97,6 @@
             </a>
             <a href="{{ route('servisler.index') }}" class="{{ request()->routeIs('servisler.*') ? 'active' : '' }}">
                 <i class="bi bi-tools"></i><label>İş Emirleri</label>
-            </a>
-            <a href="{{ route('operasyon.randevular') }}" class="{{ request()->routeIs('operasyon.randevular*') ? 'active' : '' }}">
-                <i class="bi bi-calendar-week"></i><label>Randevu ve Ajanda</label>
             </a>
             @endif
         </div>
