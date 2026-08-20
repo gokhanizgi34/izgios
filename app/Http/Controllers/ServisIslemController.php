@@ -11,6 +11,7 @@ use App\Models\ServisParca;
 use App\Models\ServisFotograf;
 use App\Models\AracHasar;
 use App\Services\IletisimOtomasyonServisi;
+use App\Services\BakimHatirlatmaTarihi;
 use App\Services\ServisMuhasebeAktarimServisi;
 use Illuminate\Support\Facades\DB;
 
@@ -122,22 +123,19 @@ class ServisIslemController extends Controller
         }
 
         $veri = $request->validate([
-            'bakim_periyodu' => ['nullable', 'integer', 'min:1', 'max:120'],
-            'sonraki_bakim_tarihi' => ['nullable', 'date'],
+            'bakim_periyodu' => ['required', 'integer', 'min:1', 'max:120'],
         ]);
 
-        if (! empty($veri['bakim_periyodu']) && empty($veri['sonraki_bakim_tarihi'])) {
-            $baslangic = $servis->servis_tarihi ?: now();
-            $veri['sonraki_bakim_tarihi'] = $baslangic->copy()
-                ->addMonths((int) $veri['bakim_periyodu'])
-                ->toDateString();
-        }
+        $baslangic = $servis->servis_tarihi ?: $servis->created_at;
+        $veri['sonraki_bakim_tarihi'] = app(BakimHatirlatmaTarihi::class)
+            ->hesapla($baslangic, (int) $veri['bakim_periyodu'])
+            ->toDateString();
 
         $servis->update($veri);
         $servis->refresh();
         app(IletisimOtomasyonServisi::class)->periyodikBakimPlanla($servis);
 
-        return back()->with('success', 'Periyodik bakım hatırlatması kaydedildi; bakım randevusu ile 15, 7, 4, 3 ve 1 gün öncesi / 5, 10, 15 ve 20 gün gecikme iletişim planı oluşturuldu.');
+        return back()->with('success', 'Bakım hatırlatması '.$servis->sonraki_bakim_tarihi->format('d.m.Y').' tarihine kuruldu; 15, 7, 4, 3 ve 1 gün öncesi / 5, 10, 15 ve 20 gün sonrası iletişim planı oluşturuldu.');
     }
 
     public function islemEkle(Request $request, Servis $servis)
@@ -235,7 +233,7 @@ class ServisIslemController extends Controller
             'klima_bakimi' => 'Klima Bakımı', 'klima_gazi' => 'Klima Gazı',
             'sogutma_sistemi' => 'Soğutma Sistemi', 'antifriz' => 'Antifriz Kontrolü',
             'silecek_bakimi' => 'Silecek Bakımı', 'far_ayari' => 'Far Ayarı',
-            'genel_kontrol' => 'Genel Kontrol',
+            'genel_kontrol' => 'Genel Kontrol', 'iscilik' => 'İşçilik',
         ];
         $veri = $request->validate(['bakim_turu' => ['required', 'in:'.implode(',', array_keys($bakimlar))], 'bakim_durumu' => ['nullable', 'in:degistirildi,kontrol_edildi'], 'tutar' => ['nullable', 'numeric', 'min:0'], 'aciklama' => ['nullable', 'string', 'max:2000']]);
         ServisIslem::create(['servis_id' => $servis->id, 'kategori' => 'periyodik_bakim', 'islem_adi' => $bakimlar[$veri['bakim_turu']], 'tutar' => $veri['tutar'] ?? 0, 'aciklama' => $veri['aciklama'] ?? null, 'durum' => $veri['bakim_durumu'] ?? 'degistirildi']);
