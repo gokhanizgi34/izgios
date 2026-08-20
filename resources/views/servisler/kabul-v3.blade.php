@@ -3,11 +3,13 @@
 @section('content')
 <style>
     .kabul-teslim-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .kabul-kamera-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .kabul-kamera-grid { display: grid; width: 100%; min-width: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; overflow: hidden; }
+    .kabul-kamera-grid > div { width: 100%; min-width: 0; }
     .kabul-kamera-girdi { display: none !important; }
-    .kabul-kamera-btn { display: flex; min-height: 66px; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px; border: 1px solid #d2deed; border-radius: 12px; background: #f8fbff; color: #163d6c; font-weight: 800; }
+    .kabul-kamera-btn { display: flex !important; width: 100% !important; max-width: 100%; min-width: 0; min-height: 66px; box-sizing: border-box; flex-direction: column; align-items: center !important; justify-content: center !important; gap: 3px; padding: 8px; overflow: hidden; border: 1px solid #d2deed; border-radius: 12px; background: #f8fbff; color: #163d6c; font-weight: 800; text-align: center; }
     .kabul-kamera-btn:hover { border-color: #dfb536; background: #fff9e7; color: #142b4e; }
     .kabul-kamera-btn i { color: #c89d18; font-size: 1.35rem; }
+    .kabul-kamera-btn span { display: block !important; min-width: 0; color: #163d6c !important; white-space: nowrap; font-size: .82rem; line-height: 1.2; }
     .kabul-kamera-durum { color: #6b7f99; font-size: .74rem; font-weight: 600; }
     .servis-aksiyonlar { display: flex; justify-content: center; align-items: center; gap: 14px; flex-wrap: wrap; }
     .kabul-tarama-btn { min-height: 44px; padding: 0 14px; border: 1px solid #e3b82e; border-radius: 11px; background: #e3b82e; color: #fff; font-weight: 850; }
@@ -17,7 +19,7 @@
     .kabul-arama-sonucu { width: 100%; padding: 10px 12px; border: 0; border-radius: 9px; background: #f4f7fb; color: #183b66; text-align: left; font-weight: 750; cursor: pointer; }
     .kabul-arama-sonucu:hover { background: #fff4c8; }
     @media (max-width: 900px) { .kabul-teslim-grid { grid-template-columns: 1fr; } }
-    @media (max-width: 700px) { .kabul-kamera-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }.kabul-kamera-btn{min-height:58px;flex-direction:row;gap:7px}.kabul-kamera-durum{display:none} }
+    @media (max-width: 700px) { .kabul-kamera-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }.kabul-kamera-btn{min-height:58px;flex-direction:row;gap:7px;padding:8px 6px}.kabul-kamera-durum{display:none} }
 </style>
 <main class="container py-4"><x-servis-yeni-tasarim :adim="3" baslik="Servis kabul" aciklama="Araç teslimini hızlıca kaydedin; iş emri bir sonraki ekranda başlar." />
 @if($errors->any())<div class="alert alert-danger">Araç, müşteri ve şikayet alanlarını kontrol edin.</div>@endif
