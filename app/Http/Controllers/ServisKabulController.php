@@ -12,10 +12,6 @@ use App\Models\Servis;
 use App\Models\ServisFotograf;
 use App\Services\IletisimOtomasyonServisi;
 
-use Intervention\Image\Laravel\Facades\Image;
-
-
-
 class ServisKabulController extends Controller
 {
 
@@ -427,9 +423,9 @@ class ServisKabulController extends Controller
 
 
 
-            $dosya =
-            uniqid()
-            .'.webp';
+            $uzanti = $foto->guessExtension() ?: 'jpg';
+
+            $dosya = uniqid().'.'.$uzanti;
 
 
 
@@ -445,15 +441,7 @@ class ServisKabulController extends Controller
 
 
 
-            Image::read($foto)
-
-                ->toWebp(80)
-
-                ->save(
-                    storage_path(
-                        'app/public/'.$yol
-                    )
-                );
+            Storage::disk('public')->putFileAs($klasor, $foto, $dosya);
 
 
 
