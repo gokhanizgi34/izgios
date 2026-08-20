@@ -56,17 +56,33 @@
                         @csrf
                         <input type="hidden" name="firma_id" value="{{ $firmaId }}">
                         <input type="hidden" name="saglayici" value="{{ $kod }}">
+                        @if(in_array($kod, ['whatsapp','sms'], true))
+                            <label for="{{ $kod }}_tur">Sağlayıcı / bağlantı tipi</label>
+                            <select id="{{ $kod }}_tur" class="form-select" name="saglayici_turu">
+                                @foreach(($kod === 'whatsapp' ? ['meta_cloud'=>'Meta WhatsApp Cloud API','http_json'=>'Genel JSON API'] : ['netgsm'=>'Netgsm','iletimerkezi'=>'İleti Merkezi','http_json'=>'Genel JSON API']) as $deger=>$metin)
+                                    <option value="{{ $deger }}" @selected(($ayar['saglayici_turu'] ?? '') === $deger)>{{ $metin }}</option>
+                                @endforeach
+                            </select>
+                        @endif
                         <label for="{{ $kod }}_anahtar">{{ $anahtarEtiketi }}</label>
                         <input id="{{ $kod }}_anahtar" class="form-control" type="password" name="api_anahtari" autocomplete="new-password" placeholder="{{ $entegrasyon?->api_anahtari_sifreli ? '•••••••• kayıtlı anahtar korunur' : $anahtarEtiketi }}">
                         <label class="mt-2" for="{{ $kod }}_gonderen">{{ $gonderenEtiketi }}</label>
                         <input id="{{ $kod }}_gonderen" class="form-control" name="gonderen" value="{{ old('gonderen', $ayar['gonderen'] ?? '') }}" placeholder="{{ $gonderenEtiketi }}">
                         <label class="mt-2" for="{{ $kod }}_kullanici">Kullanıcı / firma kodu <span class="text-muted fw-normal">(isteğe bağlı)</span></label>
                         <input id="{{ $kod }}_kullanici" class="form-control" name="kullanici_adi" value="{{ old('kullanici_adi', $ayar['kullanici_adi'] ?? '') }}" placeholder="Kullanıcı adı veya firma kodu">
+                        @if($kod === 'email')
+                            <label class="mt-2" for="email_smtp_host">SMTP sunucusu</label>
+                            <input id="email_smtp_host" class="form-control" name="smtp_host" value="{{ old('smtp_host', $ayar['smtp_host'] ?? '') }}" placeholder="mail.firmaniz.com">
+                            <div class="row g-2 mt-1"><div class="col-6"><label for="email_smtp_port">SMTP portu</label><input id="email_smtp_port" class="form-control" type="number" name="smtp_port" value="{{ old('smtp_port', $ayar['smtp_port'] ?? 465) }}"></div><div class="col-6"><label for="email_sifreleme">Güvenlik</label><select id="email_sifreleme" class="form-select" name="smtp_sifreleme"><option value="ssl" @selected(($ayar['smtp_sifreleme'] ?? 'ssl') === 'ssl')>SSL (genelde 465)</option><option value="tls" @selected(($ayar['smtp_sifreleme'] ?? '') === 'tls')>TLS (genelde 587)</option><option value="none" @selected(($ayar['smtp_sifreleme'] ?? '') === 'none')>Yok</option></select></div></div>
+                            <label class="mt-2" for="email_gonderen_adi">Gönderen adı</label>
+                            <input id="email_gonderen_adi" class="form-control" name="gonderen_adi" value="{{ old('gonderen_adi', $ayar['gonderen_adi'] ?? '') }}" placeholder="Firma / servis adı">
+                            <small class="d-block mt-2">Görseldeki IHS örneği için: kullanıcı adı ve gönderen adresi <b>servis@izgiotoservis.com</b>, SMTP sunucusu <b>mail.izgiotoservis.com</b>, port <b>465</b>, güvenlik <b>SSL</b>. Şifre alanına e-posta hesabının şifresi yazılır.</small>
+                        @endif
                         @if($endpointOrnek)
                             <label class="mt-2" for="{{ $kod }}_endpoint">API uç noktası <span class="text-muted fw-normal">(isteğe bağlı)</span></label>
                             <input id="{{ $kod }}_endpoint" class="form-control" type="url" name="endpoint" value="{{ old('endpoint', $ayar['endpoint'] ?? '') }}" placeholder="{{ $endpointOrnek }}">
                         @endif
-                        <small class="d-block mt-2">Sağlayıcı hesabı, onaylı gönderici ve canlı erişim bilgileri olmadan gerçek gönderim başlatılmaz.</small>
+                        @if($kod === 'whatsapp')<small class="d-block mt-2">Telefon numarasını ülke koduyla (ör. 905...) girin. Bu numara QR ekranındaki iletişim düğmesinde de kullanılır. Cloud API gönderimi için API anahtarı ve uç noktası ayrıca gereklidir.</small>@else<small class="d-block mt-2">Sağlayıcı hesabı, onaylı gönderici ve canlı erişim bilgileri olmadan gerçek gönderim başlatılmaz.</small>@endif
                         <button class="btn btn-primary w-100" type="submit"><i class="bi bi-shield-lock-fill me-1"></i>Bağlantı Bilgilerini Kaydet</button>
                     </form>
                 </article>

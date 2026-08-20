@@ -37,15 +37,8 @@
 
     <section class="content" id="kayitlar">
         @if(request('ekran','servis') === 'bakim')
-            <h2>Periyodik Bakım Geçmişi</h2>
-            <p class="content-note">Yapılan bakımlar ve aracın kilometre bakım planı.</p>
-            @foreach($bakimPlan as $plan)
-                <details class="plan" @if($plan['tamam'] && $loop->last) open @endif>
-                    <summary><span class="plan-km"><b>{{ number_format($plan['km'],0,',','.') }} km</b><small>VEYA {{ $plan['yil'] }}. YIL</small></span><span class="status {{ $plan['tamam'] ? '' : 'pending' }}"><i class="status-icon">{{ $plan['tamam'] ? '✓' : '◷' }}</i>{{ $plan['tamam'] ? 'Yapıldı' : 'Sırada' }}</span><span>›</span></summary>
-                    @if($plan['servis'])<div class="detail"><div><span>Tarih</span><b>{{ ($plan['servis']->servis_tarihi ?? $plan['servis']->created_at)->format('d.m.Y') }}</b></div><div><span>Servis kilometresi</span><b>{{ number_format($plan['servis']->giris_km ?? 0,0,',','.') }} KM</b></div></div>@endif
-                </details>
-            @endforeach
             <h2>Yapılan Bakımlar</h2>
+            <p class="content-note">Yalnızca araç üzerinde tamamlanarak kaydedilmiş bakım işlemleri gösterilir.</p>
             @forelse($periyodikBakimlar as $kayit)
                 <article class="service-card"><div class="service-head"><span class="service-km"><b>{{ $kayit['islem']->islem_adi }}</b><small>{{ ($kayit['servis']->servis_tarihi ?? $kayit['servis']->created_at)->format('d.m.Y') }} · {{ number_format($kayit['servis']->giris_km ?? 0,0,',','.') }} KM</small></span><span class="status"><i class="status-icon">✓</i>Yapıldı</span></div>@if($kayit['islem']->aciklama)<div class="operation-list"><div>{{ $kayit['islem']->aciklama }}</div></div>@endif</article>
             @empty<div class="empty">Bu araç için henüz bakım kaydı yok.</div>@endforelse
@@ -57,7 +50,7 @@
             @empty<div class="empty">Bu araç için henüz servis işlemi kaydı yok.</div>@endforelse
         @endif
     </section>
-    @if($whatsappUrl)<footer class="contact"><a href="{{ $whatsappUrl }}" target="_blank" rel="noopener">WhatsApp ile Servise Ulaş</a></footer>@endif
+    @if($whatsappUrl)<footer class="contact"><a href="{{ $whatsappUrl }}" target="_blank" rel="noopener">İlgili Servise WhatsApp Mesajı Gönder</a></footer>@endif
 </main>
 </body>
 </html>

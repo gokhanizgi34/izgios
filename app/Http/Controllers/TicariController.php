@@ -66,6 +66,11 @@ class TicariController extends Controller
             'endpoint' => ['nullable', 'url', 'max:500'],
             'gonderen' => ['nullable', 'string', 'max:180'],
             'kullanici_adi' => ['nullable', 'string', 'max:255'],
+            'saglayici_turu' => ['nullable', 'string', 'max:60'],
+            'smtp_host' => ['nullable', 'string', 'max:255'],
+            'smtp_port' => ['nullable', 'integer', 'between:1,65535'],
+            'smtp_sifreleme' => ['nullable', 'in:ssl,tls,none'],
+            'gonderen_adi' => ['nullable', 'string', 'max:180'],
         ]);
 
         $this->firmaId($request);
@@ -82,17 +87,30 @@ class TicariController extends Controller
             'endpoint' => $v['endpoint'] ?? null,
             'gonderen' => $v['gonderen'] ?? null,
             'kullanici_adi' => $v['kullanici_adi'] ?? null,
+            'saglayici_turu' => $v['saglayici_turu'] ?? null,
+            'smtp_host' => $v['smtp_host'] ?? null,
+            'smtp_port' => $v['smtp_port'] ?? null,
+            'smtp_sifreleme' => $v['smtp_sifreleme'] ?? null,
+            'gonderen_adi' => $v['gonderen_adi'] ?? null,
         ], fn ($deger) => filled($deger));
+
+        $tumAyarlar = array_replace(json_decode($mevcut?->ayarlar ?: '{}', true) ?: [], $ayarlar);
+        $hazir = match ($v['saglayici']) {
+            'email' => filled($anahtar) && filled($tumAyarlar['smtp_host'] ?? null) && filled($tumAyarlar['kullanici_adi'] ?? null) && filled($tumAyarlar['gonderen'] ?? null),
+            'whatsapp' => filled($tumAyarlar['gonderen'] ?? null),
+            'sms' => filled($anahtar) && filled($tumAyarlar['endpoint'] ?? null),
+            default => filled($anahtar),
+        };
 
         DB::table('muhasebe_entegrasyonlari')->updateOrInsert(
             ['firma_id' => $v['firma_id'], 'saglayici' => $v['saglayici']],
             [
                 'api_anahtari_sifreli' => $anahtar,
-                'ayarlar' => $ayarlar ? json_encode($ayarlar, JSON_UNESCAPED_UNICODE) : $mevcut?->ayarlar,
-                'aktif' => filled($anahtar),
-                'durum' => filled($anahtar) ? 'yapilandirildi' : 'yapilandirilmamis',
+                'ayarlar' => json_encode($tumAyarlar, JSON_UNESCAPED_UNICODE),
+                'aktif' => $hazir,
+                'durum' => $hazir ? 'yapilandirildi' : 'yapilandirilmamis',
                 'updated_at' => now(),
-                'created_at' => now(),
+                'created_at' => $mevcut?->created_at ?: now(),
             ]
         );
 

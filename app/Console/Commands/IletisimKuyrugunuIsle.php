@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Services\FirmaIletisimGonderici;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 class IletisimKuyrugunuIsle extends Command
@@ -12,7 +12,7 @@ class IletisimKuyrugunuIsle extends Command
     protected $signature = 'izgi:iletisim-kuyrugunu-isle {--dry-run : Gönderim yapmadan uygun kayıtları listeler}';
     protected $description = 'Planlanan müşteri iletişim bildirimlerini işler.';
 
-    public function handle(): int
+    public function handle(FirmaIletisimGonderici $gonderici): int
     {
         $kayitlar = DB::table('iletisim_gonderim_loglari')
             ->where('durum', 'planlandi')
@@ -28,28 +28,10 @@ class IletisimKuyrugunuIsle extends Command
                 continue;
             }
 
-            if ($kayit->kanal !== 'email') {
-                DB::table('iletisim_gonderim_loglari')->where('id', $kayit->id)->update([
-                    'durum' => 'entegrasyon_bekliyor',
-                    'updated_at' => now(),
-                ]);
-                continue;
-            }
-
             try {
-                $firma = DB::table('firmas')->where('id', $kayit->firma_id)->first();
                 $arac = $kayit->arac_id ? DB::table('araclar')->where('id', $kayit->arac_id)->first() : null;
                 $konu = $this->konu($kayit->mesaj_grubu, $arac?->plaka);
-
-                Mail::send('emails.iletisim-bildirimi', [
-                    'firmaAdi' => $firma?->unvan ?: config('app.name', 'İZGİOS'),
-                    'plaka' => $arac?->plaka,
-                    'mesaj' => $kayit->mesaj,
-                    'konu' => $konu,
-                    'tarih' => now()->format('d.m.Y H:i'),
-                ], function ($mail) use ($kayit, $konu) {
-                    $mail->to($kayit->alici)->subject($konu);
-                });
+                $gonderici->gonder($kayit, $konu);
                 DB::table('iletisim_gonderim_loglari')->where('id', $kayit->id)->update([
                     'durum' => 'gonderildi',
                     'gonderildi_at' => now(),
@@ -58,7 +40,9 @@ class IletisimKuyrugunuIsle extends Command
             } catch (Throwable $exception) {
                 report($exception);
                 DB::table('iletisim_gonderim_loglari')->where('id', $kayit->id)->update([
-                    'durum' => 'hata',
+                    'durum' => str_contains($exception->getMessage(), 'eksik') || str_contains($exception->getMessage(), 'etkin değil')
+                        ? 'entegrasyon_bekliyor'
+                        : 'hata',
                     'updated_at' => now(),
                 ]);
             }

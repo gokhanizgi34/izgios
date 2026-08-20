@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Arac;
-use App\Models\Sube;
+use Illuminate\Support\Facades\DB;
 
 
 
@@ -139,16 +139,6 @@ class QrServisController extends Controller
             && $aktifFirmaId
             && (int) $aktifFirmaId === (int) $arac->firma_id;
 
-        $guncelKm = (int) ($arac->kilometre ?? $arac->servisler->max('giris_km') ?? 0);
-        $bakimPlan = collect(range(1, 10))->map(function ($sira) use ($arac) {
-            $hedefKm = $sira * 20000;
-            $servis = $arac->servisler
-                ->filter(fn ($kayit) => (int) ($kayit->giris_km ?? 0) >= $hedefKm)
-                ->sortBy('giris_km')
-                ->first();
-            return ['sira' => $sira, 'km' => $hedefKm, 'yil' => $sira, 'tamam' => $servis !== null, 'servis' => $servis];
-        });
-
         $periyodikBakimlar = $arac->servisler
             ->flatMap(fn ($servis) => $servis->islemler
                 ->where('kategori', 'periyodik_bakim')
@@ -170,13 +160,21 @@ class QrServisController extends Controller
             ->filter(fn ($kayit) => $kayit['islemler']->isNotEmpty())
             ->values();
 
-        $sube = $arac->servisler->first()?->sube
-            ?: Sube::query()->where('aktif', true)->orderBy('id')->first();
-        $whatsappNo = preg_replace('/\D+/', '', (string) ($sube?->whatsapp_no ?: $sube?->telefon));
+        $firmaId = (int) ($arac->servisler->first()?->firma_id ?: $arac->firma_id);
+        $whatsappEntegrasyonu = DB::table('muhasebe_entegrasyonlari')
+            ->where('firma_id', $firmaId)
+            ->where('saglayici', 'whatsapp')
+            ->where('aktif', true)
+            ->first();
+        $whatsappAyarlari = json_decode($whatsappEntegrasyonu?->ayarlar ?: '{}', true) ?: [];
+        $whatsappNo = preg_replace('/\D+/', '', (string) ($whatsappAyarlari['gonderen'] ?? ''));
         if (str_starts_with($whatsappNo, '0')) {
             $whatsappNo = '90'.substr($whatsappNo, 1);
         }
-        $whatsappUrl = strlen($whatsappNo) >= 10 ? 'https://wa.me/'.$whatsappNo : null;
+        $whatsappMesaj = "Merhaba, {$arac->plaka} plakalı aracımla ilgili servis kaydı hakkında bilgi almak istiyorum.";
+        $whatsappUrl = strlen($whatsappNo) >= 10
+            ? 'https://wa.me/'.$whatsappNo.'?text='.rawurlencode($whatsappMesaj)
+            : null;
 
         return view(
 
@@ -189,7 +187,6 @@ class QrServisController extends Controller
                 'musteri',
 
                 'sonrakiBakim',
-                'bakimPlan',
                 'periyodikBakimlar',
                 'servisIslemleri',
                 'whatsappUrl',

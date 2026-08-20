@@ -9,6 +9,7 @@ use App\Models\Servis;
 use App\Models\ServisIslem;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Crypt;
 use Tests\TestCase;
 
 class AracDijitalKimlikTest extends TestCase
@@ -41,11 +42,14 @@ class AracDijitalKimlikTest extends TestCase
         Schema::create('servis_parcalar', function (Blueprint $table) {
             $table->id(); $table->unsignedBigInteger('servis_id'); $table->timestamps();
         });
+        Schema::create('muhasebe_entegrasyonlari', function (Blueprint $table) {
+            $table->id(); $table->unsignedBigInteger('firma_id'); $table->string('saglayici'); $table->boolean('aktif')->default(false); $table->string('durum')->default('yapilandirilmamis'); $table->text('ayarlar')->nullable(); $table->text('api_anahtari_sifreli')->nullable(); $table->timestamps();
+        });
     }
 
     protected function tearDown(): void
     {
-        foreach (['servis_parcalar','servis_fotograflari','servis_islemleri','servisler','araclar','musteris','subes','firmas'] as $table) {
+        foreach (['muhasebe_entegrasyonlari','servis_parcalar','servis_fotograflari','servis_islemleri','servisler','araclar','musteris','subes','firmas'] as $table) {
             Schema::dropIfExists($table);
         }
         parent::tearDown();
@@ -78,6 +82,16 @@ class AracDijitalKimlikTest extends TestCase
         ]);
         ServisIslem::create(['servis_id' => $servis->id, 'kategori' => 'servis', 'islem_adi' => 'Rot ayarı']);
         ServisIslem::create(['servis_id' => $servis->id, 'kategori' => 'periyodik_bakim', 'islem_adi' => 'Motor Yağı']);
+        \DB::table('muhasebe_entegrasyonlari')->insert([
+            'firma_id' => $firma->id,
+            'saglayici' => 'whatsapp',
+            'aktif' => true,
+            'durum' => 'yapilandirildi',
+            'ayarlar' => json_encode(['gonderen' => '905320000000']),
+            'api_anahtari_sifreli' => Crypt::encryptString('test-token'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $this->get(route('araclar.qr.show', $arac->qr_token))
             ->assertOk()
@@ -88,6 +102,8 @@ class AracDijitalKimlikTest extends TestCase
         $this->get(route('araclar.qr.show', [$arac->qr_token, 'ekran' => 'bakim']))
             ->assertOk()
             ->assertSee('Motor Yağı')
-            ->assertDontSee('Rot ayarı');
+            ->assertDontSee('Rot ayarı')
+            ->assertDontSee('Sırada')
+            ->assertSee('https://wa.me/905320000000', false);
     }
 }
