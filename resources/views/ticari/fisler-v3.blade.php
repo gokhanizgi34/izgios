@@ -35,8 +35,9 @@
     .fis-detail-lines td { padding: 0 5px; }
     .fis-detail-lines input { margin: 0; min-height: 39px; padding: 8px; }
     .fis-detail-footer { display: flex; justify-content: flex-end; gap: 10px; padding-top: 16px; margin-top: 12px; border-top: 1px solid #e4ebf3; }
+    .fis-camera{display:flex;align-items:center;gap:14px;margin:12px 0 18px;padding:14px;border:1px solid #cfe0ef;border-radius:13px;background:#f7fbff}.fis-camera>i{font-size:25px;color:#1768b4}.fis-camera div{flex:1}.fis-camera strong,.fis-camera small{display:block}.fis-camera small{margin-top:3px;color:#64748b}.fis-camera input{display:none}.fis-camera .btn{white-space:nowrap}.fis-ocr-preview{display:none;width:72px;height:72px;border-radius:9px;object-fit:cover;border:1px solid #cbd9e9}
     @media (max-width: 1000px) { .fis-head-fields { grid-template-columns: repeat(3, 1fr); } .fis-detail-meta { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 650px) { .fis-hero { padding: 20px; } .fis-tools > div { width: 100%; } .fis-head-fields { grid-template-columns: 1fr 1fr; } .fis-actions { align-items: stretch; flex-direction: column; } .fis-actions .btn { width: 100%; } .fis-detail-content { padding: 17px; } .fis-detail-meta { grid-template-columns: 1fr; } .fis-detail-meta .wide { grid-column: auto; } .fis-detail-lines { min-width: 620px; } }
+    @media (max-width: 650px) { .fis-hero { padding: 20px; } .fis-tools > div { width: 100%; } .fis-head-fields { grid-template-columns: 1fr 1fr; } .fis-actions { align-items: stretch; flex-direction: column; } .fis-actions .btn { width: 100%; } .fis-detail-content { padding: 17px; } .fis-detail-meta { grid-template-columns: 1fr; } .fis-detail-meta .wide { grid-column: auto; } .fis-detail-lines { min-width: 620px; }.fis-camera{align-items:stretch;flex-direction:column}.fis-camera .btn{width:100%} }
     @media (max-width: 420px) { .fis-head-fields { grid-template-columns: 1fr; } }
 </style>
 
@@ -73,7 +74,8 @@
 
     <article class="fis-card">
         <h2 class="h5">Yeni gider fişi</h2>
-        <form method="POST" action="{{ route('ticari.fisler.kaydet') }}">
+        <div class="fis-camera"><i class="bi bi-camera-fill"></i><img id="fis-ocr-preview" class="fis-ocr-preview" alt="Çekilen fiş önizlemesi"><div><strong>Telefon kamerasıyla fiş oku</strong><small id="fis-ocr-durum">Fotoğraf çekildiğinde fiş no, tarih, açıklama, KDV ve toplam tutar forma aktarılır. Kaydetmeden önce kontrol edin.</small></div><input id="fis-kamera" type="file" accept="image/*" capture="environment"><button id="fis-kamera-ac" class="btn btn-outline-primary" type="button"><i class="bi bi-camera"></i> Fiş fotoğrafı çek</button></div>
+        <form id="yeni-fis-formu" method="POST" action="{{ route('ticari.fisler.kaydet') }}">
             @csrf
             <input type="hidden" name="firma_id" value="{{ $firmaId }}">
             <div class="fis-head-fields mb-3">
@@ -200,6 +202,10 @@
     document.addEventListener('DOMContentLoaded', () => {
         const body = document.getElementById('fis-satirlar');
         const total = document.getElementById('fis-toplam');
+        const camera = document.getElementById('fis-kamera');
+        const cameraButton = document.getElementById('fis-kamera-ac');
+        const ocrStatus = document.getElementById('fis-ocr-durum');
+        const ocrPreview = document.getElementById('fis-ocr-preview');
         let index = 1;
         const money = value => '₺' + Number(value || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -225,6 +231,79 @@
                 }
             });
         }
+
+        async function loadOcr() {
+            let lastError;
+            for (const url of ['https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/+esm', 'https://esm.sh/tesseract.js@5.1.1']) {
+                try { return await import(url); } catch (error) { lastError = error; }
+            }
+            throw new Error('OCR kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.', { cause: lastError });
+        }
+
+        function amount(value) {
+            const clean = String(value || '').replace(/[^0-9,.-]/g, '');
+            const normalized = clean.includes(',') ? clean.replace(/\./g, '').replace(',', '.') : clean;
+            const number = Number.parseFloat(normalized);
+            return Number.isFinite(number) ? number : 0;
+        }
+
+        function fillFromReceipt(text) {
+            const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+            const upper = text.toLocaleUpperCase('tr-TR');
+            const receiptNo = upper.match(/(?:FİŞ|FIS|BELGE)\s*(?:NO|NUMARASI)?\s*[:#-]?\s*([A-Z0-9/-]{3,})/)?.[1];
+            const date = upper.match(/\b([0-3]?\d)[./-]([01]?\d)[./-](20\d{2})\b/);
+            const totalLines = lines.filter(line => /GENEL\s*TOPLAM|ÖDENECEK|TOPLAM/i.test(line));
+            const totalMatches = (totalLines.at(-1) || '').match(/\d{1,3}(?:[.\s]\d{3})*(?:,\d{2})|\d+[.,]\d{2}/g);
+            const receiptTotal = amount(totalMatches?.at(-1));
+            const vatRate = Number(upper.match(/(?:KDV|%)[\s:%]*(1|5|8|10|20)\b/)?.[1] || 20);
+            const merchant = lines.find(line => /[A-ZÇĞİÖŞÜ]{3}/i.test(line) && !/FİŞ|FIS|TARİH|SAAT|VERGİ/i.test(line)) || 'Fotoğraftan okunan gider fişi';
+
+            const form = document.getElementById('yeni-fis-formu');
+            if (receiptNo) form.querySelector('[name="fis_no"]').value = receiptNo.slice(0, 80);
+            if (date) form.querySelector('[name="fis_tarihi"]').value = `${date[3]}-${date[2].padStart(2, '0')}-${date[1].padStart(2, '0')}`;
+            form.querySelector('[name="aciklama"]').value = merchant.slice(0, 255);
+            const row = body.firstElementChild;
+            row.querySelector('[name$="[urun_adi]"]').value = ('Fiş gideri - ' + merchant).slice(0, 255);
+            if (receiptTotal > 0) {
+                row.querySelector('.birim').value = receiptTotal.toFixed(2);
+                row.querySelector('.dahil').value = receiptTotal.toFixed(2);
+            }
+            const rate = row.querySelector('.oran');
+            rate.value = [...rate.options].some(option => Number(option.value) === vatRate) ? String(vatRate) : '20';
+            calculate();
+            return { receiptNo, date: !!date, receiptTotal, merchant };
+        }
+
+        cameraButton.addEventListener('click', () => camera.click());
+        camera.addEventListener('change', async () => {
+            const file = camera.files?.[0];
+            if (!file) return;
+            const previewUrl = URL.createObjectURL(file);
+            ocrPreview.src = previewUrl;
+            ocrPreview.style.display = 'block';
+            cameraButton.disabled = true;
+            ocrStatus.textContent = 'Fiş okunuyor…';
+            try {
+                const { createWorker } = await loadOcr();
+                const worker = await createWorker('tur+eng', 1, { logger: message => {
+                    if (message.status === 'recognizing text') ocrStatus.textContent = 'Fiş okunuyor… %' + Math.round((message.progress || 0) * 100);
+                }});
+                let result;
+                try {
+                    await worker.setParameters({ preserve_interword_spaces: '1', tessedit_pageseg_mode: '6' });
+                    result = await worker.recognize(file);
+                } finally { await worker.terminate(); }
+                const parsed = fillFromReceipt(result.data.text || '');
+                if (!parsed.receiptTotal) throw new Error('Toplam tutar otomatik bulunamadı. Fotoğrafı daha düz ve yakın çekin veya tutarı elle girin.');
+                ocrStatus.textContent = `Fiş okundu: ${parsed.merchant} · ₺${parsed.receiptTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}. Bilgileri kontrol edip kaydedin.`;
+            } catch (error) {
+                ocrStatus.textContent = error.message || 'Fiş okunamadı. Bilgileri elle girebilirsiniz.';
+            } finally {
+                cameraButton.disabled = false;
+                camera.value = '';
+                setTimeout(() => URL.revokeObjectURL(previewUrl), 60000);
+            }
+        });
 
         bindRow(body.firstElementChild);
         document.getElementById('satir-ekle').addEventListener('click', () => {

@@ -19,6 +19,7 @@
 
 <style>
     .api-page{max-width:1240px;margin:auto}.api-hero{padding:26px;border-radius:18px;color:#fff;background:linear-gradient(115deg,#102a50,#0f766e)}.api-hero p{margin:7px 0 0;color:#dff7f0;max-width:850px}.api-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}.api-card{padding:20px;border:1px solid #dce6ef;border-radius:16px;background:#fff}.api-card__head{display:flex;gap:11px;align-items:flex-start}.api-card__icon{display:grid;place-items:center;width:40px;height:40px;flex:0 0 40px;border-radius:12px;background:#fff4c8;color:#946d00;font-size:19px}.api-card h2{font-size:17px;margin:0}.api-card p{color:#64748b;font-size:13px;min-height:38px;margin:8px 0 15px}.api-card label{font-size:12px;font-weight:800;color:#39516f}.api-card small{color:#74849a;font-size:11px}.api-card .form-control{margin-top:5px}.api-card .btn{margin-top:13px}.api-help{margin-top:18px;padding:16px 18px;border:1px solid #d6e4f1;border-radius:14px;background:#f8fbff;color:#3e5877;font-size:13px}.tema-koyu .api-card{background:#17233a;border-color:#30425c}.tema-koyu .api-card h2{color:#f2f7ff}.tema-koyu .api-card p,.tema-koyu .api-card small{color:#b9c8db}.tema-koyu .api-help{background:#17233a;border-color:#30425c;color:#c9d7e9}@media(max-width:760px){.api-grid{grid-template-columns:1fr}}
+    .api-page input,.api-page textarea{text-transform:none!important}
 </style>
 
 <section class="api-page container py-4">
@@ -52,7 +53,7 @@
                         <span class="api-card__icon"><i class="bi {{ $ikon }}"></i></span>
                         <div class="flex-grow-1"><div class="d-flex justify-content-between gap-2"><h2>{{ $ad }}</h2><span class="badge text-bg-{{ $hazir ? 'success' : 'secondary' }}">{{ $hazir ? 'Yapılandırıldı' : 'Yapılandırılmadı' }}</span></div><p>{{ $aciklama }}</p></div>
                     </div>
-                    <form method="POST" action="{{ route('ticari.api.kaydet') }}">
+                    <form method="POST" action="{{ route('ticari.api.kaydet') }}" autocapitalize="none" spellcheck="false">
                         @csrf
                         <input type="hidden" name="firma_id" value="{{ $firmaId }}">
                         <input type="hidden" name="saglayici" value="{{ $kod }}">

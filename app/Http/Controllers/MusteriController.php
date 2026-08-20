@@ -75,6 +75,7 @@ class MusteriController extends Controller
      */
     public function create()
     {
+        $this->musteriKayitYetkisi();
         $firmaId = $this->aktifFirmaId();
         $firmalar = auth()->user()?->tamSistemYetkisiVarMi()
             ? Firma::where('aktif', true)->orderBy('unvan')->get()
@@ -99,6 +100,7 @@ class MusteriController extends Controller
      */
     public function store(Request $request)
     {
+        $this->musteriKayitYetkisi();
 
 
         $validated = $request->validate([
@@ -442,6 +444,15 @@ class MusteriController extends Controller
         return auth()->user()?->tamSistemYetkisiVarMi()
             ? (session('aktif_firma_id') ?: null)
             : (session('aktif_firma_id') ?: auth()->user()?->firmaPersoneli?->firma_id);
+    }
+
+    private function musteriKayitYetkisi(): void
+    {
+        $kullanici = auth()->user();
+        abort_unless($kullanici && ($kullanici->tamSistemYetkisiVarMi() || $kullanici->isAdmin() || $kullanici->isUsta() || $kullanici->isOfis()), 403);
+        if (! $kullanici->tamSistemYetkisiVarMi()) {
+            abort_unless($this->aktifFirmaId(), 403, 'Müşteri oluşturmak için kullanıcının firma bağlantısı bulunmalıdır.');
+        }
     }
 
     private function kayitFirmaId(Request $request, mixed $istenenFirmaId): int
