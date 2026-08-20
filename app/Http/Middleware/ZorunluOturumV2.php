@@ -15,6 +15,7 @@ class ZorunluOturumV2
             'demo',
             'sifremi-unuttum',
             'sifre-sifirla/*',
+            'arac/*',
             'qr-servis/*'
         );
 

@@ -3,52 +3,61 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>{{ $arac->plaka }} | İZGİOS</title>
+    <title>{{ $arac->plaka }} · Araç Dijital Kimliği</title>
     <style>
-        body{margin:0;background:#081426;color:#eef5ff;font-family:Arial,sans-serif}.app{max-width:620px;margin:auto;min-height:100vh}.brand{padding:20px;text-align:center;background:#0e203b}.brand-name{color:#fff;font-size:31px;font-weight:900;letter-spacing:-2px}.brand-name b{color:#e8bd38}.brand small{display:block;margin-top:4px;color:#9db1cf;font-size:10px;font-weight:700;letter-spacing:.12em}.vehicle{margin:0 16px 16px;padding:18px;border-radius:15px;background:linear-gradient(135deg,#0d3140,#123d4d);border:1px solid rgba(18,207,165,.23)}.vehicle-top{display:flex;gap:12px;align-items:center}.vehicle-icon{display:grid;place-items:center;width:43px;height:43px;border-radius:12px;background:#12cfa5;color:#04271f;font-size:23px}.vehicle h1{margin:0;font-size:22px}.vehicle p{margin:5px 0 0;color:#c2d5ea;font-size:14px}.vehicle-meta{margin:15px 0 0;padding-top:12px;border-top:1px solid rgba(238,245,255,.15);color:#b5c8dc;font-size:13px}.tabs{display:grid;grid-template-columns:1fr 1fr;margin:16px;gap:10px}.tabs a{padding:13px;text-align:center;border-radius:10px;text-decoration:none;background:#132641;color:#bed1ea;font-weight:700}.tabs a.active{background:#12cfa5;color:#04271f}.content{padding:0 16px 25px}.content h2{font-size:18px;margin:20px 0 12px}.year{font-size:22px;margin:22px 0 10px}.record{width:100%;border:0;text-align:left;font:inherit;color:#fff;cursor:pointer;display:grid;grid-template-columns:82px 1fr 24px;background:#10203a;margin:9px 0;border-radius:13px;overflow:hidden}.date{background:#f2c400;color:#182238;text-align:center;padding:15px 6px;font-weight:800}.date b{font-size:25px;display:block}.detail{padding:14px}.detail strong{font-size:20px}.detail small{display:block;color:#b9c9de;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.arrow{display:grid;place-items:center;color:#12cfa5;font-size:26px}.record-detail{display:none;margin:-2px 4px 10px;padding:13px 14px;border:1px solid rgba(18,207,165,.3);border-radius:0 0 12px 12px;background:#0c1b31}.record-detail.open{display:block}.record-detail div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:13px}.record-detail div:last-child{border:0}.record-detail span{color:#9db1cf}.record-detail b{color:#fff;text-align:right}.empty{padding:20px;border-radius:12px;background:#10203a;color:#afc0d8}.contact{padding:18px 16px 30px;text-align:center}.contact a{display:block;padding:15px;border-radius:13px;background:#25d366;color:#fff;text-decoration:none;font-weight:800}
+        *{box-sizing:border-box}body{margin:0;background:#eef2f7;color:#15233a;font-family:Arial,sans-serif}.app{width:min(100%,620px);min-height:100vh;margin:auto;background:#f8fafc;box-shadow:0 0 35px #0f172a18}.head{padding:18px 20px;background:linear-gradient(115deg,#102a55,#1558d8);color:#fff}.head-brand{display:flex;align-items:center;gap:12px;font-size:19px;font-weight:800}.head-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:#ffffff1c;font-size:23px}.vehicle{margin:18px;padding:19px;border:1px solid #dce5f0;border-radius:20px;background:#fff}.vehicle small,.vehicle span{display:block;color:#66758a}.vehicle h1{margin:5px 0 3px;font-size:27px;letter-spacing:.02em}.vehicle strong{display:block;margin-top:7px;font-size:17px}.staff-actions{margin:18px;padding:16px;border:1px solid #e8c24a;border-radius:17px;background:#fff9df}.staff-actions h2{margin:0 0 5px;font-size:16px}.staff-actions p{margin:0 0 12px;color:#6e6140;font-size:12px}.staff-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.staff-grid a{display:grid;place-items:center;min-height:48px;padding:9px;border-radius:11px;text-align:center;text-decoration:none;font-size:13px;font-weight:800}.staff-grid a:first-child{background:#123466;color:#fff}.staff-grid a:last-child{background:#e1b82f;color:#132949}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:18px;padding:5px;border-radius:14px;background:#e9edf3}.tabs a{padding:12px;border-radius:10px;color:#26374d;text-align:center;text-decoration:none;font-weight:800}.tabs a.active{background:#16396f;color:#fff;box-shadow:0 5px 14px #123b7130}.content{padding:0 18px 28px}.content h2{margin:20px 0 12px;font-size:18px}.content-note{margin:-5px 0 15px;color:#6a788c;font-size:12px}.plan,.service-card{margin:9px 0;overflow:hidden;border-radius:13px;background:linear-gradient(110deg,#0b2850,#073d66);color:#fff;box-shadow:0 4px 12px #0e2d531c}.plan summary,.service-head{display:flex;align-items:center;gap:12px;min-height:58px;padding:10px 14px;cursor:pointer;list-style:none}.plan summary::-webkit-details-marker{display:none}.plan-km,.service-km{flex:1}.plan-km b,.service-km b{display:block;font-size:18px}.plan-km small,.service-km small{color:#c6d7ea;font-size:10px;font-weight:700}.status{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:800}.status-icon{display:grid;place-items:center;width:30px;height:30px;border:2px solid #63d6ad;border-radius:50%;color:#63d6ad}.status.pending .status-icon{border-color:#b8c5d5;color:#b8c5d5}.detail{padding:0 14px 14px;color:#e5eef9;font-size:13px}.detail div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid #ffffff1c}.detail span{color:#b9cbe0}.operation-list{padding:0 14px 13px}.operation-list div{padding:8px 0;border-top:1px solid #ffffff1c;font-size:13px}.operation-list b{display:block}.operation-list small{display:block;margin-top:3px;color:#b9cbe0}.empty{padding:22px;border:1px dashed #bdc9d8;border-radius:14px;background:#fff;color:#718096;text-align:center}.contact{padding:0 18px 28px}.contact a{display:block;padding:14px;border-radius:12px;background:#25a95b;color:#fff;text-align:center;text-decoration:none;font-weight:800}@media(max-width:430px){.vehicle,.staff-actions,.tabs{margin:13px}.content,.contact{padding-left:13px;padding-right:13px}.staff-grid{grid-template-columns:1fr}.head{padding:15px}.vehicle h1{font-size:24px}}
     </style>
 </head>
 <body>
 <main class="app">
-    <header class="brand"><div class="brand-name">İZGİ<b>OS</b></div><small>OTO SERVİS OTOMASYONU</small></header>
+    <header class="head"><div class="head-brand"><span class="head-icon">🚘</span><span>Araç Yönetimi</span></div></header>
     <section class="vehicle">
-        <div class="vehicle-top"><span class="vehicle-icon">🚗</span><div><h1>{{ $arac->plaka }} · Araç Geçmişi</h1><p>{{ $arac->marka }} {{ $arac->model }} · {{ number_format($arac->kilometre ?? 0,0,',','.') }} KM</p></div></div>
-        <div class="vehicle-meta">{{ $arac->model_yili ?: 'Model yılı belirtilmemiş' }} · Müşteri: {{ $musteri['ad_soyad'] ?? 'Kayıtlı müşteri' }}</div>
+        <small>Araç Dijital Kimliği</small>
+        <h1>{{ $arac->plaka }}</h1>
+        <strong>{{ trim(($arac->marka ?? '').' '.($arac->model ?? '')) ?: 'Marka / model belirtilmemiş' }}</strong>
+        <span>Model Yılı: {{ $arac->model_yili ?: '-' }} · {{ number_format($arac->kilometre ?? 0,0,',','.') }} KM</span>
+        @if($musteri)<span style="margin-top:7px">Araç sahibi: {{ $musteri['ad_soyad'] }}</span>@endif
     </section>
-    <nav class="tabs">
-        <a class="{{ request('ekran','servis') === 'servis' ? 'active' : '' }}" href="?ekran=servis">Yapılan İşlemler</a>
-        <a class="{{ request('ekran') === 'bakim' ? 'active' : '' }}" href="?ekran=bakim">Periyodik Bakım</a>
+
+    @if($hizliIslemYetkisi)
+        <section class="staff-actions">
+            <h2>Servis hızlı işlemleri</h2>
+            <p>Bu araç firmanızın kayıtlarıyla eşleşti.</p>
+            <div class="staff-grid">
+                <a href="{{ route('araclar.qr.show',$arac->qr_token) }}?ekran=servis#kayitlar">Araç servis kayıtları</a>
+                <a href="{{ route('servis.kabul',['arac_id'=>$arac->id]) }}">Servis kaydı oluştur</a>
+            </div>
+        </section>
+    @endif
+
+    <nav class="tabs" aria-label="Araç geçmişi bölümleri">
+        <a class="{{ request('ekran','servis') === 'servis' ? 'active' : '' }}" href="?ekran=servis#kayitlar">Servis İşlemleri</a>
+        <a class="{{ request('ekran') === 'bakim' ? 'active' : '' }}" href="?ekran=bakim#kayitlar">Bakım</a>
     </nav>
-    <section class="content">
+
+    <section class="content" id="kayitlar">
         @if(request('ekran','servis') === 'bakim')
-            <h2>Yapılan Periyodik Bakımlar</h2>
-            @forelse($periyodikBakimlar as $sira => $kayit)
-                @php($servis = $kayit['servis'])
-                @php($islem = $kayit['islem'])
-                <button type="button" class="record" data-target="bakim-{{ $sira }}"><div class="date"><b>{{ ($servis->servis_tarihi ?? $servis->created_at)->format('d') }}</b>{{ ($servis->servis_tarihi ?? $servis->created_at)->translatedFormat('M') }}</div><div class="detail"><strong>{{ number_format($servis->giris_km ?? 0,0,',','.') }} KM</strong><small>{{ $islem->islem_adi }}</small></div><div class="arrow">›</div></button>
-                <div id="bakim-{{ $sira }}" class="record-detail"><div><span>Yapılan bakım</span><b>{{ $islem->islem_adi }}</b></div><div><span>Kilometre</span><b>{{ number_format($servis->giris_km ?? 0,0,',','.') }} KM</b></div><div><span>Tarih</span><b>{{ ($servis->servis_tarihi ?? $servis->created_at)->format('d.m.Y') }}</b></div></div>
-            @empty
-                <div class="empty">Bu araç için henüz periyodik bakım kaydı yok.</div>
-            @endforelse
+            <h2>Periyodik Bakım Geçmişi</h2>
+            <p class="content-note">Yapılan bakımlar ve aracın kilometre bakım planı.</p>
+            @foreach($bakimPlan as $plan)
+                <details class="plan" @if($plan['tamam'] && $loop->last) open @endif>
+                    <summary><span class="plan-km"><b>{{ number_format($plan['km'],0,',','.') }} km</b><small>VEYA {{ $plan['yil'] }}. YIL</small></span><span class="status {{ $plan['tamam'] ? '' : 'pending' }}"><i class="status-icon">{{ $plan['tamam'] ? '✓' : '◷' }}</i>{{ $plan['tamam'] ? 'Yapıldı' : 'Sırada' }}</span><span>›</span></summary>
+                    @if($plan['servis'])<div class="detail"><div><span>Tarih</span><b>{{ ($plan['servis']->servis_tarihi ?? $plan['servis']->created_at)->format('d.m.Y') }}</b></div><div><span>Servis kilometresi</span><b>{{ number_format($plan['servis']->giris_km ?? 0,0,',','.') }} KM</b></div></div>@endif
+                </details>
+            @endforeach
+            <h2>Yapılan Bakımlar</h2>
+            @forelse($periyodikBakimlar as $kayit)
+                <article class="service-card"><div class="service-head"><span class="service-km"><b>{{ $kayit['islem']->islem_adi }}</b><small>{{ ($kayit['servis']->servis_tarihi ?? $kayit['servis']->created_at)->format('d.m.Y') }} · {{ number_format($kayit['servis']->giris_km ?? 0,0,',','.') }} KM</small></span><span class="status"><i class="status-icon">✓</i>Yapıldı</span></div>@if($kayit['islem']->aciklama)<div class="operation-list"><div>{{ $kayit['islem']->aciklama }}</div></div>@endif</article>
+            @empty<div class="empty">Bu araç için henüz bakım kaydı yok.</div>@endforelse
         @else
-            <h2>Yapılan Servis İşlemleri</h2>
-            @php($servisYillari = $servisIslemleri->groupBy(fn ($kayit) => ($kayit['servis']->servis_tarihi ?? $kayit['servis']->created_at)->format('Y')))
-            @forelse($servisYillari as $yil => $kayitlar)
-                <div class="year">{{ $yil }}</div>
-                @foreach($kayitlar as $kayit)
-                    @php($servis = $kayit['servis'])
-                    @php($islemler = $kayit['islemler'])
-                    @php($islemAdlari = $islemler->pluck('islem_adi')->filter()->implode(', '))
-                    <button type="button" class="record" data-target="servis-{{ $servis->id }}"><div class="date"><b>{{ ($servis->servis_tarihi ?? $servis->created_at)->format('d') }}</b>{{ ($servis->servis_tarihi ?? $servis->created_at)->translatedFormat('M') }}</div><div class="detail"><strong>{{ number_format($servis->giris_km ?? 0,0,',','.') }} KM</strong><small>{{ $islemAdlari }}</small></div><div class="arrow">›</div></button>
-                    <div id="servis-{{ $servis->id }}" class="record-detail"><div><span>Yapılan işlem</span><b>{{ $islemAdlari }}</b></div><div><span>Kilometre</span><b>{{ number_format($servis->giris_km ?? 0,0,',','.') }} KM</b></div><div><span>Tarih</span><b>{{ ($servis->servis_tarihi ?? $servis->created_at)->format('d.m.Y') }}</b></div></div>
-                @endforeach
-            @empty
-                <div class="empty">Bu araç için henüz yapılan servis işlemi yok.</div>
-            @endforelse
+            <h2>Servis İşlemleri</h2>
+            <p class="content-note">Serviste tamamlanan işlemler, bakım kayıtlarından ayrı gösterilir.</p>
+            @forelse($servisIslemleri as $kayit)
+                <article class="service-card"><div class="service-head"><span class="service-km"><b>{{ number_format($kayit['servis']->giris_km ?? 0,0,',','.') }} KM</b><small>{{ ($kayit['servis']->servis_tarihi ?? $kayit['servis']->created_at)->format('d.m.Y') }} · {{ $kayit['servis']->servis_no }}</small></span><span class="status"><i class="status-icon">✓</i>Yapıldı</span></div><div class="operation-list">@foreach($kayit['islemler'] as $islem)<div><b>{{ $islem->islem_adi }}</b>@if($islem->aciklama)<small>{{ $islem->aciklama }}</small>@endif</div>@endforeach</div></article>
+            @empty<div class="empty">Bu araç için henüz servis işlemi kaydı yok.</div>@endforelse
         @endif
     </section>
     @if($whatsappUrl)<footer class="contact"><a href="{{ $whatsappUrl }}" target="_blank" rel="noopener">WhatsApp ile Servise Ulaş</a></footer>@endif
 </main>
-<script>document.querySelectorAll('[data-target]').forEach(b=>b.addEventListener('click',()=>document.getElementById(b.dataset.target)?.classList.toggle('open')));</script>
 </body>
 </html>

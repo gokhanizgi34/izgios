@@ -173,7 +173,7 @@ Route::get(
 
 Route::get(
     '/arac/{token}',
-    [AracController::class,'qrShow']
+    [QrServisController::class,'show']
 )
 ->name('araclar.qr.show');
 

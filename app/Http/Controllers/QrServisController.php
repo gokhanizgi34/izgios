@@ -132,39 +132,12 @@ class QrServisController extends Controller
         | QR Sayfası
         |--------------------------------------------------------------------------
         */
-/*
-|--------------------------------------------------------------------------
-| Usta / Admin QR Menü Kontrolü
-|--------------------------------------------------------------------------
-*/
-
-
-if(
-    auth()->check()
-    &&
-    (
-        auth()->user()->isUsta()
-        ||
-        auth()->user()->isAdmin()
-    )
-)
-{
-
-
-    return view(
-
-        'qr.usta-menu',
-
-        compact(
-
-            'arac'
-
-        )
-
-    );
-
-
-}
+        $kullanici = auth()->user();
+        $aktifFirmaId = session('aktif_firma_id') ?: $kullanici?->firmaPersoneli?->firma_id;
+        $hizliIslemYetkisi = $kullanici
+            && ($kullanici->isUsta() || $kullanici->isAdmin())
+            && $aktifFirmaId
+            && (int) $aktifFirmaId === (int) $arac->firma_id;
 
         $guncelKm = (int) ($arac->kilometre ?? $arac->servisler->max('giris_km') ?? 0);
         $bakimPlan = collect(range(1, 10))->map(function ($sira) use ($arac) {
@@ -219,7 +192,8 @@ if(
                 'bakimPlan',
                 'periyodikBakimlar',
                 'servisIslemleri',
-                'whatsappUrl'
+                'whatsappUrl',
+                'hizliIslemYetkisi'
 
             )
 
