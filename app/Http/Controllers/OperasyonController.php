@@ -21,6 +21,7 @@ class OperasyonController extends Controller {
             'hizmet_turu' => 'required|max:100', 'baslangic' => 'required|date',
             'durum' => 'required|in:planlandi,teyitli,iptal,tamamlandi', 'notlar' => 'nullable|max:2000',
         ]);
+        $this->randevuBaglantilariniDogrula($firmaId, $v);
         $randevuId = DB::table('randevular')->insertGetId(array_merge($v, [
             'firma_id' => $firmaId,
             'usta_id' => auth()->user()->isUsta() ? auth()->id() : null,
@@ -46,6 +47,46 @@ class OperasyonController extends Controller {
 
         return redirect()->route('servis.kabul', ['arac_id' => $kayit->arac_id])
             ->with('success', 'Randevu araç kabul ekranına aktarıldı. Teslim bilgilerini kaydedip iş emrini başlatın.');
+    }
+    public function randevuGuncelle(Request $r, int $randevu)
+    {
+        $firmaId = $this->firma($r, ['usta', 'ofis']);
+        $kayit = DB::table('randevular')->where('id', $randevu)->where('firma_id', $firmaId)->first();
+        abort_unless($kayit, 404);
+        $v = $r->validate([
+            'musteri_id' => 'nullable|integer', 'arac_id' => 'nullable|integer', 'sube_id' => 'nullable|integer',
+            'hizmet_turu' => 'required|max:100', 'baslangic' => 'required|date',
+            'durum' => 'required|in:planlandi,teyitli,iptal,tamamlandi', 'notlar' => 'nullable|max:2000',
+        ]);
+        $this->randevuBaglantilariniDogrula($firmaId, $v);
+
+        DB::transaction(function () use ($randevu, $v) {
+            DB::table('iletisim_gonderim_loglari')->where('kaynak_turu', 'randevu')->where('kaynak_id', $randevu)->delete();
+            DB::table('randevular')->where('id', $randevu)->update(array_merge($v, ['updated_at' => now()]));
+        });
+        app(IletisimOtomasyonServisi::class)->randevuOlusturuldu($randevu);
+
+        return back()->with('success', 'Randevu güncellendi; bildirim planı yeni tarih ve duruma göre yenilendi.');
+    }
+    public function randevuSil(Request $r, int $randevu)
+    {
+        $firmaId = $this->firma($r, ['usta', 'ofis']);
+        abort_unless(DB::table('randevular')->where('id', $randevu)->where('firma_id', $firmaId)->exists(), 404);
+
+        DB::transaction(function () use ($randevu) {
+            DB::table('iletisim_gonderim_loglari')->where('kaynak_turu', 'randevu')->where('kaynak_id', $randevu)->delete();
+            DB::table('randevular')->where('id', $randevu)->delete();
+        });
+
+        return back()->with('success', 'Randevu ve bu randevuya bağlı bekleyen bildirim planları silindi.');
+    }
+    private function randevuBaglantilariniDogrula(int $firmaId, array $veri): void
+    {
+        foreach (['musteri_id' => 'musteris', 'arac_id' => 'araclar', 'sube_id' => 'subes'] as $alan => $tablo) {
+            if (! empty($veri[$alan])) {
+                abort_unless(DB::table($tablo)->where('id', $veri[$alan])->where('firma_id', $firmaId)->exists(), 422, 'Randevu bağlantısı seçili firmaya ait değil.');
+            }
+        }
     }
     public function sigorta(Request $r){$firmaId=$this->firma($r,['muhasebe']); return view('operasyon.merkez',array_merge($this->veri($firmaId),['modul'=>'sigorta','firmaId'=>$firmaId,'sigortalar'=>DB::table('sigorta_firmalari')->where('firma_id',$firmaId)->get(),'kayitlar'=>DB::table('sigorta_hasarlari')->leftJoin('sigorta_firmalari','sigorta_firmalari.id','=','sigorta_hasarlari.sigorta_firmasi_id')->leftJoin('araclar','araclar.id','=','sigorta_hasarlari.arac_id')->where('sigorta_hasarlari.firma_id',$firmaId)->select('sigorta_hasarlari.*','sigorta_firmalari.unvan as sigorta_unvan','araclar.plaka')->latest()->get()]));}
     public function sigortaKaydet(Request $r){$firmaId=$this->firma($r,['muhasebe']);$v=$r->validate(['dosya_no'=>'required|max:80','arac_id'=>'nullable','musteri_id'=>'nullable','sigorta_firmasi_id'=>'nullable','durum'=>'required|in:acik,ekspertiz,onaylandi,odendi,kapandi','onayli_tutar'=>'nullable|numeric|min:0','aciklama'=>'nullable|max:2000']);DB::table('sigorta_hasarlari')->insert(array_merge($v,['firma_id'=>$firmaId,'onayli_tutar'=>$v['onayli_tutar']??0,'tahsil_edilen'=>0,'created_at'=>now(),'updated_at'=>now()]));return back()->with('success','Hasar dosyası oluşturuldu.');}

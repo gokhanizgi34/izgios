@@ -106,6 +106,8 @@ Route::post('/depo/raflar', [DepoController::class, 'rafKaydet'])->name('depo.ra
 Route::post('/depo/raf-adresle', [DepoController::class, 'rafAta'])->name('depo.raf.ata');
 Route::get('/operasyon/randevular', [OperasyonController::class, 'randevular'])->name('operasyon.randevular');
 Route::post('/operasyon/randevular', [OperasyonController::class, 'randevuKaydet'])->name('operasyon.randevular.kaydet');
+Route::patch('/operasyon/randevular/{randevu}', [OperasyonController::class, 'randevuGuncelle'])->name('operasyon.randevular.guncelle');
+Route::delete('/operasyon/randevular/{randevu}', [OperasyonController::class, 'randevuSil'])->name('operasyon.randevular.sil');
 Route::post('/operasyon/randevular/{randevu}/servise-al', [OperasyonController::class, 'randevuyuServiseAl'])->name('operasyon.randevular.servise-al');
 Route::get('/operasyon/sigorta-kasko', [OperasyonController::class, 'sigorta'])->name('operasyon.sigorta');
 Route::post('/operasyon/sigorta-kasko', [OperasyonController::class, 'sigortaKaydet'])->name('operasyon.sigorta.kaydet');

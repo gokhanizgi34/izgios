@@ -46,8 +46,8 @@
         <a class="btn btn-light" href="{{ route('servisler.index') }}"><i class="bi bi-arrow-left"></i> İş Emirlerine Dön</a>
     </div>
 
-    <div class="row g-4">
-        <div class="col-lg-7">
+    <div class="servis-ozet-grid">
+        <div class="servis-bilgi-paneli">
             <article class="card h-100">
                 <div class="card-body p-4">
                     <div class="section-title"><i class="bi bi-car-front-fill"></i><h2>Araç ve Müşteri Bilgileri</h2></div>
@@ -70,7 +70,7 @@
                 </div>
             </article>
         </div>
-        <div class="col-lg-5">
+        <div class="servis-maliyet-paneli">
             <article class="card h-100">
                 <div class="card-body p-4">
                     <div class="section-title"><i class="bi bi-receipt"></i><h2>Maliyet Özeti</h2></div>
@@ -82,7 +82,7 @@
                 </div>
             </article>
         </div>
-        <div class="col-12">
+        <div class="servis-islemler-paneli">
             <article class="card">
                 <div class="card-body p-4">
                     <div class="section-title"><i class="bi bi-list-check"></i><h2>Yapılan İşlemler</h2><span class="ms-auto text-muted small">{{ $servis->islemler->count() }} kayıt</span></div>
@@ -110,5 +110,6 @@
     .islem-islemleri{display:flex;align-items:center;gap:.45rem;margin-left:auto}.islem-islemleri details{position:relative}.islem-islemleri summary,.islem-islemleri .islem-sil{list-style:none;border:1px solid #c8d8ee;border-radius:8px;background:#fff;color:#1764c0;padding:.42rem .62rem;font-size:.78rem;font-weight:800;white-space:nowrap;cursor:pointer}.islem-islemleri summary::-webkit-details-marker{display:none}.islem-islemleri details form{position:absolute;right:0;top:calc(100% + .45rem);z-index:5;display:grid;gap:.5rem;width:270px;padding:.7rem;border:1px solid #cddbeb;border-radius:10px;background:#fff;box-shadow:0 12px 28px rgba(19,42,75,.16)}.islem-islemleri input{width:100%;padding:.5rem .6rem;border:1px solid #c9d8e9;border-radius:7px;font-size:.8rem}.islem-islemleri details button{border:0;border-radius:7px;padding:.5rem;background:#1764c0;color:#fff;font-weight:800}.islem-islemleri .islem-sil{border-color:#f3c5c9;color:#c62c3a;background:#fff6f7}.tema-koyu .islem-islemleri summary{background:#202f49;border-color:#41526e;color:#edf4ff}.tema-koyu .islem-islemleri details form{background:#17233a;border-color:#41526e}.tema-koyu .islem-islemleri input{background:#202f49;border-color:#41526e;color:#edf4ff}.tema-koyu .servis-aksiyonlar,.tema-koyu .servis-detay .card{background:#17233a;border-color:#31415b}.tema-koyu .section-title h2,.tema-koyu .bilgi-grid strong,.tema-koyu .maliyet-satir strong,.tema-koyu .islem-satir strong{color:#edf4ff}.tema-koyu .bilgi-grid>div,.tema-koyu .bos-durum{background:#202f49}.tema-koyu .servis-notu p,.tema-koyu .maliyet-satir,.tema-koyu .islem-satir p{color:#b7c5dc}.tema-koyu .servis-notu,.tema-koyu .maliyet-satir,.tema-koyu .islem-satir{border-color:#31415b}
     @media(max-width:640px){.servis-detay-hero{align-items:flex-start;flex-direction:column;padding:1.3rem}.servis-aksiyonlar .btn{width:100%;text-align:left}.islem-satir{flex-wrap:wrap}.islem-islemleri{width:100%;margin-left:0}.islem-islemleri details form{left:0;right:auto;width:min(270px,calc(100vw - 70px))}}
     .servis-detay .section-title{position:static!important;display:flex!important;align-items:center!important;min-height:28px!important;margin:0 0 1.1rem!important;line-height:1.2!important}.servis-detay .section-title h2{position:static!important;display:block!important;margin:0!important;line-height:1.25!important}.servis-metin-havuzu{display:grid;gap:12px}.servis-metin-kutusu{min-height:104px;padding:14px 15px;border:1px solid #dce6f1;border-radius:12px;background:#f8fbff}.servis-metin-kutusu span{display:block;margin:0 0 8px;color:#456789;font-size:.78rem;font-weight:800}.servis-metin-kutusu p{margin:0;color:#1f3857;line-height:1.55;overflow-wrap:anywhere}.maliyet-havuzu{display:grid;gap:0}.maliyet-havuzu .maliyet-satir{min-height:60px;align-items:center;margin:0}.tema-koyu .servis-metin-kutusu{background:#202f49;border-color:#31415b}.tema-koyu .servis-metin-kutusu p{color:#edf4ff}
+    .servis-ozet-grid{display:grid;grid-template-columns:minmax(0,7fr) minmax(320px,5fr);gap:1.5rem}.servis-ozet-grid>div{min-width:0}.servis-islemler-paneli{grid-column:1/-1}@media(max-width:991px){.servis-ozet-grid{grid-template-columns:1fr}.servis-islemler-paneli{grid-column:auto}}
 </style>
 @endsection
