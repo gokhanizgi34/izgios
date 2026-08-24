@@ -202,6 +202,8 @@ Route::resource(
 Route::get('/servisler/{servis}/islem', [ServisIslemController::class, 'show'])->name('servis.islem');
 Route::post('/servisler/{servis}/uzerine-al', [ServisIslemController::class, 'uzerineAl'])->name('servis.uzerine.al');
 Route::post('/servisler/{servis}/durum', [ServisIslemController::class, 'durumGuncelle'])->name('servis.islem.durum');
+Route::patch('/servisler/{servis}/durum-notlari/{not}', [ServisIslemController::class, 'durumNotuGuncelle'])->name('servis.durum-notu.guncelle');
+Route::delete('/servisler/{servis}/durum-notlari/{not}', [ServisIslemController::class, 'durumNotuSil'])->name('servis.durum-notu.sil');
 Route::post('/servisler/{servis}/hatirlatma', [ServisIslemController::class, 'hatirlatmaGuncelle'])->name('servis.hatirlatma.guncelle');
 Route::post('/servisler/{servis}/islemler', [ServisIslemController::class, 'islemEkle'])->name('servis.islem.ekle');
 Route::post('/servisler/{servis}/periyodik-bakimlar', [ServisIslemController::class, 'periyodikBakimEkle'])->name('servis.periyodik-bakim.ekle');

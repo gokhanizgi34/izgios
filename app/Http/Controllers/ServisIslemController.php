@@ -16,6 +16,7 @@ use App\Services\BakimHatirlatmaTarihi;
 use App\Services\ServisMuhasebeAktarimServisi;
 use App\Services\ServisDurumAkisi;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 
 
@@ -105,6 +106,9 @@ class ServisIslemController extends Controller
         $oncekiDurum = $servis->durum;
 
         if ($akisNotu) {
+            if ($servis->durumNotlari()->where('durum', $oncekiDurum)->exists()) {
+                throw ValidationException::withMessages(['usta_notu' => $oncekiDurum.' aşaması için zaten bir not bulunuyor. Mevcut notu düzenleyebilirsiniz.']);
+            }
             $sonrakiDurum = $akis->sonraki($oncekiDurum);
             DB::transaction(function () use ($servis, $veri, $oncekiDurum, $sonrakiDurum) {
                 ServisDurumNotu::create([
@@ -130,6 +134,26 @@ class ServisIslemController extends Controller
         return back()->with('success', $akisNotu
             ? $oncekiDurum.' notu kaydedildi. Sıradaki aşama: '.$guncelServis->durum.'.'
             : 'Servis durumu güncellendi.');
+    }
+
+    public function durumNotuGuncelle(Request $request, Servis $servis, ServisDurumNotu $not)
+    {
+        $this->islemYetkisi($servis);
+        abort_unless((int) $not->servis_id === (int) $servis->id, 404);
+        $veri = $request->validate(['not' => ['required', 'string', 'max:5000']]);
+        $not->update($veri);
+
+        return back()->with('success', $not->durum.' aşaması notu güncellendi.');
+    }
+
+    public function durumNotuSil(Servis $servis, ServisDurumNotu $not)
+    {
+        $this->islemYetkisi($servis);
+        abort_unless((int) $not->servis_id === (int) $servis->id, 404);
+        $durum = $not->durum;
+        $not->delete();
+
+        return back()->with('success', $durum.' aşaması notu silindi. Servis durumu değiştirilmedi.');
     }
 
     public function hatirlatmaGuncelle(Request $request, Servis $servis)
