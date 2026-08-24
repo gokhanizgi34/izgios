@@ -305,9 +305,13 @@ class ServisIslemController extends Controller
     public function fotografEkle(Request $request, Servis $servis)
     {
         $this->islemYetkisi($servis);
-        $veri = $request->validate(['foto' => ['required', 'image', 'max:10240'], 'kategori' => ['nullable', 'string', 'max:50'], 'aciklama' => ['nullable', 'string', 'max:500']]);
+        $veri = $request->validate([
+            'foto' => ['required', 'image', 'max:10240'],
+            'kategori' => ['required', 'in:ariza_tespit,islem_oncesi,islem_sirasi,islem_sonrasi,parca_eski,parca_yeni,teslim'],
+            'aciklama' => ['required', 'string', 'max:500'],
+        ]);
         $yol = $request->file('foto')->store('servisler/'.$servis->id, 'public');
-        ServisFotograf::create(['servis_id' => $servis->id, 'kategori' => $veri['kategori'] ?? 'islem', 'dosya_yolu' => $yol, 'aciklama' => $veri['aciklama'] ?? 'Servis işlem fotoğrafı']);
+        ServisFotograf::create(['servis_id' => $servis->id, 'kategori' => $veri['kategori'], 'dosya_yolu' => $yol, 'aciklama' => $veri['aciklama']]);
         return back()->with('success', 'Servis fotoğrafı eklendi.');
     }
 
