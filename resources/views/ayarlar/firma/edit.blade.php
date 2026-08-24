@@ -245,6 +245,8 @@ type="url"
 
 name="google_yorum_linki"
 
+data-preserve-case
+
 class="form-control-izgios"
 
 value="{{ old('google_yorum_linki',$firma->google_yorum_linki) }}"

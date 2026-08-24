@@ -23,10 +23,11 @@ document.addEventListener("input", function(e){
     const type = alan.getAttribute("type");
 
 
-    // Mail ve şifre hariç
+    // Mail, şifre ve büyük/küçük harfe duyarlı bağlantılar hariç
     if(
         type === "email" ||
-        type === "password"
+        type === "password" ||
+        type === "url"
     ){
         return;
     }

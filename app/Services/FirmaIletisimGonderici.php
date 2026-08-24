@@ -47,6 +47,12 @@ class FirmaIletisimGonderici
             throw new RuntimeException('E-posta hesabı şifresi eksik.');
         }
 
+        $aksiyonUrl = null;
+        if (preg_match('/https?:\/\/[^\s<]+/iu', (string) $kayit->mesaj, $eslesme)) {
+            $aday = rtrim($eslesme[0], '.,;:!?)]}');
+            $aksiyonUrl = filter_var($aday, FILTER_VALIDATE_URL) ? $aday : null;
+        }
+
         Config::set('mail.mailers.firma_iletisim', [
             'transport' => 'smtp',
             'host' => $ayar['smtp_host'],
@@ -67,6 +73,7 @@ class FirmaIletisimGonderici
             'mesaj' => $kayit->mesaj,
             'konu' => $konu,
             'tarih' => now()->format('d.m.Y H:i'),
+            'aksiyonUrl' => $aksiyonUrl,
         ], function ($mail) use ($kayit, $konu, $ayar) {
             $mail->from($ayar['gonderen'], $ayar['gonderen_adi'] ?? null)
                 ->to($kayit->alici)
