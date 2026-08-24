@@ -13,6 +13,11 @@ class SistemHataIzlemeServisi
     public function tara(): array
     {
         if (! Schema::hasTable('sistem_hata_durumlari')) return ['acik'=>0,'cozulen'=>0];
+        $oncedenCozulenler = DB::table('sistem_hata_durumlari')->where('durum','cozuldu')->get();
+        foreach ($oncedenCozulenler as $kayit) {
+            $this->denetimeAktar($kayit, $kayit->kontrol_notu ?: 'Sistem hatası çözüldü');
+            DB::table('sistem_hata_durumlari')->where('id',$kayit->id)->delete();
+        }
         $hatalar = $this->logHatalari();
         $kodlar = $hatalar->pluck('kod')->all();
         foreach ($hatalar as $hata) {
@@ -24,10 +29,10 @@ class SistemHataIzlemeServisi
         }
         $cozulenler = DB::table('sistem_hata_durumlari')->where('durum','acik')->when($kodlar !== [], fn($q)=>$q->whereNotIn('hata_kodu',$kodlar))->where('son_goruldu_at','<',now()->subMinutes(10))->get();
         foreach ($cozulenler as $kayit) {
-            app(SilmeDenetimServisi::class)->tabloKaydiSilindi('SistemHatasi', array_merge((array)$kayit, ['kontrol_notu'=>'Sistem hatası çözüldü']), null);
+            $this->denetimeAktar($kayit, 'Sistem hatası çözüldü: son 10 dakikalık kontrollerde hata tekrar görülmedi.');
             DB::table('sistem_hata_durumlari')->where('id',$kayit->id)->delete();
         }
-        return ['acik'=>DB::table('sistem_hata_durumlari')->where('durum','acik')->count(),'cozulen'=>$cozulenler->count()];
+        return ['acik'=>DB::table('sistem_hata_durumlari')->where('durum','acik')->count(),'cozulen'=>$cozulenler->count()+$oncedenCozulenler->count()];
     }
 
     public function acikHatalar(): Collection
@@ -49,5 +54,14 @@ class SistemHataIzlemeServisi
             try { return Carbon::parse($hata['zaman'])->greaterThanOrEqualTo(now()->subMinutes(10)); }
             catch (\Throwable) { return true; }
         })->unique('kod')->values();
+    }
+
+    private function denetimeAktar(object $kayit, string $aciklama): void
+    {
+        app(SilmeDenetimServisi::class)->tabloKaydiSilindi('SistemHatasi', array_merge((array)$kayit, [
+            'kontrol_notu'=>$aciklama,
+            'silinme_nedeni'=>$aciklama,
+            'hata_nedeni'=>$kayit->sebep ?? 'Eski hata kaydında teknik neden tutulmamış.',
+        ]), null);
     }
 }

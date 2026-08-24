@@ -20,6 +20,11 @@ class SilmeDenetimController extends Controller
             })->latest()->paginate(40)->withQueryString();
         $firmalar = Firma::orderBy('unvan')->get(['id','unvan']);
         $moduller = SilmeDenetimKaydi::query()->select('modul')->distinct()->orderBy('modul')->pluck('modul');
-        return view('sistem.silme-kayitlari', compact('kayitlar','firmalar','moduller'));
+        $sayaclar = [
+            'tum' => SilmeDenetimKaydi::count(),
+            'hatalar' => SilmeDenetimKaydi::where('modul', 'Sistem Hataları')->count(),
+            'diger' => SilmeDenetimKaydi::where('modul', '!=', 'Sistem Hataları')->count(),
+        ];
+        return view('sistem.silme-kayitlari', compact('kayitlar','firmalar','moduller','sayaclar'));
     }
 }
