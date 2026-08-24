@@ -99,8 +99,9 @@ class TicariController extends Controller
         $tumAyarlar = array_replace(json_decode($mevcut?->ayarlar ?: '{}', true) ?: [], $ayarlar);
         $hazir = match ($v['saglayici']) {
             'email' => filled($anahtar) && filled($tumAyarlar['smtp_host'] ?? null) && filled($tumAyarlar['kullanici_adi'] ?? null) && filled($tumAyarlar['gonderen'] ?? null),
-            'whatsapp' => filled($tumAyarlar['gonderen'] ?? null),
-            'sms' => filled($anahtar) && filled($tumAyarlar['endpoint'] ?? null),
+            'whatsapp', 'sms' => filled($anahtar)
+                && filled($tumAyarlar['endpoint'] ?? null)
+                && filled($tumAyarlar['gonderen'] ?? null),
             default => filled($anahtar),
         };
 
