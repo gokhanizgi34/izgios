@@ -32,10 +32,10 @@ Müşteri bilgileri ve araç geçmişi
 
 
 
-<div class="actions">
+<div class="musteri-actions">
 
 <a href="{{ route('araclar.create', ['musteri_id' => $musteri->id]) }}"
-class="btn-service">
+class="musteri-action musteri-action--primary">
 
 <i class="bi bi-car-front-fill"></i> Araç Ekle
 
@@ -43,7 +43,7 @@ class="btn-service">
 
 
 <a href="{{ route('musteriler.edit',$musteri->id) }}"
-class="btn-edit">
+class="musteri-action musteri-action--edit">
 
 ✏ Düzenle
 
@@ -63,7 +63,7 @@ onsubmit="return confirm('Müşteri silinsin mi?')">
 @method('DELETE')
 
 
-<button class="btn-delete">
+<button class="musteri-action musteri-action--delete" type="submit">
 
 🗑 Sil
 
@@ -74,7 +74,7 @@ onsubmit="return confirm('Müşteri silinsin mi?')">
 
 
 <a href="{{ route('musteriler.index') }}"
-class="btn-back">
+class="musteri-action musteri-action--back">
 
 ← Müşterilere Dön
 
@@ -219,6 +219,9 @@ Notlar
 
 
 
+
+<!-- Müşteri bilgi kartı sonu -->
+</div>
 
 <div class="card kurumsal-kart">
 
@@ -375,7 +378,7 @@ color:#64748b;
 
 
 
-.actions{
+.musteri-actions{
 
 display:flex;
 
@@ -453,6 +456,15 @@ color:#334155;
 
 }
 
+.musteri-actions{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:10px;width:min(100%,650px)}
+.musteri-actions form{display:flex;min-width:0;margin:0}
+.musteri-action{display:inline-flex;width:100%;min-width:0;min-height:46px;align-items:center;justify-content:center;gap:7px;padding:9px 13px;box-sizing:border-box;border:1px solid transparent;border-radius:11px;text-decoration:none;font-size:.86rem;font-weight:800;line-height:1.2;text-align:center;cursor:pointer;white-space:normal;overflow-wrap:anywhere}
+.musteri-action--primary{background:#1e5bd7;border-color:#1e5bd7;color:#fff}
+.musteri-action--edit{background:#fff5cf;border-color:#eed477;color:#6b500d}
+.musteri-action--delete{background:#fff0f0;border-color:#ffcaca;color:#a92323}
+.musteri-action--back{background:#edf2f8;border-color:#d8e1ec;color:#29415f}
+.musteri-action:hover{filter:brightness(.97);transform:translateY(-1px)}
+
 
 
 
@@ -470,6 +482,8 @@ margin-bottom:25px;
 box-shadow:0 5px 20px rgba(0,0,0,.06);
 
 }
+
+@media(max-width:420px){.musteri-action{font-size:.8rem;padding:8px 7px}}
 
 
 
@@ -651,9 +665,11 @@ align-items:flex-start;
 }
 
 
-.actions{
+.musteri-actions{
 
 width:100%;
+
+grid-template-columns:repeat(2,minmax(0,1fr));
 
 }
 
