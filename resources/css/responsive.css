@@ -87,7 +87,32 @@ padding:15px!important;
 
 .izgios-footer{
 
+padding:18px 16px;
+
 font-size:12px;
+
+flex-direction:column;
+
+justify-content:center;
+
+gap:8px;
+
+text-align:center;
+
+}
+
+.footer-left,
+.footer-right{
+
+justify-content:center;
+
+width:100%;
+
+}
+
+.footer-left span:last-child{
+
+overflow-wrap:anywhere;
 
 }
 

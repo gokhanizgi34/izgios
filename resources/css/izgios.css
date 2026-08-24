@@ -1220,6 +1220,10 @@ body.menu-open {
 
     font-size:14px;
 
+    gap:18px;
+
+    align-items:center;
+
 }
 
 
@@ -1401,6 +1405,12 @@ body.menu-open {
     display:flex;
 
     gap:8px;
+
+    align-items:center;
+
+    min-width:0;
+
+    flex-wrap:wrap;
 
 }
 

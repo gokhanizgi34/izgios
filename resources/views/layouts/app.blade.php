@@ -128,27 +128,9 @@
             <div class="footer-left">
 
 
-                <span>
+                <span>© {{ date('Y') }}</span>
 
-                    © {{ date('Y') }}
-
-                </span>
-
-
-
-                <strong>
-
-                    İZGİOS
-
-                </strong>
-
-
-
-                <span>
-
-                    | İzgi Oto Servis Yönetim Sistemi
-
-                </span>
+                <span><strong>İZGİOS</strong> · İzgi Oto Servis Yönetim Sistemi</span>
 
 
 
@@ -249,10 +231,10 @@
 
 
 
-{{-- LOADER --}}
+{{-- Sayfa yükleyicisi kaldırıldı; sürekli görünen işlevsiz animasyondu. --}}
 
 
-<div id="izgios-loader">
+<div id="izgios-loader" hidden>
 
 
     <div class="loader-circle"></div>
