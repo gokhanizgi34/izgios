@@ -32,6 +32,7 @@ use App\Http\Controllers\RaporController;
 use App\Http\Controllers\OperasyonController;
 use App\Http\Controllers\IletisimAyarController;
 use App\Http\Controllers\CiktiController;
+use App\Http\Controllers\SilmeDenetimController;
 
 use App\Http\Controllers\FirmaYonetimController;
 use App\Http\Controllers\SubeController;
@@ -115,6 +116,7 @@ Route::post('/operasyon/sigorta-kasko', [OperasyonController::class, 'sigortaKay
 Route::get('/operasyon/b2b-siparisler', [OperasyonController::class, 'b2b'])->name('operasyon.b2b');
 Route::post('/operasyon/b2b-siparisler', [OperasyonController::class, 'b2bKaydet'])->name('operasyon.b2b.kaydet');
 Route::get('/raporlar', [RaporController::class, 'index'])->name('raporlar.index');
+Route::get('/sistem/silme-kayitlari', [SilmeDenetimController::class, 'index'])->name('sistem.silme-kayitlari');
 Route::post('/raporlar/al', [RaporController::class, 'al'])->name('raporlar.al');
 
 

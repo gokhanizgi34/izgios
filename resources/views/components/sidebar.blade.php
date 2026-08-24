@@ -239,6 +239,9 @@
     <a href="{{ route('sistem.hatalari') }}" class="{{ request()->routeIs('sistem.hatalari') ? 'active' : '' }}">
         <i class="bi bi-shield-exclamation"></i><label>Sistem Hataları</label>
     </a>
+    <a href="{{ route('sistem.silme-kayitlari') }}" class="{{ request()->routeIs('sistem.silme-kayitlari') ? 'active' : '' }}">
+        <i class="bi bi-trash3-fill"></i><label>Silme Kayıtları</label>
+    </a>
     <a href="{{ route('yapayzeka.index') }}" class="{{ request()->routeIs('yapayzeka.*') ? 'active' : '' }}">
         <i class="bi bi-cpu-fill"></i><label>Yapay Zekâ Merkezi</label>
     </a>

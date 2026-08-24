@@ -71,12 +71,14 @@ class OperasyonController extends Controller {
     public function randevuSil(Request $r, int $randevu)
     {
         $firmaId = $this->firma($r, ['usta', 'ofis']);
-        abort_unless(DB::table('randevular')->where('id', $randevu)->where('firma_id', $firmaId)->exists(), 404);
+        $silinenRandevu = DB::table('randevular')->where('id', $randevu)->where('firma_id', $firmaId)->first();
+        abort_unless($silinenRandevu, 404);
 
         DB::transaction(function () use ($randevu) {
             DB::table('iletisim_gonderim_loglari')->where('kaynak_turu', 'randevu')->where('kaynak_id', $randevu)->delete();
             DB::table('randevular')->where('id', $randevu)->delete();
         });
+        app(\App\Services\SilmeDenetimServisi::class)->tabloKaydiSilindi('Randevu', $silinenRandevu, $firmaId);
 
         return back()->with('success', 'Randevu ve bu randevuya bağlı bekleyen bildirim planları silindi.');
     }
