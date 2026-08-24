@@ -37,7 +37,7 @@ class AracDijitalKimlikTest extends TestCase
             $table->id(); $table->unsignedBigInteger('servis_id'); $table->string('kategori')->default('servis'); $table->string('islem_adi'); $table->text('aciklama')->nullable(); $table->decimal('tutar')->default(0); $table->string('durum')->default('tamamlandi'); $table->timestamps();
         });
         Schema::create('servis_fotograflari', function (Blueprint $table) {
-            $table->id(); $table->unsignedBigInteger('servis_id'); $table->timestamps();
+            $table->id(); $table->unsignedBigInteger('servis_id'); $table->string('kategori')->nullable(); $table->string('dosya_yolu'); $table->text('aciklama')->nullable(); $table->timestamps();
         });
         Schema::create('servis_parcalar', function (Blueprint $table) {
             $table->id(); $table->unsignedBigInteger('servis_id'); $table->timestamps();
@@ -84,6 +84,10 @@ class AracDijitalKimlikTest extends TestCase
         ServisIslem::create(['servis_id' => $servis->id, 'kategori' => 'servis', 'islem_adi' => 'Balans ayarı']);
         ServisIslem::create(['servis_id' => $servis->id, 'kategori' => 'periyodik_bakim', 'islem_adi' => 'Motor Yağı']);
         ServisIslem::create(['servis_id' => $servis->id, 'kategori' => 'periyodik_bakim', 'islem_adi' => 'Yağ Filtresi']);
+        \DB::table('servis_fotograflari')->insert([
+            ['servis_id' => $servis->id, 'kategori' => 'islem_sonrasi', 'dosya_yolu' => 'test/servis.jpg', 'aciklama' => 'Servis işlem fotoğrafı', 'created_at' => now(), 'updated_at' => now()],
+            ['servis_id' => $servis->id, 'kategori' => 'bakim', 'dosya_yolu' => 'test/bakim.jpg', 'aciklama' => 'Bakım işlem fotoğrafı', 'created_at' => now(), 'updated_at' => now()],
+        ]);
         \DB::table('muhasebe_entegrasyonlari')->insert([
             'firma_id' => $firma->id,
             'saglayici' => 'whatsapp',
@@ -109,6 +113,8 @@ class AracDijitalKimlikTest extends TestCase
             ->assertSee('Rot ayarı')
             ->assertSee('Balans ayarı')
             ->assertSee('2 işlem')
+            ->assertSee('Servis işlem fotoğrafı')
+            ->assertDontSee('Bakım işlem fotoğrafı')
             ->assertDontSee('Motor Yağı');
 
         $this->get(route('araclar.qr.show', [$arac->qr_token, 'ekran' => 'bakim']))
@@ -116,6 +122,8 @@ class AracDijitalKimlikTest extends TestCase
             ->assertSee('Motor Yağı')
             ->assertSee('Yağ Filtresi')
             ->assertSee('2 bakım işlemi')
+            ->assertSee('Bakım işlem fotoğrafı')
+            ->assertDontSee('Servis işlem fotoğrafı')
             ->assertDontSee('Rot ayarı')
             ->assertDontSee('Sırada')
             ->assertSee('https://wa.me/905320000000', false);
