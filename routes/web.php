@@ -95,6 +95,7 @@ Route::post('/asistan/yanitla', [MuhasebeAsistanController::class, 'yanitla'])->
 Route::view('/sss', 'sss.index')->name('sss.index');
 Route::get('/ayarlar/api-entegrasyonlari', [TicariController::class, 'apiAyarlari'])->name('ticari.api');
 Route::post('/ayarlar/api-entegrasyonlari', [TicariController::class, 'apiKaydet'])->name('ticari.api.kaydet');
+Route::post('/ayarlar/api-entegrasyonlari/email-test', [TicariController::class, 'apiEmailTest'])->name('ticari.api.email-test');
 Route::get('/ayarlar/iletisim-merkezi', [IletisimAyarController::class, 'index'])->name('ayarlar.iletisim');
 Route::post('/ayarlar/iletisim-merkezi', [IletisimAyarController::class, 'kaydet'])->name('ayarlar.iletisim.kaydet');
 Route::get('/depo', [DepoController::class, 'index'])->name('depo.index');

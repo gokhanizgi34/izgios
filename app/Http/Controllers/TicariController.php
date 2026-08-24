@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Firma;
+use App\Services\FirmaIletisimGonderici;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Crypt;
+use Throwable;
 
 class TicariController extends Controller
 {
@@ -115,5 +117,34 @@ class TicariController extends Controller
         );
 
         return back()->with('success', 'Entegrasyon bilgileri şifreli olarak kaydedildi.');
+    }
+
+    public function apiEmailTest(Request $request, FirmaIletisimGonderici $gonderici)
+    {
+        $request->validate(['firma_id' => ['required', 'exists:firmas,id']]);
+        $firmaId = $this->firmaId($request);
+        $entegrasyon = DB::table('muhasebe_entegrasyonlari')
+            ->where('firma_id', $firmaId)
+            ->where('saglayici', 'email')
+            ->first();
+        $ayarlar = json_decode($entegrasyon?->ayarlar ?: '{}', true) ?: [];
+
+        if (! $entegrasyon?->aktif || blank($ayarlar['gonderen'] ?? null)) {
+            return back()->withErrors(['email' => 'Önce gerekli SMTP bilgilerini kaydedin.']);
+        }
+
+        try {
+            $gonderici->gonder((object) [
+                'firma_id' => $firmaId,
+                'kanal' => 'email',
+                'alici' => $ayarlar['gonderen'],
+                'mesaj' => 'E-posta bağlantınız başarıyla doğrulandı. Servis bildirimleri bu SMTP hesabı üzerinden gönderilecektir.',
+            ], 'İZGİOS e-posta bağlantı testi');
+        } catch (Throwable $exception) {
+            report($exception);
+            return back()->withErrors(['email' => 'SMTP bağlantısı kurulamadı: '.$exception->getMessage()]);
+        }
+
+        return back()->with('success', 'Test e-postası gönderildi. Gelen kutunuzu ve gereksiz klasörünü kontrol edin.');
     }
 }
