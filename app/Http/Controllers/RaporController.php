@@ -30,8 +30,9 @@ class RaporController extends Controller
     {
         abort_unless(auth()->check(), 403);
         $user = auth()->user();
-        $v = $request->validate(['tur' => ['required', 'in:finans,servis,cari,ik,stok,stok_detay'], 'donem' => ['required', 'date'], 'firma_id' => ['nullable', 'integer', 'exists:firmas,id']]);
-        $izin = ['muhasebe'=>['finans','cari'], 'ik'=>['ik'], 'yedek_parca'=>['stok','stok_detay'], 'ofis'=>['servis','cari'], 'usta'=>['servis'], 'admin'=>['finans','servis','cari','ik','stok','stok_detay'], 'sistem_yoneticisi'=>['finans','servis','cari','ik','stok','stok_detay']];
+        $turler = ['finans','servis','cari','ik','stok','stok_detay','satis_alis','teklifler','alti_aylik_satis','kdv','masraflar','gelir_gider','stok_hareketleri','depo_durumu','hareketsiz_urun','musteri_listesi'];
+        $v = $request->validate(['tur' => ['required', 'in:'.implode(',',$turler)], 'donem' => ['required', 'date'], 'firma_id' => ['nullable', 'integer', 'exists:firmas,id']]);
+        $izin = ['muhasebe'=>['finans','cari','satis_alis','teklifler','alti_aylik_satis','kdv','masraflar','gelir_gider','musteri_listesi'], 'ik'=>['ik'], 'yedek_parca'=>['stok','stok_detay','stok_hareketleri','depo_durumu','hareketsiz_urun'], 'ofis'=>['servis','cari','satis_alis','teklifler','alti_aylik_satis','musteri_listesi'], 'usta'=>['servis'], 'admin'=>$turler, 'sistem_yoneticisi'=>$turler];
         abort_unless(in_array($v['tur'], $izin[$user->role] ?? [], true), 403, 'Bu rapor türü rolünüze açık değil.');
         $firmaId = $user->tamSistemYetkisiVarMi() ? ($v['firma_id'] ?? null) : $user->firmaPersoneli?->firma_id;
         $donem = Carbon::parse($v['donem'])->startOfMonth(); $bitis = $donem->copy()->endOfMonth();
@@ -39,9 +40,10 @@ class RaporController extends Controller
         $rapor = match ($v['tur']) {
             'finans' => $this->finans($scope, $donem, $bitis), 'servis' => $this->servis($scope, $donem, $bitis),
             'cari' => $this->cari($scope, $donem, $bitis), 'ik' => $this->ik($scope, $donem),
-            default => $this->stok($scope, $v['tur'] === 'stok_detay'),
+            'stok','stok_detay' => $this->stok($scope, $v['tur'] === 'stok_detay'),
+            default => $this->ozelRapor($v['tur'],$scope,$donem,$bitis,$firmaId),
         };
-        $baslik = ['finans'=>'Finans ve Muhasebe Raporu','servis'=>'Servis Operasyon Raporu','cari'=>'Cari Hesap ve Tahsilat Raporu','ik'=>'İK ve Personel Raporu','stok'=>'Yedek Parça ve Stok Raporu','stok_detay'=>'OEM ve Raf Bazlı Stok Listesi'][$v['tur']];
+        $baslik = ['finans'=>'Finansal Raporlar','servis'=>'Basit Satış / Servis Raporu','cari'=>'Hesap Bakiyeleri','ik'=>'Çalışanlar Raporu','stok'=>'Stok Raporları','stok_detay'=>'Ürünler ve OEM Listesi','satis_alis'=>'Satışlar - Alışlar','teklifler'=>'Teklifler Raporu','alti_aylik_satis'=>'6 Aylık Satışlar','kdv'=>'KDV Raporu','masraflar'=>'Masraflar Raporu','gelir_gider'=>'Gelir Gider Durumu','stok_hareketleri'=>'Stok Hareketleri','depo_durumu'=>'Depo Durumu','hareketsiz_urun'=>'Hareket Görmeyen Ürünler','musteri_listesi'=>'Müşteri Listesi'][$v['tur']];
         return view('raporlar.sonuc', ['baslik'=>$baslik, 'donem'=>$donem, 'tur'=>$v['tur'], 'rapor'=>$rapor, 'firmaAdi'=>$firmaId ? Firma::find($firmaId)?->gosterim_adi : 'Tüm firmalar']);
     }
 
@@ -78,5 +80,35 @@ class RaporController extends Controller
     {
         $parcalar=$scope(DB::table('stok_parcalar'), 'stok_parcalar')->leftJoin('stok_parca_raf_adresleri','stok_parca_raf_adresleri.stok_parca_id','=','stok_parcalar.id')->leftJoin('depo_raflar','depo_raflar.id','=','stok_parca_raf_adresleri.depo_raf_id')->select('stok_parcalar.oem_no','stok_parcalar.parca_adi','stok_parcalar.marka','stok_parcalar.uyumluluk','stok_parcalar.stok_miktari','stok_parcalar.minimum_stok','stok_parcalar.alis_fiyati','stok_parcalar.satis_fiyati','depo_raflar.kod as raf_yeri')->orderBy('stok_parcalar.parca_adi')->get(); $kritik=$parcalar->filter(fn($p)=>$p->stok_miktari<=$p->minimum_stok);
         return ['kpis'=>[['Parça kartı',$parcalar->count(),'adet','bi-box-seam'],['Kritik stok',$kritik->count(),'adet','bi-exclamation-triangle'],['Stok alış değeri',(float)$parcalar->sum(fn($p)=>$p->stok_miktari*$p->alis_fiyati),'para','bi-cash-stack'],['Adreslenmemiş parça',$parcalar->filter(fn($p)=>!$p->raf_yeri)->count(),'adet','bi-geo-alt']], 'parcalar'=>$detay?$parcalar:$kritik->take(20), 'kritik'=>$kritik->take(8), 'tablo'=>['başlık'=>$detay?'OEM, raf ve stok listesi':'Kritik stok listesi','başlıklar'=>['OEM Kodu','Parça adı','Marka','Uyumlu araçlar','Raf yeri','Stok','Kritik eşik','Alış','Satış']], 'uyarilar'=>[$kritik->count()?['seviye'=>'kritik','metin'=>$kritik->count().' parça kritik stok eşiğinde veya altında. Satın alma planı oluşturulmalıdır.']:['seviye'=>'olumlu','metin'=>'Kritik stok eşiğinde parça bulunmuyor.']]];
+    }
+
+    private function ozelRapor(string $tur, $scope, Carbon $baslangic, Carbon $bitis, ?int $firmaId): array
+    {
+        $paraKpi = fn(string $ad, float $deger, string $ikon) => [$ad,$deger,'para',$ikon];
+        $adetKpi = fn(string $ad, int $deger, string $ikon) => [$ad,$deger,'adet',$ikon];
+        $sonuc = ['kpis'=>[], 'satirlar'=>collect(), 'tablo'=>['başlık'=>'Rapor ayrıntıları','başlıklar'=>[]], 'uyarilar'=>[]];
+        if (in_array($tur,['satis_alis','gelir_gider','kdv','masraflar'],true)) {
+            $q=$scope(DB::table('muhasebe_fisleri'))->whereBetween('fis_tarihi',[$baslangic,$bitis]);
+            if($tur==='masraflar') $q->where('yon','gider');
+            $satirlar=(clone $q)->orderByDesc('fis_tarihi')->get()->map(fn($x)=>[$x->fis_no,Carbon::parse($x->fis_tarihi)->format('d.m.Y'),ucfirst($x->yon),$x->aciklama ?: '—',number_format((float)$x->tutar,2,',','.')]);
+            $gelir=(float)(clone $q)->where('yon','gelir')->sum('tutar'); $gider=(float)(clone $q)->where('yon','gider')->sum('tutar');
+            $sonuc['kpis']=[$paraKpi('Satış / gelir',$gelir,'bi-arrow-down-left'),$paraKpi('Alış / gider',$gider,'bi-arrow-up-right'),$paraKpi($tur==='kdv'?'Tahmini KDV (%20)':'Net sonuç',$tur==='kdv'?($gelir-$gider)*.20:$gelir-$gider,'bi-calculator'),$adetKpi('Belge / fiş',$satirlar->count(),'bi-receipt')];
+            $sonuc['satirlar']=$satirlar;$sonuc['tablo']=['başlık'=>'Mali hareketler','başlıklar'=>['Belge No','Tarih','Tür','Açıklama','Tutar']];
+        } elseif($tur==='teklifler') {
+            $q=$scope(DB::table('teklifler'))->whereBetween('tarih',[$baslangic,$bitis]);$kayitlar=$q->latest('tarih')->get();
+            $sonuc['kpis']=[$adetKpi('Teklif',$kayitlar->count(),'bi-file-earmark-text'),$paraKpi('Teklif toplamı',(float)$kayitlar->sum('tutar'),'bi-cash-stack'),$adetKpi('Taslak',$kayitlar->where('durum','taslak')->count(),'bi-pencil'),$adetKpi('Diğer durumlar',$kayitlar->where('durum','!=','taslak')->count(),'bi-check-circle')];
+            $sonuc['satirlar']=$kayitlar->map(fn($x)=>[$x->teklif_no,Carbon::parse($x->tarih)->format('d.m.Y'),$x->musteri_unvan,$x->durum,number_format((float)$x->tutar,2,',','.')]);$sonuc['tablo']=['başlık'=>'Teklif listesi','başlıklar'=>['Teklif No','Tarih','Müşteri','Durum','Tutar']];
+        } elseif($tur==='alti_aylik_satis') {
+            $ilk=$bitis->copy()->subMonths(5)->startOfMonth();$kayitlar=collect(range(0,5))->map(function($i)use($scope,$ilk){$ay=$ilk->copy()->addMonths($i);$tutar=(float)$scope(DB::table('servisler'))->whereBetween('servis_tarihi',[$ay->copy()->startOfMonth(),$ay->copy()->endOfMonth()])->sum('toplam_tutar');return [$ay->translatedFormat('F Y'),number_format($tutar,2,',','.'),$tutar];});
+            $sonuc['kpis']=[$paraKpi('6 aylık ciro',(float)$kayitlar->sum(2),'bi-graph-up'),$paraKpi('Aylık ortalama',(float)$kayitlar->avg(2),'bi-bar-chart'),$paraKpi('En yüksek ay',(float)$kayitlar->max(2),'bi-trophy'),$adetKpi('Dönem',6,'bi-calendar3')];$sonuc['satirlar']=$kayitlar->map(fn($x)=>[$x[0],$x[1]]);$sonuc['tablo']=['başlık'=>'Aylık satış cirosu','başlıklar'=>['Ay','Servis cirosu']];
+        } elseif(in_array($tur,['stok_hareketleri','depo_durumu','hareketsiz_urun'],true)) {
+            $q=$scope(DB::table('stok_parcalar'),'stok_parcalar');
+            if($tur==='stok_hareketleri'){$kayitlar=$q->join('stok_hareketleri','stok_hareketleri.stok_parca_id','=','stok_parcalar.id')->whereBetween('stok_hareketleri.created_at',[$baslangic,$bitis])->orderByDesc('stok_hareketleri.created_at')->get(['stok_parcalar.oem_no','stok_parcalar.parca_adi','stok_hareketleri.yon','stok_hareketleri.miktar','stok_hareketleri.referans','stok_hareketleri.created_at']);$satirlar=$kayitlar->map(fn($x)=>[$x->oem_no,$x->parca_adi,ucfirst($x->yon),$x->miktar,$x->referans ?: '—',Carbon::parse($x->created_at)->format('d.m.Y H:i')]);$basliklar=['OEM','Parça','Yön','Miktar','Referans','Tarih'];}
+            else {$q->leftJoin('stok_hareketleri',function($j)use($baslangic,$bitis){$j->on('stok_hareketleri.stok_parca_id','=','stok_parcalar.id')->whereBetween('stok_hareketleri.created_at',[$baslangic,$bitis]);})->selectRaw('stok_parcalar.oem_no,stok_parcalar.parca_adi,stok_parcalar.stok_miktari,stok_parcalar.minimum_stok,COUNT(stok_hareketleri.id) hareket')->groupBy('stok_parcalar.id','stok_parcalar.oem_no','stok_parcalar.parca_adi','stok_parcalar.stok_miktari','stok_parcalar.minimum_stok');if($tur==='hareketsiz_urun')$q->having('hareket','=',0);$kayitlar=$q->get();$satirlar=$kayitlar->map(fn($x)=>[$x->oem_no,$x->parca_adi,$x->stok_miktari,$x->minimum_stok,$x->hareket]);$basliklar=['OEM','Parça','Stok','Kritik eşik','Dönem hareketi'];}
+            $sonuc['kpis']=[$adetKpi('Kayıt',$kayitlar->count(),'bi-box-seam'),$adetKpi('Kritik',$kayitlar->filter(fn($x)=>isset($x->stok_miktari)&&$x->stok_miktari<=$x->minimum_stok)->count(),'bi-exclamation-triangle'),$adetKpi('Hareketli',$kayitlar->filter(fn($x)=>(int)($x->hareket??1)>0)->count(),'bi-arrow-left-right'),$adetKpi('Hareketsiz',$kayitlar->filter(fn($x)=>(int)($x->hareket??1)===0)->count(),'bi-pause-circle')];$sonuc['satirlar']=$satirlar;$sonuc['tablo']=['başlık'=>$tur==='stok_hareketleri'?'Stok hareketleri':($tur==='depo_durumu'?'Depo ve stok durumu':'Hareket görmeyen ürünler'),'başlıklar'=>$basliklar];
+        } else {
+            $q=$scope(DB::table('musteris'))->orderBy('ad_soyad');$kayitlar=$q->get();$sonuc['kpis']=[$adetKpi('Toplam müşteri',$kayitlar->count(),'bi-people'),$adetKpi('Telefon kayıtlı',$kayitlar->whereNotNull('telefon')->count(),'bi-telephone'),$adetKpi('E-posta kayıtlı',$kayitlar->whereNotNull('email')->count(),'bi-envelope'),$adetKpi('Bu ay eklenen',$kayitlar->filter(fn($x)=>Carbon::parse($x->created_at)->between($baslangic,$bitis))->count(),'bi-person-plus')];$sonuc['satirlar']=$kayitlar->map(fn($x)=>[$x->ad_soyad,$x->telefon ?: '—',$x->email ?: '—',$x->tc_kimlik_no ?: '—',Carbon::parse($x->created_at)->format('d.m.Y')]);$sonuc['tablo']=['başlık'=>'Müşteri listesi','başlıklar'=>['İsim / Ünvan','Telefon','E-posta','TCKN','Kayıt tarihi']];
+        }
+        $sonuc['uyarilar'][]=['seviye'=>$sonuc['satirlar']->isEmpty()?'uyari':'olumlu','metin'=>$sonuc['satirlar']->isEmpty()?'Seçilen kriterlerde kayıt bulunamadı.':'Rapor gerçek İZGİOS kayıtlarından hazırlandı.']; return $sonuc;
     }
 }
