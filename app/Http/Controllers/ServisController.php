@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 use App\Models\Servis;
 use App\Models\Musteri;
@@ -368,9 +369,9 @@ class ServisController extends Controller
         $servis = Servis::findOrFail($id);
         $this->servisErisiminiDogrula($servis);
 
-
-
+        $fotografKlasoru = 'servisler/'.$servis->id;
         $servis->delete();
+        Storage::disk('public')->deleteDirectory($fotografKlasoru);
 
 
 
@@ -443,6 +444,12 @@ public function musteriAra(Request $request)
 
         if ($durumZorunlu) {
             $kurallar['durum'] = ['required', 'string', 'max:50'];
+            $kurallar['sikayet'] = ['nullable', 'string', 'max:5000'];
+            $kurallar['yapilan_islem'] = ['nullable', 'string'];
+            $kurallar['kullanilan_parca'] = ['nullable', 'string'];
+            $kurallar['parca_tutari'] = ['nullable', 'numeric', 'min:0'];
+            $kurallar['iscilik_tutari'] = ['nullable', 'numeric', 'min:0'];
+            $kurallar['notlar'] = ['nullable', 'string'];
         }
 
         $veri = $request->validate($kurallar);
