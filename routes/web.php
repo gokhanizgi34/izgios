@@ -18,9 +18,7 @@ use App\Http\Controllers\AyarController;
 use App\Http\Controllers\SistemHataController;
 use App\Http\Controllers\DestekController;
 use App\Http\Controllers\SohbetController;
-use App\Http\Controllers\YapayZekaKontrolController;
 use App\Http\Controllers\SifreYonetimController;
-use App\Http\Controllers\GelistirmeMerkeziController;
 use App\Http\Controllers\TicariController;
 use App\Http\Controllers\MuhasebeMerkeziController;
 use App\Http\Controllers\GenelMuhasebeController;
@@ -97,6 +95,8 @@ Route::view('/sss', 'sss.index')->name('sss.index');
 Route::get('/ayarlar/api-entegrasyonlari', [TicariController::class, 'apiAyarlari'])->name('ticari.api');
 Route::post('/ayarlar/api-entegrasyonlari', [TicariController::class, 'apiKaydet'])->name('ticari.api.kaydet');
 Route::post('/ayarlar/api-entegrasyonlari/email-test', [TicariController::class, 'apiEmailTest'])->name('ticari.api.email-test');
+Route::post('/ayarlar/api-entegrasyonlari/yapay-zeka', [TicariController::class, 'merkeziYapayZekaKaydet'])->name('ticari.api.yapay-zeka');
+Route::redirect('/yapay-zeka-kontrol', '/ayarlar/api-entegrasyonlari')->name('yapayzeka.index');
 Route::get('/ayarlar/iletisim-merkezi', [IletisimAyarController::class, 'index'])->name('ayarlar.iletisim');
 Route::post('/ayarlar/iletisim-merkezi', [IletisimAyarController::class, 'kaydet'])->name('ayarlar.iletisim.kaydet');
 Route::get('/depo', [DepoController::class, 'index'])->name('depo.index');
@@ -423,15 +423,6 @@ Route::post('/sohbet/oda', [SohbetController::class, 'odaOlustur'])->name('sohbe
 Route::post('/sohbet/{oda}/mesaj', [SohbetController::class, 'mesajGonder'])->name('sohbet.mesaj.store');
 Route::get('/sohbet/{oda}/mesajlar', [SohbetController::class, 'mesajlarJson'])->name('sohbet.mesajlar');
 
-Route::get('/yapay-zeka-kontrol', [YapayZekaKontrolController::class, 'index'])->name('yapayzeka.index');
-
-Route::get('/gelistirme-merkezi', [GelistirmeMerkeziController::class, 'index'])->name('gelistirme.index');
-Route::post('/gelistirme-merkezi', [GelistirmeMerkeziController::class, 'store'])->name('gelistirme.store');
-Route::get('/gelistirme-merkezi/{talep}', [GelistirmeMerkeziController::class, 'show'])->name('gelistirme.show');
-Route::post('/gelistirme-merkezi/{talep}/mesaj', [GelistirmeMerkeziController::class, 'mesajGonder'])->name('gelistirme.mesaj');
-Route::post('/gelistirme-merkezi/{talep}/yapay-zeka', [GelistirmeMerkeziController::class, 'yapayZekaYaniti'])->name('gelistirme.yapayzeka');
-Route::patch('/gelistirme-merkezi/{talep}/onayla', [GelistirmeMerkeziController::class, 'onayla'])->name('gelistirme.onayla');
-Route::patch('/gelistirme-merkezi/{talep}/durum', [GelistirmeMerkeziController::class, 'durumGuncelle'])->name('gelistirme.durum');
 
 
 

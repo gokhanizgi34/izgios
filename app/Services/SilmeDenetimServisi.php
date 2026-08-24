@@ -88,13 +88,13 @@ class SilmeDenetimServisi
         return match (true) {
             str_contains($ad, 'servis') => 'Servis', str_contains($ad, 'muster') => 'Müşteri', str_contains($ad, 'arac') => 'Araç',
             str_contains($ad, 'user') || str_contains($ad, 'personel') => 'Personel', str_contains($ad, 'parca') || str_contains($ad, 'stok') || str_contains($ad, 'depo') => 'Depo / Yedek Parça',
-            str_contains($ad, 'randevu') => 'Randevu', str_contains($ad, 'firma') => 'Firma', str_contains($ad, 'sube') => 'Şube', default => 'Diğer',
+            str_contains($ad, 'sistemhata') => 'Sistem Hataları', str_contains($ad, 'randevu') => 'Randevu', str_contains($ad, 'firma') => 'Firma', str_contains($ad, 'sube') => 'Şube', default => 'Diğer',
         };
     }
 
     private function ozet(array $veri): string
     {
-        foreach (['servis_no','plaka','ad_soyad','sube_adi','unvan','parca_adi','islem_adi','baslik','name'] as $alan) if (filled($veri[$alan] ?? null)) return (string) $veri[$alan];
+        foreach (['kontrol_notu','servis_no','plaka','ad_soyad','sube_adi','unvan','parca_adi','islem_adi','baslik','name'] as $alan) if (filled($veri[$alan] ?? null)) return (string) $veri[$alan];
         return 'Kayıt #'.($veri['id'] ?? '-');
     }
 }

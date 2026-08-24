@@ -242,12 +242,6 @@
     <a href="{{ route('sistem.silme-kayitlari') }}" class="{{ request()->routeIs('sistem.silme-kayitlari') ? 'active' : '' }}">
         <i class="bi bi-trash3-fill"></i><label>Silme Kayıtları</label>
     </a>
-    <a href="{{ route('yapayzeka.index') }}" class="{{ request()->routeIs('yapayzeka.*') ? 'active' : '' }}">
-        <i class="bi bi-cpu-fill"></i><label>Yapay Zekâ Merkezi</label>
-    </a>
-    <a href="{{ route('gelistirme.index') }}" class="{{ request()->routeIs('gelistirme.*') ? 'active' : '' }}">
-        <i class="bi bi-code-square"></i><label>Geliştirme Merkezi</label>
-    </a>
 </div>
 @endif
 

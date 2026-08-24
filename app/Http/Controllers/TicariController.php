@@ -58,7 +58,20 @@ class TicariController extends Controller
     private function seciliFirma(Request $request,$firmalar): ?int { $id=$request->integer('firma_id')?:$firmalar->first()?->id;if(!auth()->user()->tamSistemYetkisiVarMi())$id=auth()->user()->firmaPersoneli?->firma_id;return $id; }
     public function belgeler(Request $request,string $tur){$this->yetki();abort_unless(in_array($tur,['teklif','fatura'],true),404);$firmalar=Firma::where('aktif',true)->orderBy('unvan')->get();$firmaId=$request->integer('firma_id')?:$firmalar->first()?->id;if(!auth()->user()->tamSistemYetkisiVarMi())$firmaId=auth()->user()->firmaPersoneli?->firma_id;$kayitlar=DB::table($tur==='teklif'?'teklifler':'faturalar')->where('firma_id',$firmaId)->latest('tarih')->get();return view('ticari.belgeler',compact('tur','firmalar','firmaId','kayitlar'));}
     public function belgeKaydet(Request $request,string $tur){abort_unless(in_array($tur,['teklif','fatura'],true),404);$v=$request->validate(['firma_id'=>['required','exists:firmas,id'],'musteri_unvan'=>['required','string','max:255'],'tarih'=>['required','date'],'tutar'=>['required','numeric','min:0'],'aciklama'=>['nullable','string','max:2000']]);$id=$this->firmaId($request);$tablo=$tur==='teklif'?'teklifler':'faturalar';$no=($tur==='teklif'?'TKL':'FTR').'-'.now()->format('YmdHis');$kayit=array_merge($v,[$tur==='teklif'?'teklif_no':'fatura_no'=>$no,'durum'=>'taslak','created_at'=>now(),'updated_at'=>now()]);if($tur==='fatura'){$kayit['entegrasyon_durumu']='gonderilmedi';unset($kayit['aciklama']);}DB::table($tablo)->insert($kayit);return back()->with('success',ucfirst($tur).' kaydedildi.');}
-    public function apiAyarlari(Request $request){$this->yetki();$firmalar=Firma::where('aktif',true)->orderBy('unvan')->get();$firmaId=$request->integer('firma_id')?:$firmalar->first()?->id;if(!auth()->user()->tamSistemYetkisiVarMi())$firmaId=auth()->user()->firmaPersoneli?->firma_id;$entegrasyonlar=DB::table('muhasebe_entegrasyonlari')->where('firma_id',$firmaId)->get()->keyBy('saglayici');$openAiGlobal=filled(config('services.izgios_ai.key'));return view('ayarlar.api-ayarlari',compact('firmalar','firmaId','entegrasyonlar','openAiGlobal'));}
+    public function apiAyarlari(Request $request){$this->yetki();$firmalar=Firma::where('aktif',true)->orderBy('unvan')->get();$firmaId=$request->integer('firma_id')?:$firmalar->first()?->id;if(!auth()->user()->tamSistemYetkisiVarMi())$firmaId=auth()->user()->firmaPersoneli?->firma_id;$entegrasyonlar=DB::table('muhasebe_entegrasyonlari')->where('firma_id',$firmaId)->get()->keyBy('saglayici');$aiAyarlar=DB::table('yonetim_ayarlari')->where('grup','yapay_zeka')->pluck('deger','anahtar');$openAiGlobal=filled($aiAyarlar['api_anahtari']??null)||filled(config('services.izgios_ai.key'));return view('ayarlar.api-ayarlari',compact('firmalar','firmaId','entegrasyonlar','openAiGlobal','aiAyarlar'));}
+
+    public function merkeziYapayZekaKaydet(Request $request)
+    {
+        abort_unless(auth()->check() && auth()->user()->tamSistemYetkisiVarMi(), 403);
+        $veri = $request->validate(['api_anahtari'=>['nullable','string','max:4000'],'model'=>['required','string','max:100'],'aktif'=>['nullable','boolean']]);
+        $mevcut = DB::table('yonetim_ayarlari')->where(['grup'=>'yapay_zeka','anahtar'=>'api_anahtari'])->value('deger');
+        $apiAnahtari = filled($veri['api_anahtari'] ?? null) ? Crypt::encryptString($veri['api_anahtari']) : $mevcut;
+        abort_if(blank($apiAnahtari) && $request->boolean('aktif'), 422, 'Yapay zekâyı etkinleştirmek için API anahtarı girin.');
+        foreach (['api_anahtari'=>$apiAnahtari,'model'=>$veri['model'],'aktif'=>$request->boolean('aktif')?'1':'0'] as $anahtar=>$deger) {
+            DB::table('yonetim_ayarlari')->updateOrInsert(['grup'=>'yapay_zeka','anahtar'=>$anahtar], ['deger'=>$deger,'guncelleyen_id'=>auth()->id(),'updated_at'=>now(),'created_at'=>now()]);
+        }
+        return back()->with('success', 'Merkezi yapay zekâ bağlantısı tüm sistem için güncellendi.');
+    }
     public function apiKaydet(Request $request)
     {
         $v = $request->validate([

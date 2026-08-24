@@ -47,3 +47,10 @@ Artisan::command('izgi:destek-zaman-asimini-kapat', function () {
 Schedule::command('izgi:destek-zaman-asimini-kapat')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+Artisan::command('izgi:sistem-hatalarini-tara', function () {
+    $sonuc = app(\App\Services\SistemHataIzlemeServisi::class)->tara();
+    $this->info("Açık hata: {$sonuc['acik']}; çözülen ve denetime aktarılan: {$sonuc['cozulen']}.");
+})->purpose('Uygulama hatalarını günceller ve çözülenleri silme denetimine aktarır.');
+
+Schedule::command('izgi:sistem-hatalarini-tara')->everyTenMinutes()->withoutOverlapping();

@@ -16,9 +16,22 @@
     .mail-page{max-width:1080px;margin:auto}.mail-hero{padding:25px;border-radius:18px;color:#fff;background:linear-gradient(115deg,#102a50,#0f766e)}.mail-hero p{margin:7px 0 0;color:#dff7f0}.integration-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.mail-card{margin-top:18px;padding:22px;border:1px solid #dce6ef;border-radius:16px;background:#fff}.mail-card.email-card{grid-column:1/-1}.mail-status{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.mail-grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}.mail-card label{font-size:12px;font-weight:800;color:#39516f;margin-top:12px}.mail-card .form-control,.mail-card .form-select{margin-top:5px;text-transform:none!important}.mail-note{margin-top:16px;padding:13px 15px;border-radius:12px;background:#f3f7fb;color:#52677f;font-size:13px}.tema-koyu .mail-card{background:#17233a;border-color:#30425c}.tema-koyu .mail-card h2{color:#f2f7ff}.tema-koyu .mail-note{background:#22314a;color:#c9d7e9}@media(max-width:760px){.integration-grid{grid-template-columns:1fr}.mail-card.email-card{grid-column:auto}}@media(max-width:620px){.mail-grid{grid-template-columns:1fr}.mail-status{align-items:flex-start;flex-direction:column}}
 </style>
 <section class="mail-page container py-4">
-    <header class="mail-hero"><h1 class="h3 mb-0"><i class="bi bi-chat-square-dots-fill me-2"></i>İletişim Entegrasyonları</h1><p>E-posta, WhatsApp ve SMS bildirimlerini tek ekrandan etkinleştirin.</p></header>
+    <header class="mail-hero"><h1 class="h3 mb-0"><i class="bi bi-chat-square-dots-fill me-2"></i>API ve İletişim Entegrasyonları</h1><p>Merkezi yapay zekâ, e-posta, WhatsApp ve SMS bağlantılarını tek ekrandan yönetin.</p></header>
     @if(session('success'))<div class="alert alert-success mt-3">{{ session('success') }}</div>@endif
     @if($errors->any())<div class="alert alert-danger mt-3">{{ $errors->first() }}</div>@endif
+    @if(auth()->user()->tamSistemYetkisiVarMi())
+    <article class="mail-card" style="border-left:4px solid #7c3aed">
+        <div class="mail-status"><div><h2 class="h5 mb-1"><i class="bi bi-stars me-1"></i>Merkezi Yapay Zekâ API</h2><small class="text-muted">Bu tek bağlantı bütün firmalar ve tüm İZGİOS asistan ekranları tarafından kullanılır.</small></div><span class="badge text-bg-{{ $openAiGlobal ? 'success' : 'secondary' }}">{{ $openAiGlobal ? 'Tanımlı' : 'Kurulum gerekli' }}</span></div>
+        <form method="POST" action="{{ route('ticari.api.yapay-zeka') }}" autocapitalize="none" spellcheck="false">
+            @csrf
+            <label for="ai_model">Model</label><input id="ai_model" class="form-control" name="model" value="{{ old('model', $aiAyarlar['model'] ?? config('services.izgios_ai.model', 'gpt-5.6')) }}" required>
+            <label for="ai_key">OpenAI API anahtarı</label><input id="ai_key" class="form-control" type="password" name="api_anahtari" autocomplete="new-password" placeholder="{{ $openAiGlobal ? 'Kayıtlı anahtarı korumak için boş bırakın' : 'sk-...' }}">
+            <div class="form-check form-switch mt-3"><input type="hidden" name="aktif" value="0"><input id="ai_active" class="form-check-input" type="checkbox" name="aktif" value="1" @checked(($aiAyarlar['aktif'] ?? ($openAiGlobal ? '1' : '0')) === '1')><label class="form-check-label mt-0" for="ai_active">Tüm sistemde etkin</label></div>
+            <button class="btn btn-primary w-100 mt-3" type="submit"><i class="bi bi-shield-lock-fill me-1"></i>Merkezi Yapay Zekâyı Kaydet</button>
+        </form>
+        <div class="mail-note">Firma bazında ayrıca yapay zekâ anahtarı girilmez. Anahtar şifreli tutulur ve ekranda tekrar gösterilmez.</div>
+    </article>
+    @endif
     @if(auth()->user()->tamSistemYetkisiVarMi())
         <form class="card p-3 mt-3" method="GET" action="{{ route('ticari.api') }}"><label class="form-label" for="firma_id">Firma</label><select id="firma_id" name="firma_id" class="form-select" onchange="this.form.submit()">@forelse($firmalar as $firma)<option value="{{ $firma->id }}" @selected($firmaId == $firma->id)>{{ $firma->gosterim_adi }}</option>@empty<option>Önce firma oluşturun</option>@endforelse</select></form>
     @endif
