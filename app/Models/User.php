@@ -234,6 +234,12 @@ class User extends Authenticatable
         return $this->role === 'ik';
     }
 
+    /** İnsan kaynakları çalışma alanında tam işlem yapabilen roller. */
+    public function ikErisimiVarMi(): bool
+    {
+        return $this->tamSistemYetkisiVarMi() || $this->isAdmin() || $this->isIk();
+    }
+
 
 
 

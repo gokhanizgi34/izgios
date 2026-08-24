@@ -7,7 +7,7 @@
 <main class="firma-liste-sayfa">
     <header class="firma-liste-baslik">
         <div><p>YÖNETİM MERKEZİ</p><h1>🏢 Firmalar</h1><span>Firma, şube ve kullanıcı yapılarını yönetin.</span></div>
-        <a href="{{ route('firma.create') }}" class="firma-liste-ana-btn">＋ Yeni Firma</a>
+        @if(auth()->user()->tamSistemYetkisiVarMi())<a href="{{ route('firma.create') }}" class="firma-liste-ana-btn">＋ Yeni Firma</a>@endif
     </header>
     @if(session('success'))<div class="firma-mesaj firma-mesaj--ok">✓ {{ session('success') }}</div>@endif
     @if(session('error'))<div class="firma-mesaj firma-mesaj--hata">⚠ {{ session('error') }}</div>@endif

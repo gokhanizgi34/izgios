@@ -10,7 +10,9 @@ class FirmaYonetimController extends Controller
 {
     public function index()
     {
+        $this->yonetimYetkisi();
         $firmalar = Firma::query()
+            ->when(! auth()->user()->tamSistemYetkisiVarMi(), fn ($query) => $query->whereKey($this->kullaniciFirmaId()))
             ->withCount(['subeler', 'personeller'])
             ->orderBy('unvan')
             ->get();
@@ -20,11 +22,13 @@ class FirmaYonetimController extends Controller
 
     public function create()
     {
+        $this->sistemYetkisi();
         return view('ayarlar.firma.create');
     }
 
     public function store(Request $request)
     {
+        $this->sistemYetkisi();
         $validated = $request->validate($this->rules());
         unset($validated['logo']);
 
@@ -41,6 +45,7 @@ class FirmaYonetimController extends Controller
 
     public function show(Firma $firma)
     {
+        $this->firmaYetkisi($firma);
         $firma->loadCount(['subeler', 'personeller']);
 
         return view('ayarlar.firma.detail', compact('firma'));
@@ -48,11 +53,13 @@ class FirmaYonetimController extends Controller
 
     public function edit(Firma $firma)
     {
+        $this->firmaYetkisi($firma);
         return view('ayarlar.firma.edit', compact('firma'));
     }
 
     public function update(Request $request, Firma $firma)
     {
+        $this->firmaYetkisi($firma);
         $validated = $request->validate($this->rules());
         unset($validated['logo']);
 
@@ -68,6 +75,7 @@ class FirmaYonetimController extends Controller
 
     public function durumDegistir(Firma $firma)
     {
+        $this->sistemYetkisi();
         $firma->update(['aktif' => ! $firma->aktif]);
 
         return back()->with('success', 'Firma durumu güncellendi.');
@@ -75,6 +83,7 @@ class FirmaYonetimController extends Controller
 
     public function destroy(Firma $firma)
     {
+        $this->sistemYetkisi();
         if ($firma->subeler()->exists() || $firma->personeller()->exists()) {
             return back()->with('error', 'Şubesi veya personeli bulunan firma silinemez.');
         }
@@ -110,5 +119,30 @@ class FirmaYonetimController extends Controller
         $firma->update([
             'logo_yolu' => $request->file('logo')->store('firmalar/logolar', 'public'),
         ]);
+    }
+
+    private function yonetimYetkisi(): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->tamSistemYetkisiVarMi() || auth()->user()->isAdmin()), 403);
+    }
+
+    private function sistemYetkisi(): void
+    {
+        abort_unless(auth()->check() && auth()->user()->tamSistemYetkisiVarMi(), 403);
+    }
+
+    private function firmaYetkisi(Firma $firma): void
+    {
+        $this->yonetimYetkisi();
+        if (! auth()->user()->tamSistemYetkisiVarMi()) {
+            abort_unless((int) $firma->id === $this->kullaniciFirmaId(), 403, 'Yalnız kendi firmanızın bilgilerini yönetebilirsiniz.');
+        }
+    }
+
+    private function kullaniciFirmaId(): int
+    {
+        $firmaId = (int) auth()->user()?->firmaPersoneli?->firma_id;
+        abort_unless($firmaId > 0, 403, 'Kullanıcının firma bağlantısı bulunmuyor.');
+        return $firmaId;
     }
 }

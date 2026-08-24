@@ -10,6 +10,7 @@ class SubeController extends Controller
 {
     public function index(Firma $firma)
     {
+        $this->firmaYetkisi($firma);
         $subeler = $firma->subeler()
             ->withCount('personeller')
             ->orderBy('sube_adi')
@@ -20,11 +21,13 @@ class SubeController extends Controller
 
     public function create(Firma $firma)
     {
+        $this->firmaYetkisi($firma);
         return view('ayarlar.firma.sube.create', compact('firma'));
     }
 
     public function store(Request $request, Firma $firma)
     {
+        $this->firmaYetkisi($firma);
         $firma->subeler()->create([
             ...$request->validate($this->rules()),
             'aktif' => true,
@@ -35,6 +38,7 @@ class SubeController extends Controller
 
     public function show(Firma $firma, Sube $sube)
     {
+        $this->firmaYetkisi($firma);
         $this->ensureOwnership($firma, $sube);
         $sube->loadCount('personeller');
 
@@ -43,6 +47,7 @@ class SubeController extends Controller
 
     public function edit(Firma $firma, Sube $sube)
     {
+        $this->firmaYetkisi($firma);
         $this->ensureOwnership($firma, $sube);
 
         return view('ayarlar.firma.sube.edit', compact('firma', 'sube'));
@@ -50,6 +55,7 @@ class SubeController extends Controller
 
     public function update(Request $request, Firma $firma, Sube $sube)
     {
+        $this->firmaYetkisi($firma);
         $this->ensureOwnership($firma, $sube);
         $sube->update($request->validate($this->rules()));
 
@@ -58,6 +64,7 @@ class SubeController extends Controller
 
     public function durumDegistir(Firma $firma, Sube $sube)
     {
+        $this->firmaYetkisi($firma);
         $this->ensureOwnership($firma, $sube);
         $sube->update(['aktif' => ! $sube->aktif]);
 
@@ -66,6 +73,7 @@ class SubeController extends Controller
 
     public function destroy(Firma $firma, Sube $sube)
     {
+        $this->firmaYetkisi($firma);
         $this->ensureOwnership($firma, $sube);
 
         if ($sube->personeller()->exists()) {
@@ -90,5 +98,13 @@ class SubeController extends Controller
     private function ensureOwnership(Firma $firma, Sube $sube): void
     {
         abort_unless((int) $sube->firma_id === (int) $firma->id, 404);
+    }
+
+    private function firmaYetkisi(Firma $firma): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->tamSistemYetkisiVarMi() || auth()->user()->isAdmin()), 403);
+        if (! auth()->user()->tamSistemYetkisiVarMi()) {
+            abort_unless((int) $firma->id === (int) auth()->user()->firmaPersoneli?->firma_id, 403, 'Yalnız kendi firmanızın şubelerini yönetebilirsiniz.');
+        }
     }
 }

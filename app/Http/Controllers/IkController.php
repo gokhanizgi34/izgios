@@ -54,7 +54,7 @@ class IkController extends Controller
         return back()->with('success', 'Bordro, mesai ve hak ediş bilgileri kaydedildi.');
     }
 
-    private function yetki(): void { abort_unless(auth()->check() && (auth()->user()->isIk() || auth()->user()->tamSistemYetkisiVarMi()), 403); }
+    private function yetki(): void { abort_unless(auth()->check() && auth()->user()->ikErisimiVarMi(), 403); }
     private function firmalar() { return auth()->user()->tamSistemYetkisiVarMi() ? Firma::where('aktif', true)->orderBy('unvan')->get() : Firma::where('id', auth()->user()->firmaPersoneli?->firma_id)->where('aktif', true)->get(); }
     private function firmaId(Request $request, $firmalar): int { $firmaId = $request->integer('firma_id') ?: $firmalar->first()?->id; abort_unless($firmaId && $firmalar->contains('id', $firmaId), 403); return $firmaId; }
 

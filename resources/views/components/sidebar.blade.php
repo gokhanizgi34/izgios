@@ -220,9 +220,16 @@
 @if(auth()->user()?->tamSistemYetkisiVarMi() || auth()->user()?->isAdmin())
 <div class="sidebar-section">
     <span>İNSAN KAYNAKLARI</span>
-    <a href="{{ route('kullanicilar.index') }}" class="{{ request()->routeIs('kullanicilar.*') ? 'active' : '' }}">
-        <i class="bi bi-person-badge-fill"></i><label>Personel</label>
-    </a>
+    <a href="{{ route('ik.index') }}" class="{{ request()->routeIs('ik.index') && !request('sekme') ? 'active' : '' }}"><i class="bi bi-people-fill"></i><label>İK Kontrol Paneli</label></a>
+    <a href="{{ route('kullanicilar.index') }}" class="{{ request()->routeIs('kullanicilar.*') ? 'active' : '' }}"><i class="bi bi-person-badge-fill"></i><label>Personel Yönetimi</label></a>
+    <a href="{{ route('ik.index',['sekme'=>'puantaj']) }}" class="{{ request('sekme') === 'puantaj' ? 'active' : '' }}"><i class="bi bi-calendar-check-fill"></i><label>Puantaj ve Mesai</label></a>
+    <a href="{{ route('ik.index',['sekme'=>'ozel-gun']) }}" class="{{ request('sekme') === 'ozel-gun' ? 'active' : '' }}"><i class="bi bi-calendar-heart-fill"></i><label>Özel Gün Takvimi</label></a>
+    <a href="{{ route('ik.index',['sekme'=>'ozluk']) }}" class="{{ request('sekme') === 'ozluk' ? 'active' : '' }}"><i class="bi bi-folder2-open"></i><label>Özlük ve CV</label></a>
+    <a href="{{ route('ik.index',['sekme'=>'ise-alim']) }}" class="{{ request('sekme') === 'ise-alim' ? 'active' : '' }}"><i class="bi bi-person-plus-fill"></i><label>İşe Alım</label></a>
+    <a href="{{ route('ik.index',['sekme'=>'egitim']) }}" class="{{ request('sekme') === 'egitim' ? 'active' : '' }}"><i class="bi bi-mortarboard-fill"></i><label>Eğitim ve Gelişim</label></a>
+    <a href="{{ route('ik.index',['sekme'=>'performans']) }}" class="{{ request('sekme') === 'performans' ? 'active' : '' }}"><i class="bi bi-graph-up-arrow"></i><label>Performans Yönetimi</label></a>
+    <a href="{{ route('ik.index',['sekme'=>'ucret']) }}" class="{{ request('sekme') === 'ucret' ? 'active' : '' }}"><i class="bi bi-cash-stack"></i><label>Ücret ve Bordro</label></a>
+    <a href="{{ route('ik.sifre.talepleri') }}" class="{{ request()->routeIs('ik.sifre.*') ? 'active' : '' }}"><i class="bi bi-key-fill"></i><label>Şifre Talepleri</label></a>
 </div>
 @endif
 
@@ -249,6 +256,14 @@
     @if(auth()->user()?->tamSistemYetkisiVarMi() || auth()->user()?->isAdmin())
     <a href="{{ route('ayarlar.iletisim') }}" class="{{ request()->routeIs('ayarlar.iletisim*') ? 'active' : '' }}">
         <i class="bi bi-send-check-fill"></i><label>İletişim Ayarları</label>
+    </a>
+    <a href="{{ route('ticari.api') }}" class="{{ request()->routeIs('ticari.api*') ? 'active' : '' }}">
+        <i class="bi bi-plug-fill"></i><label>API ve Entegrasyonlar</label>
+    </a>
+    @endif
+    @if(auth()->user()?->isAdmin() && $aktifFirma)
+    <a href="{{ route('firma.show', $aktifFirma) }}" class="{{ request()->routeIs('firma.*', 'sube.*') ? 'active' : '' }}">
+        <i class="bi bi-building-gear"></i><label>Firma ve Şube Ayarları</label>
     </a>
     @endif
     @if(auth()->user()?->tamSistemYetkisiVarMi())

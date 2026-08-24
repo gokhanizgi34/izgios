@@ -65,5 +65,5 @@ class SifreYonetimController extends Controller
         return back()->with('success', 'İK şifre talep e-postası güncellendi.');
     }
     private function aktifFirmaId(): ?int { return session('aktif_firma_id') ?: auth()->user()->firmaPersoneli?->firma_id; }
-    private function ikKontrol(): void { abort_unless(auth()->check() && (auth()->user()->isIk() || auth()->user()->tamSistemYetkisiVarMi()), 403); }
+    private function ikKontrol(): void { abort_unless(auth()->check() && auth()->user()->ikErisimiVarMi(), 403); }
 }
