@@ -138,6 +138,11 @@ class Servis extends Model
         return $this->belongsTo(User::class, 'usta_id');
     }
 
+    public function durumNotlari()
+    {
+        return $this->hasMany(ServisDurumNotu::class, 'servis_id')->oldest();
+    }
+
 
 
 

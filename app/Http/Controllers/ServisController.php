@@ -188,7 +188,8 @@ class ServisController extends Controller
             'arac',
             'islemler',
             'parcalar',
-            'fotograflar'
+            'fotograflar',
+            'durumNotlari.kullanici'
 
         ])
 

@@ -66,6 +66,12 @@
                             <span><i class="bi bi-wrench-adjustable"></i> Usta İlk Kontrolü</span>
                             <p>{{ $servis->usta_notu ?: 'Henüz ilk kontrol notu eklenmedi.' }}</p>
                         </article>
+                        @foreach($servis->durumNotlari as $durumNotu)
+                            <article class="servis-metin-kutusu">
+                                <span><i class="bi bi-signpost-split"></i> {{ $durumNotu->durum }} Süreç Notu · {{ optional($durumNotu->created_at)->format('d.m.Y H:i') }}</span>
+                                <p>{{ $durumNotu->not }}</p>
+                            </article>
+                        @endforeach
                     </div>
                 </div>
             </article>

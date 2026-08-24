@@ -10,9 +10,11 @@ use App\Models\ServisIslem;
 use App\Models\ServisParca;
 use App\Models\ServisFotograf;
 use App\Models\AracHasar;
+use App\Models\ServisDurumNotu;
 use App\Services\IletisimOtomasyonServisi;
 use App\Services\BakimHatirlatmaTarihi;
 use App\Services\ServisMuhasebeAktarimServisi;
+use App\Services\ServisDurumAkisi;
 use Illuminate\Support\Facades\DB;
 
 
@@ -42,7 +44,9 @@ class ServisIslemController extends Controller
 
             'parcalar',
 
-            'fotograflar'
+            'fotograflar',
+
+            'durumNotlari.kullanici'
 
         ])
 
@@ -89,18 +93,43 @@ class ServisIslemController extends Controller
         return redirect()->route('servis.islem', $servis)->with('success', 'İş emri üzerinize alındı.');
     }
 
-    public function durumGuncelle(Request $request, Servis $servis)
+    public function durumGuncelle(Request $request, Servis $servis, ServisDurumAkisi $akis)
     {
         $this->islemYetkisi($servis);
-        $veri = $request->validate(['durum' => ['required', 'in:Bekliyor,İşlemde,Teslime Hazır,Tamamlandı'], 'usta_notu' => ['nullable', 'string', 'max:5000']]);
+        $akisNotu = $request->boolean('akis_notu');
+        $veri = $request->validate([
+            'durum' => [$akisNotu ? 'nullable' : 'required', 'in:Bekliyor,İşlemde,Teslime Hazır,Tamamlandı'],
+            'usta_notu' => [$akisNotu ? 'required' : 'nullable', 'string', 'max:5000'],
+            'akis_notu' => ['nullable', 'boolean'],
+        ]);
         $oncekiDurum = $servis->durum;
-        $servis->update(array_filter($veri, fn ($deger) => $deger !== null));
+
+        if ($akisNotu) {
+            $sonrakiDurum = $akis->sonraki($oncekiDurum);
+            DB::transaction(function () use ($servis, $veri, $oncekiDurum, $sonrakiDurum) {
+                ServisDurumNotu::create([
+                    'servis_id' => $servis->id,
+                    'kullanici_id' => auth()->id(),
+                    'durum' => $oncekiDurum,
+                    'not' => $veri['usta_notu'],
+                ]);
+                $servis->update(['durum' => $sonrakiDurum]);
+            });
+        } else {
+            $servis->update(array_filter([
+                'durum' => $veri['durum'],
+                'usta_notu' => $veri['usta_notu'] ?? null,
+            ], fn ($deger) => $deger !== null));
+        }
+
         $guncelServis = $servis->fresh();
         app(IletisimOtomasyonServisi::class)->servisDurumuDegisti($guncelServis, $oncekiDurum, $guncelServis->durum);
         if ($guncelServis->durum === 'Tamamlandı') {
             app(ServisMuhasebeAktarimServisi::class)->aktar($guncelServis);
         }
-        return back()->with('success', 'Servis durumu güncellendi.');
+        return back()->with('success', $akisNotu
+            ? $oncekiDurum.' notu kaydedildi. Sıradaki aşama: '.$guncelServis->durum.'.'
+            : 'Servis durumu güncellendi.');
     }
 
     public function hatirlatmaGuncelle(Request $request, Servis $servis)
