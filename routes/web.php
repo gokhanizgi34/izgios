@@ -367,6 +367,11 @@ Route::get('/ayarlar/ik/sifre-talepleri', [SifreYonetimController::class, 'ikTal
 Route::get('/ayarlar/ik', [IkController::class, 'index'])->name('ik.index');
 Route::post('/ayarlar/ik/ozluk', [IkController::class, 'ozlukKaydet'])->name('ik.ozluk.kaydet');
 Route::post('/ayarlar/ik/bordro', [IkController::class, 'bordroKaydet'])->name('ik.bordro.kaydet');
+Route::get('/ayarlar/ik/personel/{user}/puantaj-qr', [IkController::class, 'puantajQr'])->name('ik.puantaj.qr');
+Route::get('/ayarlar/ik/bordro/{bordro}', [IkController::class, 'bordroYazdir'])->name('ik.bordro.yazdir');
+Route::post('/ayarlar/ik/bordro/{bordro}/gonder', [IkController::class, 'bordroGonder'])->name('ik.bordro.gonder');
+Route::get('/puantaj/{token}', [IkController::class, 'qrOkut'])->middleware('throttle:30,1')->name('ik.puantaj.qr.okut');
+Route::post('/puantaj/{token}', [IkController::class, 'qrKaydet'])->middleware('throttle:10,1')->name('ik.puantaj.qr.kaydet');
 Route::patch('/ayarlar/ik/sifre-talepleri/{talep}', [SifreYonetimController::class, 'ikOnayla'])->name('ik.sifre.onayla');
 Route::get('/ayarlar/ik/iletisim', [SifreYonetimController::class, 'ikAyarFormu'])->name('ik.iletisim');
 Route::put('/ayarlar/ik/iletisim', [SifreYonetimController::class, 'ikAyarKaydet'])->name('ik.iletisim.update');

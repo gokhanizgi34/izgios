@@ -353,6 +353,11 @@ class KullaniciController extends Controller
 
             'sube_id' => ['required'],
 
+            'brut_ucret' => ['nullable', 'numeric', 'min:0'],
+            'net_ucret' => ['nullable', 'numeric', 'min:0'],
+            'calisma_baslangic' => ['nullable', 'date_format:H:i'],
+            'calisma_bitis' => ['nullable', 'date_format:H:i', 'after:calisma_baslangic'],
+
 
 
             'password' => [
@@ -453,10 +458,30 @@ class KullaniciController extends Controller
 
         [$firma, $sube] = $this->baglantiVerisiniDogrula($request);
 
-        DB::transaction(function () use ($validated, $firma, $sube) {
-            unset($validated['firma_id'], $validated['sube_id']);
+        $ikVerisi = collect($validated)->only(['brut_ucret','net_ucret','calisma_baslangic','calisma_bitis'])->all();
+        DB::transaction(function () use ($validated, $firma, $sube, $ikVerisi) {
+            unset($validated['firma_id'], $validated['sube_id'], $validated['brut_ucret'], $validated['net_ucret'], $validated['calisma_baslangic'], $validated['calisma_bitis']);
             $kullanici = User::create($validated);
             $this->firmaPersoneliniKaydet($kullanici, $firma, $sube);
+            if (collect($ikVerisi)->filter(fn ($deger) => filled($deger))->isNotEmpty()) {
+                DB::table('ik_personel_ozlukleri')->insert(array_merge([
+                    'firma_id' => $firma->id,
+                    'user_id' => $kullanici->id,
+                    'puantaj_qr_token' => (string) \Illuminate\Support\Str::uuid(),
+                    'puantaj_qr_yenilendi_at' => now(),
+                    'calisma_gunleri' => json_encode([1,2,3,4,5,6]),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ], array_filter($ikVerisi, fn ($deger) => filled($deger))));
+                $brut = (float) ($ikVerisi['brut_ucret'] ?? 0);
+                $net = (float) ($ikVerisi['net_ucret'] ?? 0);
+                DB::table('ik_bordrolar')->insert([
+                    'firma_id'=>$firma->id,'user_id'=>$kullanici->id,'donem'=>now()->startOfMonth()->toDateString(),
+                    'brut_ucret'=>$brut,'net_ucret'=>$net,'esas_net_ucret'=>$net,'calisilan_gun'=>30,'odenecek_net'=>$net,
+                    'durum'=>'taslak','aciklama'=>'Personel oluşturulurken ücret kartından otomatik açıldı; İK puantaj hesabında güncellenecek.',
+                    'olusturan_id'=>auth()->id(),'created_at'=>now(),'updated_at'=>now(),
+                ]);
+            }
         });
 
 

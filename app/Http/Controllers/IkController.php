@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Firma;
+use App\Services\FirmaIletisimGonderici;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class IkController extends Controller
 {
@@ -37,9 +40,11 @@ class IkController extends Controller
         if ($request->filled('islem')) {
             return $this->ikKaydiKaydet($request, $firmaId);
         }
-        $v = $request->validate(['user_id' => ['required', 'integer'], 'ise_baslama_tarihi' => ['nullable', 'date'], 'unvan' => ['nullable', 'string', 'max:120'], 'brut_ucret' => ['nullable', 'numeric', 'min:0'], 'net_ucret' => ['nullable', 'numeric', 'min:0'], 'saatlik_mesai_ucreti' => ['nullable', 'numeric', 'min:0'], 'notlar' => ['nullable', 'string', 'max:2000']]);
+        $v = $request->validate(['user_id' => ['required', 'integer'], 'ise_baslama_tarihi' => ['nullable', 'date'], 'unvan' => ['nullable', 'string', 'max:120'], 'brut_ucret' => ['nullable', 'numeric', 'min:0'], 'net_ucret' => ['nullable', 'numeric', 'min:0'], 'saatlik_mesai_ucreti' => ['nullable', 'numeric', 'min:0'], 'calisma_baslangic' => ['nullable','date_format:H:i'], 'calisma_bitis' => ['nullable','date_format:H:i','after:calisma_baslangic'], 'gunluk_mola_dakika' => ['nullable','integer','min:0','max:300'], 'fazla_mesai_carpani' => ['nullable','numeric','min:1','max:3'], 'calisma_gunleri' => ['nullable','array'], 'calisma_gunleri.*' => ['integer','between:1,7'], 'notlar' => ['nullable', 'string', 'max:2000']]);
         abort_unless(DB::table('firma_personels')->where('firma_id', $firmaId)->where('user_id', $v['user_id'])->where('aktif', true)->exists(), 422, 'Personel seçilen firmaya bağlı değil.');
-        DB::table('ik_personel_ozlukleri')->updateOrInsert(['firma_id' => $firmaId, 'user_id' => $v['user_id']], array_merge($v, ['firma_id' => $firmaId, 'updated_at' => now(), 'created_at' => now()]));
+        $v['calisma_gunleri'] = json_encode($v['calisma_gunleri'] ?? [1,2,3,4,5,6]);
+        $mevcut = DB::table('ik_personel_ozlukleri')->where('firma_id',$firmaId)->where('user_id',$v['user_id'])->first();
+        DB::table('ik_personel_ozlukleri')->updateOrInsert(['firma_id' => $firmaId, 'user_id' => $v['user_id']], array_merge($v, ['firma_id' => $firmaId, 'puantaj_qr_token' => $mevcut?->puantaj_qr_token ?: (string) Str::uuid(), 'puantaj_qr_yenilendi_at' => $mevcut?->puantaj_qr_yenilendi_at ?: now(), 'updated_at' => now(), 'created_at' => $mevcut?->created_at ?: now()]));
         $this->bordroHesapla($firmaId, $v['user_id'], now());
         return back()->with('success', 'Personel özlük ve ücret bilgileri kaydedildi; güncel ay bordrosu otomatik hesaplandı.');
     }
@@ -169,13 +174,32 @@ class IkController extends Controller
             $saatlikMesai = round($esasNet / 240, 2);
         }
         $kesinti = round(($esasNet / 30) * $eksikGun, 2);
-        $mesaiTutari = round($mesaiSaati * $saatlikMesai, 2);
-        $odenecekNet = max(0, round($esasNet - $kesinti + $mesaiTutari, 2));
+        $mesaiTutari = round($mesaiSaati * $saatlikMesai * (float) ($ozluk->fazla_mesai_carpani ?? 1.5), 2);
+        $primeEsas = max(0, $brut - round(($brut / 30) * $eksikGun, 2) + $mesaiTutari);
+        $sgkIsci = round($primeEsas * .14, 2);
+        $issizlikIsci = round($primeEsas * .01, 2);
+        $vergiMatrahi = max(0, $primeEsas - $sgkIsci - $issizlikIsci);
+        $oncekiMatrah = (float) DB::table('ik_bordrolar')->where('firma_id',$firmaId)->where('user_id',$userId)->whereYear('donem',$ayBaslangic->year)->whereDate('donem','<',$ayBaslangic->toDateString())->sum('gelir_vergisi_matrahi');
+        $gelirVergisi = $this->gelirVergisi($oncekiMatrah + $vergiMatrahi) - $this->gelirVergisi($oncekiMatrah);
+        $damgaVergisi = round($primeEsas * .00759, 2);
+        $toplamKesinti = round($sgkIsci + $issizlikIsci + $gelirVergisi + $damgaVergisi + $kesinti, 2);
+        $sgkIsveren = round($primeEsas * .2175, 2);
+        $issizlikIsveren = round($primeEsas * .02, 2);
+        $odenecekNet = $brut > 0 ? max(0, round($primeEsas - $sgkIsci - $issizlikIsci - $gelirVergisi - $damgaVergisi, 2)) : max(0, round($esasNet - $kesinti + $mesaiTutari, 2));
 
         DB::table('ik_bordrolar')->updateOrInsert(
             ['firma_id' => $firmaId, 'user_id' => $userId, 'donem' => $ayBaslangic->toDateString()],
             [
                 'brut_ucret' => $brut,
+                'sgk_isci' => $sgkIsci,
+                'issizlik_isci' => $issizlikIsci,
+                'gelir_vergisi_matrahi' => $vergiMatrahi,
+                'gelir_vergisi' => $gelirVergisi,
+                'damga_vergisi' => $damgaVergisi,
+                'sgk_isveren' => $sgkIsveren,
+                'issizlik_isveren' => $issizlikIsveren,
+                'toplam_kesinti' => $toplamKesinti,
+                'isveren_maliyeti' => round($primeEsas + $sgkIsveren + $issizlikIsveren, 2),
                 'net_ucret' => $odenecekNet,
                 'esas_net_ucret' => $esasNet,
                 'calisilan_gun' => $calisilanGun,
@@ -187,11 +211,76 @@ class IkController extends Controller
                 'hak_edis' => $mesaiTutari,
                 'avans' => (float) ($mevcutBordro->avans ?? 0),
                 'durum' => $mevcutBordro->durum ?? 'taslak',
-                'aciklama' => 'Puantaj otomatik hesaplama: 30 gün varsayımı, eksik gün ve mesai yansıtıldı.',
+                'aciklama' => 'Puantaj, eksik gün, fazla mesai ve dönemsel yasal kesinti kalemleri otomatik hesaplandı. Onay öncesi mali müşavir kontrolü gerekir.',
                 'olusturan_id' => $mevcutBordro->olusturan_id ?? auth()->id(),
                 'updated_at' => now(),
                 'created_at' => $mevcutBordro->created_at ?? now(),
             ]
         );
+    }
+
+    public function puantajQr(Request $request, int $user)
+    {
+        $this->yetki(); $firmaId=$this->firmaId($request,$this->firmalar());
+        $personel=DB::table('firma_personels as fp')->join('users as u','u.id','=','fp.user_id')->join('ik_personel_ozlukleri as o',function($j){$j->on('o.user_id','=','u.id')->on('o.firma_id','=','fp.firma_id');})->where('fp.firma_id',$firmaId)->where('u.id',$user)->select('u.id','u.name','u.surname','o.puantaj_qr_token')->first();
+        abort_unless($personel,404);
+        if (!$personel->puantaj_qr_token) { $token=(string)Str::uuid(); DB::table('ik_personel_ozlukleri')->where('firma_id',$firmaId)->where('user_id',$user)->update(['puantaj_qr_token'=>$token,'puantaj_qr_yenilendi_at'=>now()]); $personel->puantaj_qr_token=$token; }
+        $qrCode=QrCode::size(360)->margin(2)->generate(route('ik.puantaj.qr.okut',$personel->puantaj_qr_token));
+        return view('ayarlar.ik.puantaj-qr',compact('personel','qrCode','firmaId'));
+    }
+
+    public function qrOkut(string $token)
+    {
+        $personel=DB::table('ik_personel_ozlukleri as o')->join('users as u','u.id','=','o.user_id')->join('firmas as f','f.id','=','o.firma_id')->where('o.puantaj_qr_token',$token)->select('o.*','u.name','u.surname','f.unvan as firma_adi')->firstOrFail();
+        return view('ayarlar.ik.puantaj-okut',compact('personel','token'));
+    }
+
+    public function qrKaydet(Request $request, string $token)
+    {
+        $personel=DB::table('ik_personel_ozlukleri')->where('puantaj_qr_token',$token)->firstOrFail();
+        abort_if(DB::table('ik_puantaj_hareketleri')->where('firma_id',$personel->firma_id)->where('user_id',$personel->user_id)->where('created_at','>',now()->subMinute())->exists(),429,'Aynı QR bir dakika içinde tekrar kullanılamaz.');
+        $bugun=now()->toDateString(); $saat=now()->format('H:i:s');
+        $puantaj=DB::table('ik_puantaj_kayitlari')->where('firma_id',$personel->firma_id)->where('user_id',$personel->user_id)->where('tarih',$bugun)->first();
+        $hareket=(!$puantaj || !$puantaj->giris_saati) ? 'giris' : 'cikis';
+        if ($hareket==='giris') {
+            DB::table('ik_puantaj_kayitlari')->updateOrInsert(['firma_id'=>$personel->firma_id,'user_id'=>$personel->user_id,'tarih'=>$bugun],['giris_saati'=>$saat,'durum'=>'calisti','kaynak'=>'qr','giris_ip'=>$request->ip(),'updated_at'=>now(),'created_at'=>$puantaj?->created_at ?: now()]);
+        } else {
+            abort_if($puantaj->cikis_saati,422,'Bugünkü giriş ve çıkış daha önce tamamlandı.');
+            $giris=Carbon::parse($bugun.' '.$puantaj->giris_saati); $cikis=now();
+            $calisma=max(0,round(($giris->diffInMinutes($cikis)-(int)$personel->gunluk_mola_dakika)/60,2));
+            $plan=max(0,round((Carbon::parse($bugun.' '.$personel->calisma_baslangic)->diffInMinutes(Carbon::parse($bugun.' '.$personel->calisma_bitis))-(int)$personel->gunluk_mola_dakika)/60,2));
+            DB::table('ik_puantaj_kayitlari')->where('id',$puantaj->id)->update(['cikis_saati'=>$saat,'calisma_saati'=>$calisma,'mesai_saati'=>max(0,$calisma-$plan),'cikis_ip'=>$request->ip(),'updated_at'=>now()]);
+            $this->bordroHesapla((int)$personel->firma_id,(int)$personel->user_id,now());
+        }
+        DB::table('ik_puantaj_hareketleri')->insert(['firma_id'=>$personel->firma_id,'user_id'=>$personel->user_id,'hareket'=>$hareket,'kayit_zamani'=>now(),'kaynak'=>'qr','ip_adresi'=>$request->ip(),'cihaz'=>Str::limit((string)$request->userAgent(),500,''),'created_at'=>now(),'updated_at'=>now()]);
+        return back()->with('success', $hareket==='giris' ? 'İşe giriş kaydedildi.' : 'İşten çıkış ve mesai süresi kaydedildi.');
+    }
+
+    public function bordroYazdir(Request $request, int $bordro)
+    {
+        $this->yetki(); $firmalar=$this->firmalar(); $firmaId=$this->firmaId($request,$firmalar);
+        $kayit=DB::table('ik_bordrolar as b')->join('users as u','u.id','=','b.user_id')->join('firmas as f','f.id','=','b.firma_id')->where('b.id',$bordro)->where('b.firma_id',$firmaId)->select('b.*','u.name','u.surname','u.email','u.phone','f.unvan as firma_adi')->firstOrFail();
+        return view('ayarlar.ik.bordro',compact('kayit'));
+    }
+
+    public function bordroGonder(Request $request, int $bordro, FirmaIletisimGonderici $gonderici)
+    {
+        abort_unless(auth()->user()?->tamSistemYetkisiVarMi(),403);
+        $v=$request->validate(['kanal'=>['required','in:email,whatsapp,sms']]);
+        $kayit=DB::table('ik_bordrolar as b')->join('users as u','u.id','=','b.user_id')->where('b.id',$bordro)->select('b.*','u.name','u.surname','u.email','u.phone')->firstOrFail();
+        $alici=$v['kanal']==='email'?$kayit->email:$kayit->phone; abort_if(blank($alici),422,'Personelin seçilen kanal için iletişim bilgisi yok.');
+        $link=route('ik.bordro.yazdir',['bordro'=>$kayit->id,'firma_id'=>$kayit->firma_id]);
+        $mesaj=Carbon::parse($kayit->donem)->format('m.Y')." dönemi bordronuz hazır. Net ödeme: ₺".number_format($kayit->odenecek_net,2,',','.').". Bordro: {$link}";
+        if ($v['kanal']==='whatsapp') return redirect()->away('https://wa.me/'.preg_replace('/\D+/','',$alici).'?text='.rawurlencode($mesaj));
+        if ($v['kanal']==='sms') return redirect()->away('sms:'.preg_replace('/\D+/','',$alici).'?body='.rawurlencode($mesaj));
+        $gonderici->gonder((object)['firma_id'=>$kayit->firma_id,'kanal'=>'email','alici'=>$alici,'mesaj'=>$mesaj],'Aylık ücret bordrosu');
+        return back()->with('success','Bordro e-posta ile gönderildi.');
+    }
+
+    private function gelirVergisi(float $matrah): float
+    {
+        $dilimler=[[190000,.15],[400000,.20],[1500000,.27],[5300000,.35],[INF,.40]]; $vergi=0; $onceki=0;
+        foreach($dilimler as [$sinir,$oran]) { $tutar=min($matrah,$sinir)-$onceki; if($tutar>0)$vergi+=$tutar*$oran; if($matrah<=$sinir)break; $onceki=$sinir; }
+        return round($vergi,2);
     }
 }
