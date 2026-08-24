@@ -195,10 +195,6 @@
         <i class="bi bi-chat-square-text-fill"></i>
         <label>Firma Sohbeti</label>
     </a>
-    <a href="{{ route('operasyon.b2b') }}" class="{{ request()->routeIs('operasyon.b2b*') ? 'active' : '' }}">
-        <i class="bi bi-cart-check-fill"></i><label>B2B Siparişler</label>
-    </a>
-
     @if(auth()->check())
     <a href="{{ route('hesap.sifre') }}" class="{{ request()->routeIs('hesap.sifre') ? 'active' : '' }}">
         <i class="bi bi-key-fill"></i>

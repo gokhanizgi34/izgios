@@ -113,8 +113,6 @@ Route::delete('/operasyon/randevular/{randevu}', [OperasyonController::class, 'r
 Route::post('/operasyon/randevular/{randevu}/servise-al', [OperasyonController::class, 'randevuyuServiseAl'])->name('operasyon.randevular.servise-al');
 Route::get('/operasyon/sigorta-kasko', [OperasyonController::class, 'sigorta'])->name('operasyon.sigorta');
 Route::post('/operasyon/sigorta-kasko', [OperasyonController::class, 'sigortaKaydet'])->name('operasyon.sigorta.kaydet');
-Route::get('/operasyon/b2b-siparisler', [OperasyonController::class, 'b2b'])->name('operasyon.b2b');
-Route::post('/operasyon/b2b-siparisler', [OperasyonController::class, 'b2bKaydet'])->name('operasyon.b2b.kaydet');
 Route::get('/raporlar', [RaporController::class, 'index'])->name('raporlar.index');
 Route::get('/sistem/silme-kayitlari', [SilmeDenetimController::class, 'index'])->name('sistem.silme-kayitlari');
 Route::post('/raporlar/al', [RaporController::class, 'al'])->name('raporlar.al');

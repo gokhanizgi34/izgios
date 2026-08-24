@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $modul === 'randevu' ? 'Randevu ve Ajanda' : ($modul === 'sigorta' ? 'Sigorta / Kasko' : 'B2B Siparişleri'))
+@section('title', $modul === 'randevu' ? 'Randevu ve Ajanda' : 'Sigorta / Kasko')
 
 @section('content')
 <style>
@@ -44,8 +44,7 @@
     <header class="op-hero">
         <h1>
             @if($modul === 'randevu') <i class="bi bi-calendar-week"></i> Randevu ve Servis Ajandası
-            @elseif($modul === 'sigorta') <i class="bi bi-shield-check"></i> Sigorta / Kasko Hasar Takibi
-            @else <i class="bi bi-cart-check"></i> B2B Sipariş Merkezi
+            @else <i class="bi bi-shield-check"></i> Sigorta / Kasko Hasar Takibi
             @endif
         </h1>
         <p>Firma ve şube kapsamlı kayıtlar; ilgili müşteri, araç ve operasyon süreciyle birlikte izlenir.</p>
@@ -57,7 +56,7 @@
     <div class="op-grid">
         <article class="op-card">
             <div class="op-card-head">
-                <h2>@if($modul === 'randevu') Yeni randevu @elseif($modul === 'sigorta') Yeni hasar dosyası @else Yeni B2B siparişi @endif</h2>
+                <h2>{{ $modul === 'randevu' ? 'Yeni randevu' : 'Yeni hasar dosyası' }}</h2>
                 <p>@if($modul === 'randevu') Müşteri ve aracı seçip ajandaya ekleyin. @else Kayıt bilgilerini tamamlayın. @endif</p>
             </div>
             <div class="op-card-body op-form">
@@ -99,15 +98,6 @@
                         <div class="field-gap"><label class="form-label">Açıklama</label><textarea class="form-control" name="aciklama"></textarea></div>
                         <button class="btn-submit" type="submit">Hasar Dosyası Aç</button>
                     </form>
-                @else
-                    <form method="post" action="{{ route('operasyon.b2b.kaydet') }}">@csrf
-                        <div class="field-gap"><label class="form-label">Alıcı firma / bayi</label><input class="form-control" name="alici_unvan" required></div>
-                        <div class="field-gap"><label class="form-label">Stok ürünü</label><select class="form-select" name="stok_parca_id"><option value="">Serbest ürün satırı</option>@foreach($parcalar as $p)<option value="{{ $p->id }}">{{ $p->parca_adi }} · {{ $p->oem_no }}</option>@endforeach</select></div>
-                        <div class="field-gap"><label class="form-label">Ürün adı</label><input class="form-control" name="urun_adi" required></div>
-                        <div class="row g-2"><div class="col-6 field-gap"><label class="form-label">Miktar</label><input class="form-control" type="number" step=".01" name="miktar" required></div><div class="col-6 field-gap"><label class="form-label">Birim fiyat</label><input class="form-control" type="number" step=".01" name="birim_fiyat" required></div></div>
-                        <div class="field-gap"><label class="form-label">Durum</label><select class="form-select" name="durum"><option value="taslak">Taslak</option><option value="onaylandi">Onaylandı</option><option value="hazirlaniyor">Hazırlanıyor</option><option value="kargoda">Kargoda</option><option value="tamamlandi">Tamamlandı</option><option value="iptal">İptal</option></select></div>
-                        <button class="btn-submit" type="submit">Siparişi Kaydet</button>
-                    </form>
                 @endif
             </div>
         </article>
@@ -130,7 +120,7 @@
                         @endforelse
                     </div>
                 @else
-                    <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr>@if($modul === 'sigorta')<th>Dosya</th><th>Sigorta / Araç</th><th>Tutar</th><th>Durum</th>@else<th>Sipariş no</th><th>Alıcı</th><th>Tutar</th><th>Durum</th>@endif</tr></thead><tbody>@forelse($kayitlar as $k)<tr>@if($modul === 'sigorta')<td>{{ $k->dosya_no }}</td><td>{{ $k->sigorta_unvan ?: 'Firma seçilmedi' }}<small class="d-block">{{ $k->plaka ?: '-' }}</small></td><td>₺{{ number_format($k->onayli_tutar, 2, ',', '.') }}</td><td>{{ $k->durum }}</td>@else<td>{{ $k->siparis_no }}</td><td>{{ $k->alici_unvan }}</td><td>₺{{ number_format($k->toplam_tutar, 2, ',', '.') }}</td><td>{{ $k->durum }}</td>@endif</tr>@empty<tr><td colspan="4" class="text-muted">Henüz kayıt yok.</td></tr>@endforelse</tbody></table></div>
+                    <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Dosya</th><th>Sigorta / Araç</th><th>Tutar</th><th>Durum</th></tr></thead><tbody>@forelse($kayitlar as $k)<tr><td>{{ $k->dosya_no }}</td><td>{{ $k->sigorta_unvan ?: 'Firma seçilmedi' }}<small class="d-block">{{ $k->plaka ?: '-' }}</small></td><td>₺{{ number_format($k->onayli_tutar, 2, ',', '.') }}</td><td>{{ $k->durum }}</td></tr>@empty<tr><td colspan="4" class="text-muted">Henüz kayıt yok.</td></tr>@endforelse</tbody></table></div>
                 @endif
             </div>
         </article>
