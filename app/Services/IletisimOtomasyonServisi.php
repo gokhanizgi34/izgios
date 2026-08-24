@@ -217,6 +217,7 @@ class IletisimOtomasyonServisi
         $planlananAt = Carbon::parse($zaman);
         $sablon = $varsayilanSablon ?: ($ayar->sablon ?: $this->varsayilanSablon($grup));
         $qrTakipLinki = $arac?->qr_token ? route('qr.servis.show', ['token' => $arac->qr_token, 'ekran' => 'servis']) : null;
+        $qrSifre = $arac ? mb_substr(preg_replace('/[^A-Z0-9]/u', '', mb_strtoupper($arac->plaka)), -4) : null;
         $servisNo = in_array($kaynakTuru, ['servis', 'servis_durum'], true)
             ? (Servis::find($kaynakId)?->servis_no ?: (string) $kaynakId)
             : '-';
@@ -230,8 +231,12 @@ class IletisimOtomasyonServisi
             '{servis_no}' => $servisNo,
             '{firma_telefonu}' => $firma?->telefon ?: 'servisinizin iletişim hattı',
             '{qr_takip_linki}' => $qrTakipLinki ?: 'QR takip bağlantısı tanımlı değil',
+            '{qr_sifre}' => $qrSifre ?: '-',
             '{yorum_linki}' => $firma?->google_yorum_linki ?: 'yorum bağlantısı yakında paylaşılacaktır',
         ]);
+        if ($qrTakipLinki && in_array($kaynakTuru, ['servis', 'servis_durum'], true) && ! str_contains($mesaj, 'Şifre:')) {
+            $mesaj .= " Detaylar: {$qrTakipLinki} Şifre: {$qrSifre}";
+        }
 
         foreach (['whatsapp', 'sms', 'email'] as $kanal) {
             if (! $ayar->{$kanal}) {
@@ -275,7 +280,7 @@ class IletisimOtomasyonServisi
         return match ($grup) {
             'randevu_olustuldu' => 'Merhaba {musteri_adi}, {plaka} için randevunuz oluşturuldu.',
             'randevu_yaklasiyor' => '{musteri_adi}, {plaka} aracınızın randevusu yaklaşıyor.',
-            'servis_kabul' => 'Merhaba {musteri_adi}, {plaka} aracınız servise kabul edildi. Servis numaranız: {servis_no}. Servis sürecini buradan takip edebilirsiniz: {qr_takip_linki}',
+            'servis_kabul' => 'Merhaba {musteri_adi}, {plaka} aracınız servise kabul edildi. Servis numaranız: {servis_no}. Detaylar: {qr_takip_linki} Şifreniz: {qr_sifre}',
             'islem_basladi' => '{musteri_adi}, {plaka} aracınızın servis işlemleri başladı.',
             'teslimata_hazir' => '{musteri_adi}, {plaka} aracınız teslimata hazır. Teslim saatiniz için {firma_telefonu} numarasından {firma_adi} ile iletişime geçebilirsiniz.',
             'teslim_edildi' => '{musteri_adi}, {plaka} aracınız teslim edildi. Bizi tercih ettiğiniz için teşekkür ederiz. Deneyiminizi Google üzerinde paylaşmak isterseniz: {yorum_linki}',

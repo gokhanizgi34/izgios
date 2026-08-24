@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\FirmaIletisimGonderici;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -41,21 +42,35 @@ class CiktiController extends Controller
         }, $dosya, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
-    public function gonder(Request $request, string $tur, int $id)
+    public function gonder(Request $request, string $tur, int $id, FirmaIletisimGonderici $gonderici)
     {
         [$baslik, $belge, $satirlar, $firma, $resmiFatura] = $this->belge($request, $tur, $id);
         $veri = $request->validate([
             'kanal' => ['required', 'in:email,whatsapp,sms'],
             'alici' => ['required', 'string', 'max:255'],
         ]);
-
-        $mesaj = $this->paylasimMesaji($baslik, $belge, $satirlar, $firma);
-
         if ($veri['kanal'] === 'email') {
             $request->validate(['alici' => ['email']]);
+        }
 
+        $mesaj = $this->paylasimMesaji($baslik, $belge, $satirlar, $firma);
+        $entegrasyonAktif = DB::table('muhasebe_entegrasyonlari')->where('firma_id', $belge->firma_id)->where('saglayici', $veri['kanal'])->where('aktif', true)->exists();
+
+        if ($entegrasyonAktif) {
             try {
-                Mail::send('emails.muhasebe-belgesi', compact('baslik', 'belge', 'satirlar', 'firma', 'resmiFatura'), function ($mail) use ($veri, $baslik, $belge) {
+                $gonderici->gonder((object) ['firma_id' => $belge->firma_id, 'kanal' => $veri['kanal'], 'alici' => $veri['alici'], 'mesaj' => $mesaj], $baslik.' · '.$belge->belge_no);
+                $this->gonderimLogla($belge, $veri['kanal'], $veri['alici'], $mesaj, 'gonderildi');
+                return back()->with('success', strtoupper($veri['kanal']).' gönderimi tamamlandı.');
+            } catch (Throwable $exception) {
+                report($exception);
+                return back()->withErrors(['alici' => 'Entegrasyon üzerinden gönderilemedi. API/SMTP ayarlarını kontrol edin.']);
+            }
+        }
+
+        if ($veri['kanal'] === 'email') {
+            try {
+                $paylasimMesaji = $mesaj;
+                Mail::send('emails.muhasebe-belgesi', compact('baslik', 'belge', 'satirlar', 'firma', 'resmiFatura', 'paylasimMesaji'), function ($mail) use ($veri, $baslik, $belge) {
                     $mail->to($veri['alici'])->subject("{$baslik} · {$belge->belge_no}");
                 });
                 $this->gonderimLogla($belge, 'email', $veri['alici'], $mesaj, 'gonderildi');
@@ -114,6 +129,9 @@ class CiktiController extends Controller
             $belge->musteri_unvan ??= $musteri?->ad_soyad;
             $belge->alici_email = $musteri?->email;
             $belge->alici_telefon = $musteri?->telefon;
+            $arac = DB::table('araclar')->where('id', $belge->arac_id)->select('plaka', 'qr_token')->first();
+            $belge->plaka = $arac?->plaka;
+            $belge->qr_token = $arac?->qr_token;
         }
 
         if (in_array($tur, ['teklif', 'fatura'], true)) {
@@ -142,7 +160,7 @@ class CiktiController extends Controller
         ))->implode("\n");
         $ek = $satirlar->count() > 8 ? "\n+ diğer satırlar" : '';
 
-        return trim(sprintf(
+        $mesaj = trim(sprintf(
             "%s\n%s · %s\n\n%s%s\n\nKDV dahil genel toplam: ₺%s",
             $firma->gosterim_adi ?? $firma->unvan,
             $baslik,
@@ -151,6 +169,11 @@ class CiktiController extends Controller
             $ek,
             number_format((float) $belge->tutar, 2, ',', '.')
         ));
+        if (! empty($belge->qr_token) && ! empty($belge->plaka)) {
+            $sifre = mb_substr(preg_replace('/[^A-Z0-9]/u', '', mb_strtoupper($belge->plaka)), -4);
+            $mesaj .= "\n\nDetayları görmek için: ".route('qr.servis.show', ['token' => $belge->qr_token, 'ekran' => 'servis'])."\nŞifre: {$sifre}";
+        }
+        return $mesaj;
     }
 
     private function telefonuNormalizeEt(string $telefon): ?string

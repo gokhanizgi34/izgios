@@ -264,6 +264,8 @@ Route::get(
     [QrServisController::class,'show']
 )
 ->name('qr.servis.show');
+Route::post('/qr-servis/{token}/sifre', [QrServisController::class, 'sifreDogrula'])->middleware('throttle:10,1')->name('qr.servis.sifre');
+Route::get('/qr-servis/{token}/fotograflar/{fotograf}', [QrServisController::class, 'fotograf'])->name('qr.servis.fotograf');
 
 /*
 |--------------------------------------------------------------------------

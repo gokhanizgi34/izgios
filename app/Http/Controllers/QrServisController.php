@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Arac;
+use App\Models\ServisFotograf;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 
 
@@ -19,7 +22,7 @@ class QrServisController extends Controller
     */
 
 
-    public function show($token)
+    public function show(Request $request, $token)
     {
 
 
@@ -138,6 +141,7 @@ class QrServisController extends Controller
             && ($kullanici->isUsta() || $kullanici->isAdmin())
             && $aktifFirmaId
             && (int) $aktifFirmaId === (int) $arac->firma_id;
+        $detayYetkisi = $hizliIslemYetkisi || $request->session()->get('qr_detay_'.$arac->qr_token) === true;
 
         $periyodikBakimlar = $arac->servisler
             ->flatMap(fn ($servis) => $servis->islemler
@@ -174,14 +178,16 @@ class QrServisController extends Controller
             ->sortByDesc('km')
             ->values();
 
-        $firmaId = (int) ($arac->servisler->first()?->firma_id ?: $arac->firma_id);
+        $sonServis = $arac->servisler->first();
+        $firmaId = (int) ($sonServis?->firma_id ?: $arac->firma_id);
         $whatsappEntegrasyonu = DB::table('muhasebe_entegrasyonlari')
             ->where('firma_id', $firmaId)
             ->where('saglayici', 'whatsapp')
             ->where('aktif', true)
             ->first();
         $whatsappAyarlari = json_decode($whatsappEntegrasyonu?->ayarlar ?: '{}', true) ?: [];
-        $whatsappNo = preg_replace('/\D+/', '', (string) ($whatsappAyarlari['gonderen'] ?? ''));
+        $firmaTelefonu = DB::table('firmas')->where('id', $firmaId)->value('telefon');
+        $whatsappNo = preg_replace('/\D+/', '', (string) ($sonServis?->sube?->whatsapp_no ?: ($whatsappAyarlari['gonderen'] ?? $firmaTelefonu)));
         if (str_starts_with($whatsappNo, '0')) {
             $whatsappNo = '90'.substr($whatsappNo, 1);
         }
@@ -189,6 +195,16 @@ class QrServisController extends Controller
         $whatsappUrl = strlen($whatsappNo) >= 10
             ? 'https://wa.me/'.$whatsappNo.'?text='.rawurlencode($whatsappMesaj)
             : null;
+
+        $fotoGruplari = $arac->servisler->map(function ($servis) {
+            return [
+                'km' => (int) ($servis->giris_km ?? 0),
+                'tarih' => $servis->servis_tarihi ?? $servis->created_at,
+                'servis_no' => $servis->servis_no,
+                'servis' => $servis->fotograflar->where('kategori', '!=', 'bakim')->values(),
+                'bakim' => $servis->fotograflar->where('kategori', 'bakim')->values(),
+            ];
+        })->filter(fn ($grup) => $grup['servis']->isNotEmpty() || $grup['bakim']->isNotEmpty())->values();
 
         return view(
 
@@ -204,13 +220,39 @@ class QrServisController extends Controller
                 'periyodikBakimlar',
                 'servisIslemleri',
                 'whatsappUrl',
-                'hizliIslemYetkisi'
+                'hizliIslemYetkisi',
+                'detayYetkisi',
+                'fotoGruplari'
 
             )
 
         );
 
 
+    }
+
+    public function sifreDogrula(Request $request, string $token)
+    {
+        $arac = Arac::where('qr_token', $token)->firstOrFail();
+        $veri = $request->validate(['sifre' => ['required', 'string', 'max:12']]);
+        $beklenen = mb_substr(preg_replace('/[^A-Z0-9]/u', '', mb_strtoupper($arac->plaka)), -4);
+        $girilen = preg_replace('/[^A-Z0-9]/u', '', mb_strtoupper($veri['sifre']));
+        if (! hash_equals($beklenen, $girilen)) {
+            return back()->withErrors(['sifre' => 'Şifre hatalı. Plakanızın son dört karakterini yazın.']);
+        }
+        $request->session()->put('qr_detay_'.$arac->qr_token, true);
+        return redirect()->to(route('qr.servis.show', ['token' => $token, 'ekran' => $request->input('ekran', 'servis')]).'#kayitlar');
+    }
+
+    public function fotograf(Request $request, string $token, ServisFotograf $fotograf)
+    {
+        $arac = Arac::where('qr_token', $token)->firstOrFail();
+        $kullanici = auth()->user();
+        $personelYetkili = $kullanici && ($kullanici->tamSistemYetkisiVarMi() || (int) $kullanici->firmaPersoneli?->firma_id === (int) $arac->firma_id);
+        abort_unless($request->session()->get('qr_detay_'.$arac->qr_token) === true || $personelYetkili, 403);
+        abort_unless($arac->servisler()->whereKey($fotograf->servis_id)->exists(), 404);
+        abort_unless(Storage::disk('public')->exists($fotograf->dosya_yolu), 404);
+        return response()->file(Storage::disk('public')->path($fotograf->dosya_yolu));
     }
 
 

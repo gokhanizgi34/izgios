@@ -9,6 +9,7 @@
         </td></tr>
         <tr><td style="padding:26px 28px">
             <p style="margin:0 0 18px">Belge detayları aşağıdadır.</p>
+            @if(!empty($paylasimMesaji))<p style="padding:14px;border-radius:9px;background:#f4f7fb;white-space:pre-line">{{ $paylasimMesaji }}</p>@endif
             <table width="100%" cellspacing="0" cellpadding="8" style="border-collapse:collapse;font-size:13px">
                 <thead><tr style="background:#eaf0f7"><th align="left">Ürün / Hizmet</th><th align="right">Adet</th><th align="right">KDV dahil</th></tr></thead>
                 <tbody>

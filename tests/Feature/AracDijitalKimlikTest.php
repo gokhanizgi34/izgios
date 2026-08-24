@@ -98,6 +98,14 @@ class AracDijitalKimlikTest extends TestCase
         $this->get(route('araclar.qr.show', $arac->qr_token))
             ->assertOk()
             ->assertSee('Araç Dijital Kimliği')
+            ->assertSee('Detaylar için şifreyi girin')
+            ->assertDontSee('Rot ayarı');
+
+        $this->post(route('qr.servis.sifre', $arac->qr_token), ['sifre' => 'T123'])
+            ->assertRedirect();
+
+        $this->get(route('araclar.qr.show', $arac->qr_token))
+            ->assertOk()
             ->assertSee('Rot ayarı')
             ->assertSee('Balans ayarı')
             ->assertSee('2 işlem')

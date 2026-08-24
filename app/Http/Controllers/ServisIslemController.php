@@ -307,7 +307,7 @@ class ServisIslemController extends Controller
         $this->islemYetkisi($servis);
         $veri = $request->validate([
             'foto' => ['required', 'image', 'max:10240'],
-            'kategori' => ['required', 'in:ariza_tespit,islem_oncesi,islem_sirasi,islem_sonrasi,parca_eski,parca_yeni,teslim'],
+            'kategori' => ['required', 'in:ariza_tespit,islem_oncesi,islem_sirasi,islem_sonrasi,parca_eski,parca_yeni,bakim,teslim'],
             'aciklama' => ['required', 'string', 'max:500'],
         ]);
         $yol = $request->file('foto')->store('servisler/'.$servis->id, 'public');
