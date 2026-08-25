@@ -18,8 +18,8 @@ class StokKaynakController extends Controller
         $firmaId = $this->firmaId($request);
         $veri = $request->validate([
             'ad' => ['required','string','max:120'],
-            'adresler' => ['required','array','min:1','max:20'],
-            'adresler.*' => ['nullable','url:http,https','max:1000'],
+            'adresler' => ['required','array','min:1','max:50'],
+            'adresler.*' => ['required','url:http,https','max:1000'],
         ]);
         $adresler = array_values(array_filter($veri['adresler'], fn($adres) => filled($adres)));
         abort_if(empty($adresler), 422, 'En az bir ürün kaynağı adresi girin.');

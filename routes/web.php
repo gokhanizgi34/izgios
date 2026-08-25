@@ -105,8 +105,14 @@ Route::post('/depo/parca', [DepoController::class, 'parcaKaydet'])->name('depo.p
 Route::post('/depo/hareket', [DepoController::class, 'hareketKaydet'])->name('depo.hareket');
 Route::get('/depo/barkod', [DepoController::class, 'barkod'])->name('depo.barkod');
 Route::post('/depo/depolar', [DepoController::class, 'depoKaydet'])->name('depo.depo.kaydet');
+Route::patch('/depo/depolar/{depo}', [DepoController::class, 'depoGuncelle'])->name('depo.depo.guncelle');
+Route::delete('/depo/depolar/{depo}', [DepoController::class, 'depoSil'])->name('depo.depo.sil');
 Route::post('/depo/raflar', [DepoController::class, 'rafKaydet'])->name('depo.raf.kaydet');
+Route::patch('/depo/raflar/{raf}', [DepoController::class, 'rafGuncelle'])->name('depo.raf.guncelle');
+Route::delete('/depo/raflar/{raf}', [DepoController::class, 'rafSil'])->name('depo.raf.sil');
 Route::post('/depo/raf-adresle', [DepoController::class, 'rafAta'])->name('depo.raf.ata');
+Route::patch('/depo/parcalar/{parca}', [DepoController::class, 'parcaGuncelle'])->name('depo.parca.guncelle');
+Route::delete('/depo/parcalar/{parca}', [DepoController::class, 'parcaSil'])->name('depo.parca.sil');
 Route::post('/depo/urun-kaynaklari', [StokKaynakController::class, 'kaydet'])->name('depo.kaynak.kaydet');
 Route::post('/depo/urun-kaynaklari/xml', [StokKaynakController::class, 'xmlAktar'])->name('depo.kaynak.xml');
 Route::post('/depo/urun-kaynaklari/{kaynak}/test', [StokKaynakController::class, 'test'])->name('depo.kaynak.test');
