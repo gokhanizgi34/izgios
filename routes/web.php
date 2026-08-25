@@ -108,6 +108,7 @@ Route::post('/depo/depolar', [DepoController::class, 'depoKaydet'])->name('depo.
 Route::post('/depo/raflar', [DepoController::class, 'rafKaydet'])->name('depo.raf.kaydet');
 Route::post('/depo/raf-adresle', [DepoController::class, 'rafAta'])->name('depo.raf.ata');
 Route::post('/depo/urun-kaynaklari', [StokKaynakController::class, 'kaydet'])->name('depo.kaynak.kaydet');
+Route::post('/depo/urun-kaynaklari/xml', [StokKaynakController::class, 'xmlAktar'])->name('depo.kaynak.xml');
 Route::post('/depo/urun-kaynaklari/{kaynak}/test', [StokKaynakController::class, 'test'])->name('depo.kaynak.test');
 Route::post('/depo/urun-kaynaklari/{kaynak}/senkronize-et', [StokKaynakController::class, 'senkronizeEt'])->name('depo.kaynak.senkronize');
 Route::get('/operasyon/randevular', [OperasyonController::class, 'randevular'])->name('operasyon.randevular');

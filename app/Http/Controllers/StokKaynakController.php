@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Throwable;
+use XMLReader;
 
 class StokKaynakController extends Controller
 {
@@ -46,24 +47,79 @@ class StokKaynakController extends Controller
         }
     }
 
+    public function xmlAktar(Request $request)
+    {
+        $firmaId = $this->firmaId($request);
+        $veri = $request->validate([
+            'xml_dosyasi' => ['required', 'file', 'max:12000', 'mimes:xml'],
+        ]);
+        $dosya = $veri['xml_dosyasi'];
+        $okuyucu = new XMLReader();
+
+        if (! $okuyucu->open($dosya->getRealPath(), null, LIBXML_NONET | LIBXML_COMPACT | LIBXML_NOERROR | LIBXML_NOWARNING)) {
+            return back()->withErrors(['xml_dosyasi' => 'XML dosyası açılamadı.']);
+        }
+
+        $kaynakId = DB::table('stok_urun_kaynaklari')->insertGetId([
+            'firma_id' => $firmaId,
+            'ad' => 'XML · '.now()->format('Ymd-His').' · '.Str::limit($dosya->getClientOriginalName(), 84, ''),
+            'adres_sifreli' => Crypt::encryptString('xml://'.$dosya->getClientOriginalName()),
+            'aktif' => false,
+            'son_durum' => 'aktariliyor',
+            'olusturan_id' => auth()->id(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $kaynak = DB::table('stok_urun_kaynaklari')->find($kaynakId);
+        $sayac = ['eklenen' => 0, 'guncellenen' => 0, 'atlanmis' => 0, 'toplam' => 0];
+        $grup = [];
+
+        try {
+            while ($okuyucu->read()) {
+                if ($okuyucu->nodeType !== XMLReader::ELEMENT || $okuyucu->name !== 'urun') {
+                    continue;
+                }
+
+                $dugum = simplexml_load_string($okuyucu->readOuterXml(), 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOCDATA);
+                if ($dugum === false) {
+                    $sayac['atlanmis']++;
+                    continue;
+                }
+
+                $grup[] = json_decode(json_encode($dugum, JSON_UNESCAPED_UNICODE), true);
+                $sayac['toplam']++;
+                if (count($grup) >= 250) {
+                    $this->urunleriYaz($grup, $kaynak, $sayac);
+                    $grup = [];
+                }
+            }
+            if ($grup !== []) {
+                $this->urunleriYaz($grup, $kaynak, $sayac);
+            }
+            DB::table('stok_urun_kaynaklari')->where('id', $kaynakId)->update([
+                'son_durum' => 'basarili', 'son_urun_sayisi' => $sayac['toplam'],
+                'son_hata' => null, 'son_senkron_at' => now(), 'updated_at' => now(),
+            ]);
+        } catch (Throwable $e) {
+            $this->hataKaydet($kaynakId, $e);
+            return back()->withErrors(['xml_dosyasi' => 'XML aktarımı başarısız: '.Str::limit($e->getMessage(), 220)]);
+        } finally {
+            $okuyucu->close();
+        }
+
+        return back()->with('success', "XML aktarımı tamamlandı: {$sayac['eklenen']} yeni, {$sayac['guncellenen']} güncel, {$sayac['atlanmis']} atlanan ürün.");
+    }
+
     public function senkronizeEt(Request $request, int $kaynak)
     {
         $kayit = $this->kaynak($request, $kaynak);
         try {
             $urunler = $this->urunListesi($this->istek($kayit)->json());
             $eklenen=0; $guncellenen=0; $atlanmis=0;
-            foreach (array_chunk($urunler, 250) as $parca) {
-                DB::transaction(function () use ($parca,$kayit,&$eklenen,&$guncellenen,&$atlanmis) {
-                    foreach ($parca as $ham) {
-                        $urun=$this->normalize($ham); if(!$urun){$atlanmis++;continue;}
-                        $mevcut=DB::table('stok_parcalar')->where('firma_id',$kayit->firma_id)->where('oem_no',$urun['oem_no'])->first();
-                        $urun=$this->benzersizAlanlariHazirla($urun,$kayit,$mevcut);
-                        $deger=array_merge($urun,['urun_kaynak_id'=>$kayit->id,'kaynak_senkron_at'=>now(),'updated_at'=>now()]);
-                        if($mevcut){DB::table('stok_parcalar')->where('id',$mevcut->id)->update($deger);$guncellenen++;}
-                        else{DB::table('stok_parcalar')->insert(array_merge($deger,['firma_id'=>$kayit->firma_id,'stok_miktari'=>0,'minimum_stok'=>0,'alis_fiyati'=>0,'oem_durum'=>'kaynak_dogrulandi','aktif'=>true,'created_at'=>now()]));$eklenen++;}
-                    }
-                });
-            }
+            $sayac=['eklenen'=>0,'guncellenen'=>0,'atlanmis'=>0];
+            foreach (array_chunk($urunler, 250) as $parca) $this->urunleriYaz($parca,$kayit,$sayac);
+            ['eklenen'=>$eklenen,'guncellenen'=>$guncellenen,'atlanmis'=>$atlanmis]=$sayac;
             DB::table('stok_urun_kaynaklari')->where('id',$kaynak)->update(['son_durum'=>'basarili','son_urun_sayisi'=>count($urunler),'son_hata'=>null,'son_senkron_at'=>now(),'updated_at'=>now()]);
             return back()->with('success',"Senkronizasyon tamamlandı: {$eklenen} yeni, {$guncellenen} güncel, {$atlanmis} atlanan ürün.");
         } catch (Throwable $e) {
@@ -72,9 +128,29 @@ class StokKaynakController extends Controller
         }
     }
 
+    private function urunleriYaz(array $hamUrunler, object $kaynak, array &$sayac): void
+    {
+        DB::transaction(function () use ($hamUrunler, $kaynak, &$sayac) {
+            foreach ($hamUrunler as $ham) {
+                $urun = is_array($ham) ? $this->normalize($ham) : null;
+                if (! $urun) { $sayac['atlanmis']++; continue; }
+                $mevcut = DB::table('stok_parcalar')->where('firma_id', $kaynak->firma_id)->where('oem_no', $urun['oem_no'])->first();
+                $urun = $this->benzersizAlanlariHazirla($urun, $kaynak, $mevcut);
+                $deger = array_merge($urun, ['urun_kaynak_id'=>$kaynak->id,'kaynak_senkron_at'=>now(),'updated_at'=>now()]);
+                if ($mevcut) {
+                    DB::table('stok_parcalar')->where('id', $mevcut->id)->update($deger);
+                    $sayac['guncellenen']++;
+                } else {
+                    DB::table('stok_parcalar')->insert(array_merge($deger, ['firma_id'=>$kaynak->firma_id,'stok_miktari'=>0,'minimum_stok'=>0,'alis_fiyati'=>0,'oem_durum'=>'kaynak_dogrulandi','aktif'=>true,'created_at'=>now()]));
+                    $sayac['eklenen']++;
+                }
+            }
+        });
+    }
+
     private function normalize(array $ham): ?array
     {
-        $al=fn(array $adlar,$varsayilan=null)=>collect($adlar)->map(fn($ad)=>data_get($ham,$ad))->first(fn($v)=>$v!==null&&$v!=='') ?? $varsayilan;
+        $al=fn(array $adlar,$varsayilan=null)=>collect($adlar)->map(fn($ad)=>data_get($ham,$ad))->first(fn($v)=>is_scalar($v)&&$v!=='') ?? $varsayilan;
         $kod=trim((string)$al(['oem_no','oemNo','OEMNO','OEM','OemNo','productCode','ProductCode','stockCode','StokKodu','kod','Code']));
         $ad=trim((string)$al(['ad','name','Name','urunAdi','UrunAdi','productName','ProductName','MalzemeAdi']));
         if($ad===''||$kod==='') return null;
