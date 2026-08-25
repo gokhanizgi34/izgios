@@ -24,6 +24,7 @@ use App\Http\Controllers\MuhasebeMerkeziController;
 use App\Http\Controllers\GenelMuhasebeController;
 use App\Http\Controllers\MuhasebeAsistanController;
 use App\Http\Controllers\DepoController;
+use App\Http\Controllers\StokKaynakController;
 use App\Http\Controllers\HesapController;
 use App\Http\Controllers\IkController;
 use App\Http\Controllers\RaporController;
@@ -106,6 +107,9 @@ Route::get('/depo/barkod', [DepoController::class, 'barkod'])->name('depo.barkod
 Route::post('/depo/depolar', [DepoController::class, 'depoKaydet'])->name('depo.depo.kaydet');
 Route::post('/depo/raflar', [DepoController::class, 'rafKaydet'])->name('depo.raf.kaydet');
 Route::post('/depo/raf-adresle', [DepoController::class, 'rafAta'])->name('depo.raf.ata');
+Route::post('/depo/urun-kaynaklari', [StokKaynakController::class, 'kaydet'])->name('depo.kaynak.kaydet');
+Route::post('/depo/urun-kaynaklari/{kaynak}/test', [StokKaynakController::class, 'test'])->name('depo.kaynak.test');
+Route::post('/depo/urun-kaynaklari/{kaynak}/senkronize-et', [StokKaynakController::class, 'senkronizeEt'])->name('depo.kaynak.senkronize');
 Route::get('/operasyon/randevular', [OperasyonController::class, 'randevular'])->name('operasyon.randevular');
 Route::post('/operasyon/randevular', [OperasyonController::class, 'randevuKaydet'])->name('operasyon.randevular.kaydet');
 Route::patch('/operasyon/randevular/{randevu}', [OperasyonController::class, 'randevuGuncelle'])->name('operasyon.randevular.guncelle');
