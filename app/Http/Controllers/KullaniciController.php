@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Validation\Rule;
+use App\Services\MaasHesaplamaServisi;
 
 
 
@@ -355,6 +356,7 @@ class KullaniciController extends Controller
 
             'brut_ucret' => ['nullable', 'numeric', 'min:0'],
             'net_ucret' => ['nullable', 'numeric', 'min:0'],
+            'ucret_giris_turu' => ['nullable', Rule::in(['brut', 'net'])],
             'calisma_baslangic' => ['nullable', 'date_format:H:i'],
             'calisma_bitis' => ['nullable', 'date_format:H:i', 'after:calisma_baslangic'],
 
@@ -458,9 +460,19 @@ class KullaniciController extends Controller
 
         [$firma, $sube] = $this->baglantiVerisiniDogrula($request);
 
-        $ikVerisi = collect($validated)->only(['brut_ucret','net_ucret','calisma_baslangic','calisma_bitis'])->all();
+        $ikVerisi = collect($validated)->only(['brut_ucret','net_ucret','ucret_giris_turu','calisma_baslangic','calisma_bitis'])->all();
+        $ucretTuru = $ikVerisi['ucret_giris_turu'] ?? (filled($ikVerisi['net_ucret'] ?? null) ? 'net' : 'brut');
+        if (filled($ikVerisi[$ucretTuru.'_ucret'] ?? null)) {
+            $hesaplayici = app(MaasHesaplamaServisi::class);
+            $hesap = $ucretTuru === 'net'
+                ? $hesaplayici->nettenBrute((float)$ikVerisi['net_ucret'])
+                : $hesaplayici->bruttenNete((float)$ikVerisi['brut_ucret']);
+            $ikVerisi['brut_ucret'] = $hesap['brut'];
+            $ikVerisi['net_ucret'] = $hesap['net'];
+        }
+        unset($ikVerisi['ucret_giris_turu']);
         DB::transaction(function () use ($validated, $firma, $sube, $ikVerisi) {
-            unset($validated['firma_id'], $validated['sube_id'], $validated['brut_ucret'], $validated['net_ucret'], $validated['calisma_baslangic'], $validated['calisma_bitis']);
+            unset($validated['firma_id'], $validated['sube_id'], $validated['brut_ucret'], $validated['net_ucret'], $validated['ucret_giris_turu'], $validated['calisma_baslangic'], $validated['calisma_bitis']);
             $kullanici = User::create($validated);
             $this->firmaPersoneliniKaydet($kullanici, $firma, $sube);
             if (collect($ikVerisi)->filter(fn ($deger) => filled($deger))->isNotEmpty()) {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Firma;
 use App\Services\FirmaIletisimGonderici;
+use App\Services\MaasHesaplamaServisi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -40,8 +41,9 @@ class IkController extends Controller
         if ($request->filled('islem')) {
             return $this->ikKaydiKaydet($request, $firmaId);
         }
-        $v = $request->validate(['user_id' => ['required', 'integer'], 'ise_baslama_tarihi' => ['nullable', 'date'], 'unvan' => ['nullable', 'string', 'max:120'], 'brut_ucret' => ['nullable', 'numeric', 'min:0'], 'net_ucret' => ['nullable', 'numeric', 'min:0'], 'saatlik_mesai_ucreti' => ['nullable', 'numeric', 'min:0'], 'calisma_baslangic' => ['nullable','date_format:H:i'], 'calisma_bitis' => ['nullable','date_format:H:i','after:calisma_baslangic'], 'gunluk_mola_dakika' => ['nullable','integer','min:0','max:300'], 'fazla_mesai_carpani' => ['nullable','numeric','min:1','max:3'], 'calisma_gunleri' => ['nullable','array'], 'calisma_gunleri.*' => ['integer','between:1,7'], 'notlar' => ['nullable', 'string', 'max:2000']]);
+        $v = $request->validate(['user_id' => ['required', 'integer'], 'ise_baslama_tarihi' => ['nullable', 'date'], 'unvan' => ['nullable', 'string', 'max:120'], 'brut_ucret' => ['nullable', 'numeric', 'min:0'], 'net_ucret' => ['nullable', 'numeric', 'min:0'], 'ucret_giris_turu' => ['nullable','in:brut,net'], 'saatlik_mesai_ucreti' => ['nullable', 'numeric', 'min:0'], 'calisma_baslangic' => ['nullable','date_format:H:i'], 'calisma_bitis' => ['nullable','date_format:H:i','after:calisma_baslangic'], 'gunluk_mola_dakika' => ['nullable','integer','min:0','max:300'], 'fazla_mesai_carpani' => ['nullable','numeric','min:1','max:3'], 'calisma_gunleri' => ['nullable','array'], 'calisma_gunleri.*' => ['integer','between:1,7'], 'notlar' => ['nullable', 'string', 'max:2000']]);
         abort_unless(DB::table('firma_personels')->where('firma_id', $firmaId)->where('user_id', $v['user_id'])->where('aktif', true)->exists(), 422, 'Personel seçilen firmaya bağlı değil.');
+        $v = $this->ucretleriTamamla($v, $firmaId, (int) $v['user_id']);
         $v['calisma_gunleri'] = json_encode($v['calisma_gunleri'] ?? [1,2,3,4,5,6]);
         $mevcut = DB::table('ik_personel_ozlukleri')->where('firma_id',$firmaId)->where('user_id',$v['user_id'])->first();
         DB::table('ik_personel_ozlukleri')->updateOrInsert(['firma_id' => $firmaId, 'user_id' => $v['user_id']], array_merge($v, ['firma_id' => $firmaId, 'puantaj_qr_token' => $mevcut?->puantaj_qr_token ?: (string) Str::uuid(), 'puantaj_qr_yenilendi_at' => $mevcut?->puantaj_qr_yenilendi_at ?: now(), 'updated_at' => now(), 'created_at' => $mevcut?->created_at ?: now()]));
@@ -125,6 +127,22 @@ class IkController extends Controller
         foreach ($personelIds as $personelId) {
             $this->bordroHesapla($firmaId, $personelId, $donem);
         }
+    }
+
+    private function ucretleriTamamla(array $veri, int $firmaId, int $userId): array
+    {
+        $tur = $veri['ucret_giris_turu'] ?? (filled($veri['net_ucret'] ?? null) ? 'net' : 'brut');
+        unset($veri['ucret_giris_turu']);
+        if (!filled($veri[$tur.'_ucret'] ?? null)) return $veri;
+
+        $oncekiMatrah = (float) DB::table('ik_bordrolar')->where('firma_id',$firmaId)->where('user_id',$userId)->whereYear('donem',now()->year)->whereDate('donem','<',now()->startOfMonth()->toDateString())->sum('gelir_vergisi_matrahi');
+        $hesaplayici = app(MaasHesaplamaServisi::class);
+        $hesap = $tur === 'net'
+            ? $hesaplayici->nettenBrute((float)$veri['net_ucret'], $oncekiMatrah)
+            : $hesaplayici->bruttenNete((float)$veri['brut_ucret'], $oncekiMatrah);
+        $veri['brut_ucret'] = $hesap['brut'];
+        $veri['net_ucret'] = $hesap['net'];
+        return $veri;
     }
 
     private function bordroHesapla(int $firmaId, int $userId, $donem): void
