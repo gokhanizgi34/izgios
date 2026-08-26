@@ -274,6 +274,37 @@
             return { receiptNo, date: !!date, receiptTotal, merchant };
         }
 
+        async function aiReceipt(file) {
+            const formData = new FormData(); formData.append('tur', 'fis'); formData.append('gorsel', file);
+            const response = await fetch(@json(route('gorsel.okuma')), { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': @json(csrf_token()) }, body: formData });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.success) throw new Error(result.message || 'Yapay zekâ fişi okuyamadı.');
+            return result.data;
+        }
+
+        function fillFromAi(data) {
+            const form = document.getElementById('yeni-fis-formu');
+            if (data.fis_no) form.querySelector('[name="fis_no"]').value = String(data.fis_no).slice(0, 80);
+            if (/^\d{4}-\d{2}-\d{2}$/.test(data.tarih || '')) form.querySelector('[name="fis_tarihi"]').value = data.tarih;
+            const merchant = String(data.firma || 'Fotoğraftan okunan gider fişi').slice(0, 255);
+            form.querySelector('[name="aciklama"]').value = merchant;
+            const items = Array.isArray(data.kalemler) && data.kalemler.length ? data.kalemler.slice(0, 30) : [{ ad: 'Fiş gideri - ' + merchant, adet: 1, birim_fiyat: data.toplam, kdv_orani: data.kdv_orani, toplam: data.toplam }];
+            while (body.children.length > 1) body.lastElementChild.remove();
+            items.forEach((item, itemIndex) => {
+                let row = body.firstElementChild;
+                if (itemIndex > 0) { row = body.firstElementChild.cloneNode(true); body.appendChild(row); bindRow(row); }
+                row.querySelectorAll('input, select').forEach(input => input.name = input.name.replace(/\[\d+\]/, '[' + itemIndex + ']'));
+                row.querySelector('[name$="[urun_adi]"]').value = String(item.ad || 'Fiş kalemi').slice(0, 255);
+                row.querySelector('[name$="[adet]"]').value = Number(item.adet || 1);
+                const totalValue = Number(item.toplam || 0), unitValue = Number(item.birim_fiyat || (totalValue / Number(item.adet || 1)) || 0);
+                row.querySelector('.birim').value = unitValue.toFixed(2); row.querySelector('.dahil').value = totalValue.toFixed(2);
+                const rate = row.querySelector('.oran'), vat = Number(item.kdv_orani ?? data.kdv_orani ?? 20);
+                rate.value = [...rate.options].some(option => Number(option.value) === vat) ? String(vat) : '20';
+            });
+            index = items.length; calculate();
+            return { merchant, receiptTotal: Number(data.toplam || 0), confidence: Number(data.guven || 0) };
+        }
+
         cameraButton.addEventListener('click', () => camera.click());
         camera.addEventListener('change', async () => {
             const file = camera.files?.[0];
@@ -282,20 +313,19 @@
             ocrPreview.src = previewUrl;
             ocrPreview.style.display = 'block';
             cameraButton.disabled = true;
-            ocrStatus.textContent = 'Fiş okunuyor…';
+            ocrStatus.textContent = 'Fiş yapay zekâ ile okunuyor…';
             try {
-                const { createWorker } = await loadOcr();
-                const worker = await createWorker('tur+eng', 1, { logger: message => {
-                    if (message.status === 'recognizing text') ocrStatus.textContent = 'Fiş okunuyor… %' + Math.round((message.progress || 0) * 100);
-                }});
-                let result;
-                try {
-                    await worker.setParameters({ preserve_interword_spaces: '1', tessedit_pageseg_mode: '6' });
-                    result = await worker.recognize(file);
-                } finally { await worker.terminate(); }
-                const parsed = fillFromReceipt(result.data.text || '');
+                let parsed;
+                try { parsed = fillFromAi(await aiReceipt(file)); }
+                catch (aiError) {
+                    ocrStatus.textContent = 'Yapay zekâ yanıt vermedi; yerel OCR deneniyor…';
+                    const { createWorker } = await loadOcr();
+                    const worker = await createWorker('tur+eng', 1, { logger: message => { if (message.status === 'recognizing text') ocrStatus.textContent = 'Fiş okunuyor… %' + Math.round((message.progress || 0) * 100); }});
+                    let result; try { await worker.setParameters({ preserve_interword_spaces: '1', tessedit_pageseg_mode: '6' }); result = await worker.recognize(file); } finally { await worker.terminate(); }
+                    parsed = fillFromReceipt(result.data.text || '');
+                }
                 if (!parsed.receiptTotal) throw new Error('Toplam tutar otomatik bulunamadı. Fotoğrafı daha düz ve yakın çekin veya tutarı elle girin.');
-                ocrStatus.textContent = `Fiş okundu: ${parsed.merchant} · ₺${parsed.receiptTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}. Bilgileri kontrol edip kaydedin.`;
+                ocrStatus.textContent = `Fiş okundu: ${parsed.merchant} · ₺${parsed.receiptTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}. Yapay zekâ sonuçlarını kontrol edip kaydedin.`;
             } catch (error) {
                 ocrStatus.textContent = error.message || 'Fiş okunamadı. Bilgileri elle girebilirsiniz.';
             } finally {
