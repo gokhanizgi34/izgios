@@ -31,6 +31,22 @@
         </form>
         <div class="mail-note">Firma bazında ayrıca yapay zekâ anahtarı girilmez. Anahtar şifreli tutulur ve ekranda tekrar gösterilmez.</div>
     </article>
+    <article class="mail-card" style="border-left:4px solid #0f766e">
+        <div class="mail-status"><div><h2 class="h5 mb-1"><i class="bi bi-envelope-check-fill me-1"></i>Sistem Yöneticisi E-posta Hesabı</h2><small class="text-muted">Destek mesajları, sistem hataları ve tüm silme denetimleri bu merkezi hesaptan gönderilir ve bildirim adresine ulaşır.</small></div><span class="badge text-bg-{{ $sistemEmailHazir ? 'success' : 'secondary' }}">{{ $sistemEmailHazir ? 'Aktif' : 'Kurulum gerekli' }}</span></div>
+        <form method="POST" action="{{ route('ticari.api.sistem-email') }}" autocapitalize="none" spellcheck="false">
+            @csrf
+            <label for="sys_smtp_host">SMTP sunucusu</label><input id="sys_smtp_host" class="form-control" name="smtp_host" value="{{ old('smtp_host', $sistemEmailAyarlar['smtp_host'] ?? '') }}" placeholder="mail.izgios.com" required>
+            <div class="mail-grid"><div><label for="sys_smtp_port">SMTP portu</label><input id="sys_smtp_port" class="form-control" type="number" name="smtp_port" min="1" max="65535" value="{{ old('smtp_port', $sistemEmailAyarlar['smtp_port'] ?? 465) }}" required></div><div><label for="sys_sifreleme">Güvenlik</label><select id="sys_sifreleme" class="form-select" name="smtp_sifreleme"><option value="ssl" @selected(($sistemEmailAyarlar['smtp_sifreleme'] ?? 'ssl')==='ssl')>SSL</option><option value="tls" @selected(($sistemEmailAyarlar['smtp_sifreleme'] ?? '')==='tls')>TLS</option><option value="none" @selected(($sistemEmailAyarlar['smtp_sifreleme'] ?? '')==='none')>Yok</option></select></div></div>
+            <label for="sys_kullanici">SMTP kullanıcı adı</label><input id="sys_kullanici" class="form-control" name="kullanici_adi" value="{{ old('kullanici_adi', $sistemEmailAyarlar['kullanici_adi'] ?? '') }}" autocomplete="username" required>
+            <label for="sys_sifre">E-posta hesabı şifresi</label><input id="sys_sifre" class="form-control" type="password" name="sifre" autocomplete="new-password" placeholder="{{ filled($sistemEmailAyarlar['sifre'] ?? null) ? 'Kayıtlı şifreyi korumak için boş bırakın' : 'E-posta hesabı şifresi' }}">
+            <div class="mail-grid"><div><label for="sys_gonderen">Gönderen e-posta</label><input id="sys_gonderen" class="form-control" type="email" name="gonderen" value="{{ old('gonderen', $sistemEmailAyarlar['gonderen'] ?? '') }}" placeholder="sistem@izgios.com" required></div><div><label for="sys_gonderen_adi">Gönderen adı</label><input id="sys_gonderen_adi" class="form-control" name="gonderen_adi" value="{{ old('gonderen_adi', $sistemEmailAyarlar['gonderen_adi'] ?? 'İZGİOS Sistem Yönetimi') }}"></div></div>
+            <label for="sys_alici">Sistem bildirimlerinin geleceği e-posta</label><input id="sys_alici" class="form-control" type="email" name="bildirim_alicisi" value="{{ old('bildirim_alicisi', $sistemEmailAyarlar['bildirim_alicisi'] ?? '') }}" placeholder="yonetim@izgios.com" required>
+            <div class="form-check form-switch mt-3"><input type="hidden" name="aktif" value="0"><input id="sys_aktif" class="form-check-input" type="checkbox" name="aktif" value="1" @checked(($sistemEmailAyarlar['aktif'] ?? '0')==='1')><label class="form-check-label mt-0" for="sys_aktif">Sistem e-postalarını etkinleştir</label></div>
+            <button class="btn btn-primary w-100 mt-3"><i class="bi bi-shield-lock-fill me-1"></i>Sistem E-posta Ayarlarını Kaydet</button>
+        </form>
+        @if($sistemEmailHazir)<form method="POST" action="{{ route('ticari.api.sistem-email-test') }}">@csrf<button class="btn btn-outline-success w-100 mt-2"><i class="bi bi-send-check me-1"></i>Sistem E-postasını Test Et</button></form>@endif
+        <div class="mail-note">Firma servis bildirimleri firma hesabından çıkmaya devam eder. Bu hesap yalnız merkezi sistem yönetimi ve denetim mesajları içindir.</div>
+    </article>
     @endif
     @if(auth()->user()->tamSistemYetkisiVarMi())
         <form class="card p-3 mt-3" method="GET" action="{{ route('ticari.api') }}"><label class="form-label" for="firma_id">Firma</label><select id="firma_id" name="firma_id" class="form-select" onchange="this.form.submit()">@forelse($firmalar as $firma)<option value="{{ $firma->id }}" @selected($firmaId == $firma->id)>{{ $firma->gosterim_adi }}</option>@empty<option>Önce firma oluşturun</option>@endforelse</select></form>

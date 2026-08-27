@@ -26,6 +26,7 @@ class SistemHataIzlemeServisi
                 'seviye'=>$hata['seviye'],'ekran'=>$hata['ekran'],'islem'=>$hata['islem'],'sebep'=>$hata['sebep'],'durum'=>'acik',
                 'ilk_goruldu_at'=>$mevcut?->ilk_goruldu_at ?: $hata['zaman'],'son_goruldu_at'=>$hata['zaman'],'updated_at'=>now(),'created_at'=>$mevcut?->created_at ?: now(),
             ]);
+            if (! $mevcut) $this->yeniHataBildir($hata);
         }
         $cozulenler = DB::table('sistem_hata_durumlari')->where('durum','acik')->when($kodlar !== [], fn($q)=>$q->whereNotIn('hata_kodu',$kodlar))->where('son_goruldu_at','<',now()->subMinutes(10))->get();
         foreach ($cozulenler as $kayit) {
@@ -33,6 +34,20 @@ class SistemHataIzlemeServisi
             DB::table('sistem_hata_durumlari')->where('id',$kayit->id)->delete();
         }
         return ['acik'=>DB::table('sistem_hata_durumlari')->where('durum','acik')->count(),'cozulen'=>$cozulenler->count()+$oncedenCozulenler->count()];
+    }
+
+    private function yeniHataBildir(array $hata): void
+    {
+        $gonderici = app(MerkeziSistemMailGonderici::class);
+        if (! $gonderici->hazirMi()) return;
+        try {
+            $gonderici->bildirimGonder(
+                'Yeni sistem hatası · '.$hata['kod'],
+                "Seviye: {$hata['seviye']}. Ekran: {$hata['ekran']}. İşlem: {$hata['islem']}. Sebep: {$hata['sebep']}. ".route('sistem.hatalari')
+            );
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     public function acikHatalar(): Collection

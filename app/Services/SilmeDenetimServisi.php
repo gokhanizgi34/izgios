@@ -43,6 +43,22 @@ class SilmeDenetimServisi
             'ekran_adresi' => request()?->fullUrl(),
         ]);
         $this->firmaSahibineBildir($kayit);
+        $this->sistemYoneticisineBildir($kayit);
+    }
+
+    private function sistemYoneticisineBildir(SilmeDenetimKaydi $kayit): void
+    {
+        $gonderici = app(MerkeziSistemMailGonderici::class);
+        if (! $gonderici->hazirMi()) return;
+        try {
+            $gonderici->bildirimGonder(
+                ($kayit->modul === 'Sistem Hataları' ? 'Sistem hatası çözüldü' : 'Silme denetimi').' · '.$kayit->modul,
+                "Kayıt: {$kayit->kayit_ozeti}. İşlemi yapan: {$kayit->islemi_yapan} ({$kayit->rol}). Firma no: ".($kayit->firma_id ?: 'Sistem geneli').". Tarih: {$kayit->created_at->format('d.m.Y H:i')}. IP: ".($kayit->ip_adresi ?: '-').". ".route('sistem.silme-kayitlari')
+            );
+        } catch (Throwable $e) {
+            report($e);
+            if (blank($kayit->mail_hatasi)) $kayit->update(['mail_hatasi'=>mb_substr('Sistem e-postası: '.$e->getMessage(),0,2000)]);
+        }
     }
 
     private function firmaSahibineBildir(SilmeDenetimKaydi $kayit): void
@@ -53,6 +69,12 @@ class SilmeDenetimServisi
             ->pluck('email')->filter()->unique()->values();
         if ($alicilar->isEmpty()) return;
         try {
+            $merkeziGonderici = app(MerkeziSistemMailGonderici::class);
+            if ($merkeziGonderici->hazirMi()) {
+                $merkeziGonderici->gorunumGonder($alicilar->all(), 'Silme işlemi bildirimi · '.$kayit->modul, 'emails.silme-bildirimi', ['kayit'=>$kayit]);
+                $kayit->update(['firma_sahibine_mail'=>true]);
+                return;
+            }
             $entegrasyonAktif = DB::table('muhasebe_entegrasyonlari')->where('firma_id', $kayit->firma_id)->where('saglayici', 'email')->where('aktif', true)->exists();
             if ($entegrasyonAktif) {
                 foreach ($alicilar as $alici) {

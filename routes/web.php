@@ -105,6 +105,8 @@ Route::get('/ayarlar/api-entegrasyonlari', [TicariController::class, 'apiAyarlar
 Route::post('/ayarlar/api-entegrasyonlari', [TicariController::class, 'apiKaydet'])->name('ticari.api.kaydet');
 Route::post('/ayarlar/api-entegrasyonlari/email-test', [TicariController::class, 'apiEmailTest'])->name('ticari.api.email-test');
 Route::post('/ayarlar/api-entegrasyonlari/yapay-zeka', [TicariController::class, 'merkeziYapayZekaKaydet'])->name('ticari.api.yapay-zeka');
+Route::post('/ayarlar/api-entegrasyonlari/sistem-email', [TicariController::class, 'merkeziEmailKaydet'])->name('ticari.api.sistem-email');
+Route::post('/ayarlar/api-entegrasyonlari/sistem-email-test', [TicariController::class, 'merkeziEmailTest'])->name('ticari.api.sistem-email-test');
 Route::post('/gorsel-okuma', [GorselOkumaController::class, 'oku'])->name('gorsel.okuma');
 Route::redirect('/yapay-zeka-kontrol', '/ayarlar/api-entegrasyonlari')->name('yapayzeka.index');
 Route::get('/ayarlar/iletisim-merkezi', [IletisimAyarController::class, 'index'])->name('ayarlar.iletisim');

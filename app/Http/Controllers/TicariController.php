@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Firma;
 use App\Services\FirmaIletisimGonderici;
+use App\Services\MerkeziSistemMailGonderici;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Crypt;
@@ -58,7 +59,33 @@ class TicariController extends Controller
     private function seciliFirma(Request $request,$firmalar): ?int { $id=$request->integer('firma_id')?:$firmalar->first()?->id;if(!auth()->user()->tamSistemYetkisiVarMi())$id=auth()->user()->firmaPersoneli?->firma_id;return $id; }
     public function belgeler(Request $request,string $tur){$this->yetki();abort_unless(in_array($tur,['teklif','fatura'],true),404);$firmalar=Firma::where('aktif',true)->orderBy('unvan')->get();$firmaId=$request->integer('firma_id')?:$firmalar->first()?->id;if(!auth()->user()->tamSistemYetkisiVarMi())$firmaId=auth()->user()->firmaPersoneli?->firma_id;$kayitlar=DB::table($tur==='teklif'?'teklifler':'faturalar')->where('firma_id',$firmaId)->latest('tarih')->get();return view('ticari.belgeler',compact('tur','firmalar','firmaId','kayitlar'));}
     public function belgeKaydet(Request $request,string $tur){abort_unless(in_array($tur,['teklif','fatura'],true),404);$v=$request->validate(['firma_id'=>['required','exists:firmas,id'],'musteri_unvan'=>['required','string','max:255'],'tarih'=>['required','date'],'tutar'=>['required','numeric','min:0'],'aciklama'=>['nullable','string','max:2000']]);$id=$this->firmaId($request);$tablo=$tur==='teklif'?'teklifler':'faturalar';$no=($tur==='teklif'?'TKL':'FTR').'-'.now()->format('YmdHis');$kayit=array_merge($v,[$tur==='teklif'?'teklif_no':'fatura_no'=>$no,'durum'=>'taslak','created_at'=>now(),'updated_at'=>now()]);if($tur==='fatura'){$kayit['entegrasyon_durumu']='gonderilmedi';unset($kayit['aciklama']);}DB::table($tablo)->insert($kayit);return back()->with('success',ucfirst($tur).' kaydedildi.');}
-    public function apiAyarlari(Request $request){$this->yetki();$firmalar=Firma::where('aktif',true)->orderBy('unvan')->get();$firmaId=$request->integer('firma_id')?:$firmalar->first()?->id;if(!auth()->user()->tamSistemYetkisiVarMi())$firmaId=auth()->user()->firmaPersoneli?->firma_id;$entegrasyonlar=DB::table('muhasebe_entegrasyonlari')->where('firma_id',$firmaId)->get()->keyBy('saglayici');$aiAyarlar=DB::table('yonetim_ayarlari')->where('grup','yapay_zeka')->pluck('deger','anahtar');$openAiGlobal=filled($aiAyarlar['api_anahtari']??null)||filled(config('services.izgios_ai.key'));return view('ayarlar.api-ayarlari',compact('firmalar','firmaId','entegrasyonlar','openAiGlobal','aiAyarlar'));}
+    public function apiAyarlari(Request $request){$this->yetki();$firmalar=Firma::where('aktif',true)->orderBy('unvan')->get();$firmaId=$request->integer('firma_id')?:$firmalar->first()?->id;if(!auth()->user()->tamSistemYetkisiVarMi())$firmaId=auth()->user()->firmaPersoneli?->firma_id;$entegrasyonlar=DB::table('muhasebe_entegrasyonlari')->where('firma_id',$firmaId)->get()->keyBy('saglayici');$aiAyarlar=DB::table('yonetim_ayarlari')->where('grup','yapay_zeka')->pluck('deger','anahtar');$sistemEmailAyarlar=DB::table('yonetim_ayarlari')->where('grup','sistem_email')->pluck('deger','anahtar');$openAiGlobal=filled($aiAyarlar['api_anahtari']??null)||filled(config('services.izgios_ai.key'));$sistemEmailHazir=app(MerkeziSistemMailGonderici::class)->hazirMi();return view('ayarlar.api-ayarlari',compact('firmalar','firmaId','entegrasyonlar','openAiGlobal','aiAyarlar','sistemEmailAyarlar','sistemEmailHazir'));}
+
+    public function merkeziEmailKaydet(Request $request)
+    {
+        abort_unless(auth()->check() && auth()->user()->tamSistemYetkisiVarMi(), 403);
+        $veri = $request->validate([
+            'smtp_host'=>['required','string','max:255'], 'smtp_port'=>['required','integer','between:1,65535'],
+            'smtp_sifreleme'=>['required','in:ssl,tls,none'], 'kullanici_adi'=>['required','string','max:255'],
+            'sifre'=>['nullable','string','max:2000'], 'gonderen'=>['required','email','max:255'],
+            'gonderen_adi'=>['nullable','string','max:180'], 'bildirim_alicisi'=>['required','email','max:255'],
+            'aktif'=>['nullable','boolean'],
+        ]);
+        $mevcutSifre=DB::table('yonetim_ayarlari')->where(['grup'=>'sistem_email','anahtar'=>'sifre'])->value('deger');
+        $sifre=filled($veri['sifre']??null)?Crypt::encryptString($veri['sifre']):$mevcutSifre;
+        abort_if(blank($sifre),422,'Sistem e-posta hesabı şifresini girin.');
+        $ayarlar=['smtp_host'=>$veri['smtp_host'],'smtp_port'=>(string)$veri['smtp_port'],'smtp_sifreleme'=>$veri['smtp_sifreleme'],'kullanici_adi'=>$veri['kullanici_adi'],'sifre'=>$sifre,'gonderen'=>$veri['gonderen'],'gonderen_adi'=>$veri['gonderen_adi']??'İZGİOS Sistem Yönetimi','bildirim_alicisi'=>$veri['bildirim_alicisi'],'aktif'=>$request->boolean('aktif')?'1':'0'];
+        foreach($ayarlar as $anahtar=>$deger) DB::table('yonetim_ayarlari')->updateOrInsert(['grup'=>'sistem_email','anahtar'=>$anahtar],['deger'=>$deger,'guncelleyen_id'=>auth()->id(),'updated_at'=>now(),'created_at'=>now()]);
+        return back()->with('success','Sistem Yöneticisi e-posta entegrasyonu güncellendi.');
+    }
+
+    public function merkeziEmailTest(Request $request, MerkeziSistemMailGonderici $gonderici)
+    {
+        abort_unless(auth()->check() && auth()->user()->tamSistemYetkisiVarMi(),403);
+        try{$gonderici->bildirimGonder('İZGİOS sistem e-posta bağlantı testi','Merkezi sistem e-posta hesabı başarıyla doğrulandı. Sistem hataları, silme kayıtları ve destek bildirimleri bu adrese gönderilecektir.');}
+        catch(Throwable $hata){report($hata);return back()->withErrors(['sistem_email'=>'Bağlantı kurulamadı: '.$hata->getMessage()]);}
+        return back()->with('success','Sistem e-posta test mesajı gönderildi.');
+    }
 
     public function merkeziYapayZekaKaydet(Request $request)
     {

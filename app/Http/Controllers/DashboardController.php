@@ -9,6 +9,7 @@ use App\Models\Servis;
 use App\Models\Sube;
 use App\Models\User;
 use App\Models\DestekTalebi;
+use App\Services\MerkeziSistemMailGonderici;
 use Illuminate\Support\Facades\File;
 
 class DashboardController extends Controller
@@ -61,7 +62,7 @@ class DashboardController extends Controller
             'son_kullanicilar' => User::query()->latest()->limit(6)->get(),
             'son_firmalar' => Firma::query()->latest()->limit(5)->get(),
             'son_destekler' => DestekTalebi::query()->with('kullanici')->latest()->limit(6)->get(),
-            'mail_yapilandirildi' => config('mail.default') !== 'log',
+            'mail_yapilandirildi' => app(MerkeziSistemMailGonderici::class)->hazirMi() || config('mail.default') !== 'log',
             'ai_yapilandirildi' => filled(config('services.izgios_ai.key')),
         ];
 

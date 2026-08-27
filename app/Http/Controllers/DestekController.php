@@ -4,11 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\DestekMesaji;
 use App\Models\DestekTalebi;
-use App\Models\User;
+use App\Services\MerkeziSistemMailGonderici;
 use App\Services\YapayZekaDestekServisi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 class DestekController extends Controller
 {
@@ -117,7 +116,14 @@ class DestekController extends Controller
 
         if ($yonetici) {
             $talep->update(['durum' => 'inceleniyor', 'son_yanit_at' => now()]);
-            return back()->with('success', 'Yanıtınız talep konuşmasına eklendi.');
+            try {
+                $gonderici = app(MerkeziSistemMailGonderici::class);
+                $alici = $talep->kullanici?->email;
+                if ($alici && $gonderici->hazirMi()) $gonderici->metinGonder($alici, 'Destek talebinize yanıt: '.$talep->baslik, $veri['mesaj'].' '.route('destek.index'));
+            } catch (\Throwable $hata) {
+                Log::warning('Sistem yöneticisi destek yanıtı e-postası gönderilemedi.', ['talep_id'=>$talep->id,'sebep'=>$hata->getMessage()]);
+            }
+            return back()->with('success', 'Yanıtınız talep konuşmasına eklendi ve kullanıcıya e-posta gönderimi başlatıldı.');
         }
 
         $dervisYaniti = $yapayZeka->yanitlaMesaj($talep, $veri['mesaj']);
@@ -134,19 +140,17 @@ class DestekController extends Controller
 
     private function yoneticiyeEpostaGonder(DestekTalebi $talep, bool $yeniTalep, ?string $yeniMesaj = null): void
     {
-        $adresler = User::query()->where('role', 'sistem_yoneticisi')->whereNotNull('email')->pluck('email')->filter()->values()->all();
-        if ($adresler === []) {
-            $adresler = array_filter([config('mail.from.address')]);
-        }
-
+        $gonderici = app(MerkeziSistemMailGonderici::class);
+        if (! $gonderici->hazirMi()) return;
         try {
-            Mail::send('emails.destek-talebi', [
+            $gonderici->gorunumGonder(
+                $gonderici->ayarlar()['bildirim_alicisi'],
+                ($yeniTalep ? 'Yeni destek talebi: ' : 'Destek talebi güncellendi: ') . $talep->baslik,
+                'emails.destek-talebi', [
                 'talep' => $talep->loadMissing('kullanici'),
                 'destekUrl' => route('destek.index'),
                 'yeniMesaj' => $yeniMesaj,
-            ], function ($mail) use ($adresler, $talep, $yeniTalep) {
-                $mail->to($adresler)->subject(($yeniTalep ? 'Yeni destek talebi: ' : 'Destek talebi güncellendi: ') . $talep->baslik);
-            });
+            ]);
         } catch (\Throwable $hata) {
             Log::warning('Destek yöneticisi e-posta bildirimi gönderilemedi.', ['talep_id' => $talep->id, 'sebep' => $hata->getMessage()]);
         }
