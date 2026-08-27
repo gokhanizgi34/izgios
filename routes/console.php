@@ -21,7 +21,7 @@ Schedule::command('izgi:backup')
     ->hourly();
 
 Schedule::command('izgi:dogum-gunu-kutla')
-    ->dailyAt('09:00')
+    ->everyMinute()
     ->withoutOverlapping();
 
 Schedule::command('izgi:iletisim-kuyrugunu-isle')
