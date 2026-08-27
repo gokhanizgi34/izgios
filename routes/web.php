@@ -109,6 +109,7 @@ Route::redirect('/yapay-zeka-kontrol', '/ayarlar/api-entegrasyonlari')->name('ya
 Route::get('/ayarlar/iletisim-merkezi', [IletisimAyarController::class, 'index'])->name('ayarlar.iletisim');
 Route::post('/ayarlar/iletisim-merkezi', [IletisimAyarController::class, 'kaydet'])->name('ayarlar.iletisim.kaydet');
 Route::get('/depo', [DepoController::class, 'index'])->name('depo.index');
+Route::get('/depo/parca-onerileri', [DepoController::class, 'parcaOnerileri'])->name('depo.parca.onerileri');
 Route::post('/depo/parca', [DepoController::class, 'parcaKaydet'])->name('depo.parca');
 Route::post('/depo/hareket', [DepoController::class, 'hareketKaydet'])->name('depo.hareket');
 Route::get('/depo/barkod', [DepoController::class, 'barkod'])->name('depo.barkod');

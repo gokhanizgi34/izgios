@@ -141,7 +141,7 @@ class StokKaynakController extends Controller
                     DB::table('stok_parcalar')->where('id', $mevcut->id)->update($deger);
                     $sayac['guncellenen']++;
                 } else {
-                    DB::table('stok_parcalar')->insert(array_merge($deger, ['firma_id'=>$kaynak->firma_id,'stok_miktari'=>0,'minimum_stok'=>0,'alis_fiyati'=>0,'oem_durum'=>'kaynak_dogrulandi','aktif'=>true,'created_at'=>now()]));
+                    DB::table('stok_parcalar')->insert(array_merge($deger, ['firma_id'=>$kaynak->firma_id,'olusturan_id'=>auth()->id(),'olusturan_rol'=>auth()->user()?->role,'stok_miktari'=>0,'minimum_stok'=>0,'alis_fiyati'=>0,'oem_durum'=>'kaynak_dogrulandi','aktif'=>true,'created_at'=>now()]));
                     $sayac['eklenen']++;
                 }
             }

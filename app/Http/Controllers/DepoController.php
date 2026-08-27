@@ -1,21 +1,269 @@
 <?php
+
 namespace App\Http\Controllers;
-use App\Models\Firma; use App\Services\SilmeDenetimServisi; use Illuminate\Http\Request; use Illuminate\Support\Facades\DB; use Throwable;
-class DepoController {
-private function firmaSec(Request $r):int{abort_unless(auth()->check()&&(auth()->user()->tamSistemYetkisiVarMi()||auth()->user()->isAdmin()||auth()->user()->isYedekParca()),403);$sys=auth()->user()->tamSistemYetkisiVarMi();$id=$sys?($r->integer('firma_id')?:session('aktif_firma_id')?:Firma::where('aktif',true)->orderBy('unvan')->value('id')):auth()->user()->firmaPersoneli?->firma_id;abort_unless($id&&Firma::whereKey($id)->where('aktif',true)->exists(),403);return(int)$id;}
-public function index(Request $r){$firmaId=$this->firmaSec($r);$firmalar=auth()->user()->tamSistemYetkisiVarMi()?Firma::where('aktif',true)->orderBy('unvan')->get():Firma::whereKey($firmaId)->get();$depolar=DB::table('depolar')->where('firma_id',$firmaId)->where('aktif',true)->orderBy('ad')->get();$raflar=DB::table('depo_raflar')->join('depolar','depolar.id','=','depo_raflar.depo_id')->where('depolar.firma_id',$firmaId)->where('depo_raflar.aktif',true)->select('depo_raflar.*','depolar.ad as depo_adi')->orderBy('depolar.ad')->orderBy('depo_raflar.kod')->get();$cariler=DB::table('cari_hesaplar')->where('firma_id',$firmaId)->where('aktif',true)->orderBy('unvan')->get(['id','unvan','plaka']);$parcalar=DB::table('stok_parcalar')->leftJoin('stok_parca_raf_adresleri','stok_parca_raf_adresleri.stok_parca_id','=','stok_parcalar.id')->leftJoin('depo_raflar','depo_raflar.id','=','stok_parca_raf_adresleri.depo_raf_id')->leftJoin('depolar','depolar.id','=','depo_raflar.depo_id')->where('stok_parcalar.firma_id',$firmaId)->select('stok_parcalar.*','depo_raflar.kod as raf_kodu','depolar.ad as depo_adi')->latest('stok_parcalar.id')->get();$kaynaklar=DB::table('stok_urun_kaynaklari')->where('firma_id',$firmaId)->orderBy('ad')->get();$duzenlenecekParca=$r->integer('duzenle_parca')?DB::table('stok_parcalar')->where('firma_id',$firmaId)->whereKey($r->integer('duzenle_parca'))->first():null;$ozet=['toplam'=>$parcalar->count(),'kritik'=>$parcalar->filter(fn($p)=>$p->stok_miktari<=$p->minimum_stok)->count(),'bekleyen'=>$parcalar->where('oem_durum','kontrol_bekliyor')->count()];return view('depo.index-v2',compact('firmalar','firmaId','parcalar','ozet','depolar','raflar','cariler','kaynaklar','duzenlenecekParca'));}
-public function barkod(Request $r){$firmaId=$this->firmaSec($r);$firmalar=auth()->user()->tamSistemYetkisiVarMi()?Firma::where('aktif',true)->orderBy('unvan')->get():Firma::whereKey($firmaId)->get();$arama=trim((string)$r->input('ara'));$depolar=DB::table('depolar')->where('firma_id',$firmaId)->where('aktif',true)->get();$raflar=DB::table('depo_raflar')->join('depolar','depolar.id','=','depo_raflar.depo_id')->where('depolar.firma_id',$firmaId)->select('depo_raflar.*','depolar.ad as depo_adi')->get();$parcalar=DB::table('stok_parcalar')->leftJoin('stok_parca_raf_adresleri','stok_parca_raf_adresleri.stok_parca_id','=','stok_parcalar.id')->leftJoin('depo_raflar','depo_raflar.id','=','stok_parca_raf_adresleri.depo_raf_id')->leftJoin('depolar','depolar.id','=','depo_raflar.depo_id')->where('stok_parcalar.firma_id',$firmaId)->when($arama!=='',fn($q)=>$q->where('stok_parcalar.parca_adi','like',"%{$arama}%"))->select('stok_parcalar.*','depo_raflar.kod as raf_kodu','depolar.ad as depo_adi')->get();return view('depo.barkod-v2',compact('firmalar','firmaId','arama','parcalar','depolar','raflar'));}
-public function depoKaydet(Request $r){$id=$this->firmaSec($r);$v=$r->validate(['ad'=>['required','string','max:100']]);DB::table('depolar')->insert(['firma_id'=>$id,'ad'=>$v['ad'],'aktif'=>true,'created_at'=>now(),'updated_at'=>now()]);return back()->with('success','Depo oluşturuldu.');}
-public function depoGuncelle(Request $r,int $depo){$id=$this->firmaSec($r);$v=$r->validate(['ad'=>['required','string','max:100']]);abort_unless(DB::table('depolar')->whereKey($depo)->where('firma_id',$id)->exists(),404);DB::table('depolar')->whereKey($depo)->update(['ad'=>$v['ad'],'updated_at'=>now()]);return back()->with('success','Depo güncellendi.');}
-public function depoSil(Request $r,int $depo){$id=$this->firmaSec($r);$k=DB::table('depolar')->whereKey($depo)->where('firma_id',$id)->first();abort_unless($k,404);app(SilmeDenetimServisi::class)->tabloKaydiSilindi('Depo',$k,$id);DB::table('depolar')->whereKey($depo)->delete();return back()->with('success','Depo ve bağlı rafları silindi.');}
-public function rafKaydet(Request $r){$id=$this->firmaSec($r);$v=$r->validate(['depo_id'=>['required','exists:depolar,id'],'kod'=>['required','string','max:60']]);abort_unless(DB::table('depolar')->whereKey($v['depo_id'])->where('firma_id',$id)->exists(),403);DB::table('depo_raflar')->insert(['depo_id'=>$v['depo_id'],'kod'=>$v['kod'],'aktif'=>true,'created_at'=>now(),'updated_at'=>now()]);return back()->with('success','Raf adresi oluşturuldu.');}
-public function rafGuncelle(Request $r,int $raf){$id=$this->firmaSec($r);$v=$r->validate(['depo_id'=>['required','exists:depolar,id'],'kod'=>['required','string','max:60']]);abort_unless(DB::table('depolar')->whereKey($v['depo_id'])->where('firma_id',$id)->exists()&&$this->rafFirmayaAit($raf,$id),403);DB::table('depo_raflar')->whereKey($raf)->update(['depo_id'=>$v['depo_id'],'kod'=>$v['kod'],'updated_at'=>now()]);return back()->with('success','Raf güncellendi.');}
-public function rafSil(Request $r,int $raf){$id=$this->firmaSec($r);$k=DB::table('depo_raflar')->join('depolar','depolar.id','=','depo_raflar.depo_id')->where('depo_raflar.id',$raf)->where('depolar.firma_id',$id)->select('depo_raflar.*')->first();abort_unless($k,404);app(SilmeDenetimServisi::class)->tabloKaydiSilindi('DepoRafi',$k,$id);DB::table('depo_raflar')->whereKey($raf)->delete();return back()->with('success','Raf silindi.');}
-public function rafAta(Request $r){$id=$this->firmaSec($r);$v=$r->validate(['stok_parca_id'=>['required','exists:stok_parcalar,id'],'depo_raf_id'=>['required','exists:depo_raflar,id']]);abort_unless(DB::table('stok_parcalar')->whereKey($v['stok_parca_id'])->where('firma_id',$id)->exists()&&$this->rafFirmayaAit((int)$v['depo_raf_id'],$id),403);DB::table('stok_parca_raf_adresleri')->where('stok_parca_id',$v['stok_parca_id'])->update(['ana_konum'=>false]);DB::table('stok_parca_raf_adresleri')->updateOrInsert(['stok_parca_id'=>$v['stok_parca_id'],'depo_raf_id'=>$v['depo_raf_id']],['ana_konum'=>true,'updated_at'=>now(),'created_at'=>now()]);return back()->with('success','Ürün raf adresine bağlandı.');}
-public function parcaKaydet(Request $r){$id=$this->firmaSec($r);$v=$this->parcaDogrula($r);$v['oem_no']=$this->oem($v['oem_no']);if(DB::table('stok_parcalar')->where('firma_id',$id)->where('oem_no',$v['oem_no'])->exists())return back()->withErrors(['oem_no'=>'Bu OEM numarası bu firma için zaten kayıtlı.'])->withInput();$v['barkod']=filled($v['barkod']??null)?$v['barkod']:$this->barkodOlustur($id);$v['alis_fiyati']=$v['alis_fiyati']??0;$v['satis_fiyati']=filled($v['satis_fiyati']??null)?$v['satis_fiyati']:$v['alis_fiyati'];DB::table('stok_parcalar')->insert(array_merge($v,['firma_id'=>$id,'stok_miktari'=>0,'oem_durum'=>'kontrol_bekliyor','aktif'=>true,'created_at'=>now(),'updated_at'=>now()]));return back()->with('success','Parça kartı oluşturuldu. Ürün barkodu: '.$v['barkod']);}
-public function parcaGuncelle(Request $r,int $parca){$id=$this->firmaSec($r);abort_unless(DB::table('stok_parcalar')->whereKey($parca)->where('firma_id',$id)->exists(),404);$v=$this->parcaDogrula($r);$v['oem_no']=$this->oem($v['oem_no']);if(DB::table('stok_parcalar')->where('firma_id',$id)->where('oem_no',$v['oem_no'])->where('id','!=',$parca)->exists())return back()->withErrors(['oem_no'=>'Bu OEM numarası başka üründe kayıtlı.'])->withInput();if(filled($v['barkod']??null)&&DB::table('stok_parcalar')->where('firma_id',$id)->where('barkod',$v['barkod'])->where('id','!=',$parca)->exists())return back()->withErrors(['barkod'=>'Bu barkod başka üründe kayıtlı.'])->withInput();DB::table('stok_parcalar')->whereKey($parca)->update(array_merge($v,['updated_at'=>now()]));return redirect()->route('depo.index',['firma_id'=>$id])->with('success','Ürün kartı güncellendi.');}
-public function parcaSil(Request $r,int $parca){$id=$this->firmaSec($r);$k=DB::table('stok_parcalar')->whereKey($parca)->where('firma_id',$id)->first();abort_unless($k,404);app(SilmeDenetimServisi::class)->tabloKaydiSilindi('StokParcasi',$k,$id);DB::table('stok_parcalar')->whereKey($parca)->delete();return back()->with('success','Ürün kartı ve bağlı stok hareketleri silindi.');}
-public function hareketKaydet(Request $r){$id=$this->firmaSec($r);$v=$r->validate(['stok_parca_id'=>['required','exists:stok_parcalar,id'],'depo_id'=>['required','exists:depolar,id'],'depo_raf_id'=>['required','exists:depo_raflar,id'],'cari_hesap_id'=>['nullable','exists:cari_hesaplar,id'],'yon'=>['required','in:giris,cikis'],'miktar'=>['required','numeric','gt:0'],'birim_alis_fiyati'=>['nullable','numeric','min:0'],'referans'=>['nullable','string','max:100'],'aciklama'=>['nullable','string','max:500']]);$p=DB::table('stok_parcalar')->whereKey($v['stok_parca_id'])->where('firma_id',$id)->first();if(!$p)return back()->withErrors(['stok_parca_id'=>'Seçilen ürün bu firmaya ait değil.'])->withInput();if(!DB::table('depolar')->whereKey($v['depo_id'])->where('firma_id',$id)->exists())return back()->withErrors(['depo_id'=>'Seçilen depo bu firmaya ait değil.'])->withInput();if(!DB::table('depo_raflar')->whereKey($v['depo_raf_id'])->where('depo_id',$v['depo_id'])->exists())return back()->withErrors(['depo_raf_id'=>'Seçilen raf seçilen depoya ait değil. Depoyu seçip rafı yeniden belirleyin.'])->withInput();if(!empty($v['cari_hesap_id'])&&!DB::table('cari_hesaplar')->whereKey($v['cari_hesap_id'])->where('firma_id',$id)->exists())return back()->withErrors(['cari_hesap_id'=>'Seçilen cari bu firmaya ait değil.'])->withInput();if($v['yon']==='cikis'&&$p->stok_miktari<$v['miktar'])return back()->withErrors(['miktar'=>'Yetersiz stok.'])->withInput();try{DB::transaction(function()use($v,$p,$id){$alis=(float)($v['birim_alis_fiyati']??0);$toplam=round($v['miktar']*$alis*(1+((float)$p->kdv_orani/100)),2);$hid=DB::table('stok_hareketleri')->insertGetId(array_merge($v,['birim_alis_fiyati'=>$alis,'toplam_tutar'=>$toplam,'olusturan_id'=>auth()->id(),'created_at'=>now(),'updated_at'=>now()]));$g=['stok_miktari'=>$p->stok_miktari+($v['yon']==='giris'?$v['miktar']:-$v['miktar']),'updated_at'=>now()];if($v['yon']==='giris'&&$alis>0){$g['alis_fiyati']=$alis;if((float)$p->satis_fiyati<=0)$g['satis_fiyati']=$alis;}DB::table('stok_parcalar')->whereKey($p->id)->update($g);if($v['yon']==='giris'&&$toplam>0&&!empty($v['cari_hesap_id'])){$fid=DB::table('muhasebe_fisleri')->insertGetId(['firma_id'=>$id,'cari_hesap_id'=>$v['cari_hesap_id'],'fis_no'=>'STK-'.str_pad((string)$hid,7,'0',STR_PAD_LEFT),'tip'=>'Yedek Parça Alış Fişi','fis_tarihi'=>now()->toDateString(),'aciklama'=>$p->parca_adi.' stok alımı','tutar'=>$toplam,'yon'=>'gider','kaynak'=>'stok_alim','kaynak_id'=>$hid,'durum'=>'onaylandi','olusturan_id'=>auth()->id(),'created_at'=>now(),'updated_at'=>now()]);$net=round($v['miktar']*$alis,2);DB::table('muhasebe_fis_satirlari')->insert(['muhasebe_fis_id'=>$fid,'urun_adi'=>$p->parca_adi,'adet'=>$v['miktar'],'birim'=>$p->birim,'birim_fiyat'=>$alis,'kdv_orani'=>$p->kdv_orani,'kdv_haric_tutar'=>$net,'kdv_tutari'=>$toplam-$net,'kdv_dahil_tutar'=>$toplam,'created_at'=>now(),'updated_at'=>now()]);DB::table('cari_hesaplar')->whereKey($v['cari_hesap_id'])->decrement('bakiye',$toplam);}});}catch(Throwable $e){report($e);return back()->withErrors(['stok'=>'Stok hareketi kaydedilemedi. Alanları kontrol edip tekrar deneyin.'])->withInput();}return back()->with('success','Raf bazlı stok hareketi işlendi.');}
-private function parcaDogrula(Request $r):array{return$r->validate(['oem_no'=>['required','string','max:80','regex:/^[A-Za-z0-9.\-\/ ]{3,80}$/'],'urun_kodu'=>['nullable','string','max:80'],'barkod'=>['nullable','string','max:80'],'parca_adi'=>['required','string','max:255'],'marka'=>['nullable','string','max:100'],'kategori'=>['nullable','string','max:255'],'birim'=>['nullable','string','max:20'],'kdv_orani'=>['nullable','numeric','min:0','max:100'],'alis_fiyati'=>['nullable','numeric','min:0'],'satis_fiyati'=>['nullable','numeric','min:0'],'minimum_stok'=>['nullable','numeric','min:0']]);}
-private function oem(string $v):string{return strtoupper(preg_replace('/\s+/','',$v));}private function rafFirmayaAit(int $raf,int $id):bool{return DB::table('depo_raflar')->join('depolar','depolar.id','=','depo_raflar.depo_id')->where('depo_raflar.id',$raf)->where('depolar.firma_id',$id)->exists();}private function barkodOlustur(int $id):string{do{$g='869'.str_pad((string)$id,3,'0',STR_PAD_LEFT).str_pad((string)random_int(0,999999),6,'0',STR_PAD_LEFT);$t=0;foreach(str_split($g)as$i=>$r)$t+=(int)$r*($i%2?3:1);$kod=$g.((10-$t%10)%10);}while(DB::table('stok_parcalar')->where('barkod',$kod)->exists());return$kod;}
+
+use App\Models\Firma;
+use App\Services\SilmeDenetimServisi;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Throwable;
+
+class DepoController
+{
+    private function firmaSec(Request $r): int
+    {
+        abort_unless(auth()->check() && (auth()->user()->tamSistemYetkisiVarMi() || auth()->user()->isAdmin() || auth()->user()->isYedekParca()), 403);
+        $sys = auth()->user()->tamSistemYetkisiVarMi();
+        $id = $sys ? ($r->integer('firma_id') ?: session('aktif_firma_id') ?: Firma::where('aktif', true)->orderBy('unvan')->value('id')) : auth()->user()->firmaPersoneli?->firma_id;
+        abort_unless($id && Firma::whereKey($id)->where('aktif', true)->exists(), 403);
+
+        return (int) $id;
+    }
+
+    public function index(Request $r)
+    {
+        $firmaId = $this->firmaSec($r);
+        $firmalar = auth()->user()->tamSistemYetkisiVarMi() ? Firma::where('aktif', true)->orderBy('unvan')->get() : Firma::whereKey($firmaId)->get();
+        $depolar = DB::table('depolar')->where('firma_id', $firmaId)->where('aktif', true)->orderBy('ad')->get();
+        $raflar = DB::table('depo_raflar')->join('depolar', 'depolar.id', '=', 'depo_raflar.depo_id')->where('depolar.firma_id', $firmaId)->where('depo_raflar.aktif', true)->select('depo_raflar.*', 'depolar.ad as depo_adi')->orderBy('depolar.ad')->orderBy('depo_raflar.kod')->get();
+        $cariler = DB::table('cari_hesaplar')->where('firma_id', $firmaId)->where('aktif', true)->orderBy('unvan')->get(['id', 'unvan', 'plaka']);
+        $parcaSorgusu = DB::table('stok_parcalar')->leftJoin('stok_parca_raf_adresleri', 'stok_parca_raf_adresleri.stok_parca_id', '=', 'stok_parcalar.id')->leftJoin('depo_raflar', 'depo_raflar.id', '=', 'stok_parca_raf_adresleri.depo_raf_id')->leftJoin('depolar', 'depolar.id', '=', 'depo_raflar.depo_id')->where('stok_parcalar.firma_id', $firmaId);
+        $this->rolGorunurlugu($parcaSorgusu);
+        $parcalar = $parcaSorgusu->select('stok_parcalar.*', 'depo_raflar.kod as raf_kodu', 'depolar.ad as depo_adi')->latest('stok_parcalar.id')->get();
+        $kaynaklar = DB::table('stok_urun_kaynaklari')->where('firma_id', $firmaId)->orderBy('ad')->get();
+        $duzenlenecekParca = $r->integer('duzenle_parca') ? (clone $parcaSorgusu)->where('stok_parcalar.id', $r->integer('duzenle_parca'))->select('stok_parcalar.*')->first() : null;
+        $ozet = ['toplam' => $parcalar->count(), 'kritik' => $parcalar->filter(fn ($p) => $p->stok_miktari <= $p->minimum_stok)->count(), 'bekleyen' => $parcalar->where('oem_durum', 'kontrol_bekliyor')->count()];
+
+        return view('depo.index-v2', compact('firmalar', 'firmaId', 'parcalar', 'ozet', 'depolar', 'raflar', 'cariler', 'kaynaklar', 'duzenlenecekParca'));
+    }
+
+    public function parcaOnerileri(Request $r)
+    {
+        $firmaId = $this->firmaSec($r);
+        $q = trim((string) $r->input('q'));
+        if (mb_strlen($q) < 2) {
+            return response()->json([]);
+        }$s = DB::table('stok_parcalar')->where('firma_id', $firmaId)->where('aktif', true);
+        foreach (preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY) as $kelime) {
+            $s->where(fn ($x) => $x->where('parca_adi', 'like', "%{$kelime}%")->orWhere('marka', 'like', "%{$kelime}%")->orWhere('uyumluluk', 'like', "%{$kelime}%")->orWhere('oem_no', 'like', "%{$kelime}%"));
+        }
+
+return response()->json($s->select('oem_no', 'parca_adi', 'marka', 'uyumluluk')->distinct()->orderBy('parca_adi')->limit(20)->get());
+    }
+
+    public function barkod(Request $r)
+    {
+        $firmaId = $this->firmaSec($r);
+        $firmalar = auth()->user()->tamSistemYetkisiVarMi() ? Firma::where('aktif', true)->orderBy('unvan')->get() : Firma::whereKey($firmaId)->get();
+        $arama = trim((string) $r->input('ara'));
+        $depolar = DB::table('depolar')->where('firma_id', $firmaId)->where('aktif', true)->get();
+        $raflar = DB::table('depo_raflar')->join('depolar', 'depolar.id', '=', 'depo_raflar.depo_id')->where('depolar.firma_id', $firmaId)->select('depo_raflar.*', 'depolar.ad as depo_adi')->get();
+        $parcaSorgusu = DB::table('stok_parcalar')->leftJoin('stok_parca_raf_adresleri', 'stok_parca_raf_adresleri.stok_parca_id', '=', 'stok_parcalar.id')->leftJoin('depo_raflar', 'depo_raflar.id', '=', 'stok_parca_raf_adresleri.depo_raf_id')->leftJoin('depolar', 'depolar.id', '=', 'depo_raflar.depo_id')->where('stok_parcalar.firma_id', $firmaId)->when($arama !== '', fn ($q) => $q->where('stok_parcalar.parca_adi', 'like', "%{$arama}%"));
+        $this->rolGorunurlugu($parcaSorgusu);
+        $parcalar = $parcaSorgusu->select('stok_parcalar.*', 'depo_raflar.kod as raf_kodu', 'depolar.ad as depo_adi')->get();
+
+        return view('depo.barkod-v2', compact('firmalar', 'firmaId', 'arama', 'parcalar', 'depolar', 'raflar'));
+    }
+
+    public function depoKaydet(Request $r)
+    {
+        $id = $this->firmaSec($r);
+        $v = $r->validate(['ad' => ['required', 'string', 'max:100']]);
+        DB::table('depolar')->insert(['firma_id' => $id, 'ad' => $v['ad'], 'aktif' => true, 'created_at' => now(), 'updated_at' => now()]);
+
+        return back()->with('success', 'Depo oluşturuldu.');
+    }
+
+    public function depoGuncelle(Request $r, int $depo)
+    {
+        $id = $this->firmaSec($r);
+        $v = $r->validate(['ad' => ['required', 'string', 'max:100']]);
+        abort_unless(DB::table('depolar')->whereKey($depo)->where('firma_id', $id)->exists(), 404);
+        DB::table('depolar')->whereKey($depo)->update(['ad' => $v['ad'], 'updated_at' => now()]);
+
+        return back()->with('success', 'Depo güncellendi.');
+    }
+
+    public function depoSil(Request $r, int $depo)
+    {
+        $id = $this->firmaSec($r);
+        $k = DB::table('depolar')->whereKey($depo)->where('firma_id', $id)->first();
+        abort_unless($k, 404);
+        app(SilmeDenetimServisi::class)->tabloKaydiSilindi('Depo', $k, $id);
+        DB::table('depolar')->whereKey($depo)->delete();
+
+        return back()->with('success', 'Depo ve bağlı rafları silindi.');
+    }
+
+    public function rafKaydet(Request $r)
+    {
+        $id = $this->firmaSec($r);
+        $v = $r->validate(['depo_id' => ['required', 'exists:depolar,id'], 'kod' => ['required', 'string', 'max:60']]);
+        abort_unless(DB::table('depolar')->whereKey($v['depo_id'])->where('firma_id', $id)->exists(), 403);
+        DB::table('depo_raflar')->insert(['depo_id' => $v['depo_id'], 'kod' => $v['kod'], 'aktif' => true, 'created_at' => now(), 'updated_at' => now()]);
+
+        return back()->with('success', 'Raf adresi oluşturuldu.');
+    }
+
+    public function rafGuncelle(Request $r, int $raf)
+    {
+        $id = $this->firmaSec($r);
+        $v = $r->validate(['depo_id' => ['required', 'exists:depolar,id'], 'kod' => ['required', 'string', 'max:60']]);
+        abort_unless(DB::table('depolar')->whereKey($v['depo_id'])->where('firma_id', $id)->exists() && $this->rafFirmayaAit($raf, $id), 403);
+        DB::table('depo_raflar')->whereKey($raf)->update(['depo_id' => $v['depo_id'], 'kod' => $v['kod'], 'updated_at' => now()]);
+
+        return back()->with('success', 'Raf güncellendi.');
+    }
+
+    public function rafSil(Request $r, int $raf)
+    {
+        $id = $this->firmaSec($r);
+        $k = DB::table('depo_raflar')->join('depolar', 'depolar.id', '=', 'depo_raflar.depo_id')->where('depo_raflar.id', $raf)->where('depolar.firma_id', $id)->select('depo_raflar.*')->first();
+        abort_unless($k, 404);
+        app(SilmeDenetimServisi::class)->tabloKaydiSilindi('DepoRafi', $k, $id);
+        DB::table('depo_raflar')->whereKey($raf)->delete();
+
+        return back()->with('success', 'Raf silindi.');
+    }
+
+    public function rafAta(Request $r)
+    {
+        $id = $this->firmaSec($r);
+        $v = $r->validate(['stok_parca_id' => ['required', 'exists:stok_parcalar,id'], 'depo_raf_id' => ['required', 'exists:depo_raflar,id']]);
+        abort_unless($this->parcaErisilebilir((int) $v['stok_parca_id'], $id) && $this->rafFirmayaAit((int) $v['depo_raf_id'], $id), 403);
+        DB::table('stok_parca_raf_adresleri')->where('stok_parca_id', $v['stok_parca_id'])->update(['ana_konum' => false]);
+        DB::table('stok_parca_raf_adresleri')->updateOrInsert(['stok_parca_id' => $v['stok_parca_id'], 'depo_raf_id' => $v['depo_raf_id']], ['ana_konum' => true, 'updated_at' => now(), 'created_at' => now()]);
+
+        return back()->with('success', 'Ürün raf adresine bağlandı.');
+    }
+
+    public function parcaKaydet(Request $r)
+    {
+        $id = $this->firmaSec($r);
+        $rol = (string) auth()->user()->role;
+        $v = $this->parcaDogrula($r);
+        $v['oem_no'] = $this->oem($v['oem_no']);
+        if (DB::table('stok_parcalar')->where('firma_id', $id)->where('oem_no', $v['oem_no'])->where('olusturan_rol', $rol)->exists()) {
+            return back()->withErrors(['oem_no' => 'Bu OEM numarası sizin rolünüz için zaten kayıtlı.'])->withInput();
+        }$v['barkod'] = filled($v['barkod'] ?? null) ? $v['barkod'] : $this->barkodOlustur($id);
+        $v['alis_fiyati'] = $v['alis_fiyati'] ?? 0;
+        $v['satis_fiyati'] = filled($v['satis_fiyati'] ?? null) ? $v['satis_fiyati'] : $v['alis_fiyati'];
+        DB::table('stok_parcalar')->insert(array_merge($v, ['firma_id' => $id, 'olusturan_id' => auth()->id(), 'olusturan_rol' => $rol, 'stok_miktari' => 0, 'oem_durum' => 'kontrol_bekliyor', 'aktif' => true, 'created_at' => now(), 'updated_at' => now()]));
+
+        return back()->with('success', 'Parça kartı oluşturuldu. Ürün barkodu: '.$v['barkod']);
+    }
+
+    public function parcaGuncelle(Request $r, int $parca)
+    {
+        $id = $this->firmaSec($r);
+        abort_unless($this->parcaErisilebilir($parca, $id), 404);
+        $rol = (string) auth()->user()->role;
+        $v = $this->parcaDogrula($r);
+        $v['oem_no'] = $this->oem($v['oem_no']);
+        if (DB::table('stok_parcalar')->where('firma_id', $id)->where('oem_no', $v['oem_no'])->where('olusturan_rol', $rol)->where('id', '!=', $parca)->exists()) {
+            return back()->withErrors(['oem_no' => 'Bu OEM numarası sizin rolünüzde başka üründe kayıtlı.'])->withInput();
+        }if (filled($v['barkod'] ?? null) && DB::table('stok_parcalar')->where('firma_id', $id)->where('barkod', $v['barkod'])->where('id', '!=', $parca)->exists()) {
+            return back()->withErrors(['barkod' => 'Bu barkod başka üründe kayıtlı.'])->withInput();
+        }DB::table('stok_parcalar')->whereKey($parca)->update(array_merge($v, ['updated_at' => now()]));
+
+        return redirect()->route('depo.index', ['firma_id' => $id])->with('success', 'Ürün kartı güncellendi.');
+    }
+
+    public function parcaSil(Request $r, int $parca)
+    {
+        $id = $this->firmaSec($r);
+        abort_unless($this->parcaErisilebilir($parca, $id), 404);
+        $k = DB::table('stok_parcalar')->whereKey($parca)->where('firma_id', $id)->first();
+        app(SilmeDenetimServisi::class)->tabloKaydiSilindi('StokParcasi', $k, $id);
+        DB::table('stok_parcalar')->whereKey($parca)->delete();
+
+        return back()->with('success', 'Ürün kartı ve bağlı stok hareketleri silindi.');
+    }
+
+    public function hareketKaydet(Request $r)
+    {
+        $id = $this->firmaSec($r);
+        $v = $r->validate(['stok_parca_id' => ['required', 'exists:stok_parcalar,id'], 'depo_id' => ['required', 'exists:depolar,id'], 'depo_raf_id' => ['required', 'exists:depo_raflar,id'], 'cari_hesap_id' => ['nullable', 'exists:cari_hesaplar,id'], 'yon' => ['required', 'in:giris,cikis'], 'miktar' => ['required', 'numeric', 'gt:0'], 'birim_alis_fiyati' => ['nullable', 'numeric', 'min:0'], 'referans' => ['nullable', 'string', 'max:100'], 'aciklama' => ['nullable', 'string', 'max:500']]);
+        $p = $this->parcaErisilebilir((int) $v['stok_parca_id'], $id) ? DB::table('stok_parcalar')->whereKey($v['stok_parca_id'])->where('firma_id', $id)->first() : null;
+        if (! $p) {
+            return back()->withErrors(['stok_parca_id' => 'Seçilen ürün bu firmaya ait değil.'])->withInput();
+        }if (! DB::table('depolar')->whereKey($v['depo_id'])->where('firma_id', $id)->exists()) {
+            return back()->withErrors(['depo_id' => 'Seçilen depo bu firmaya ait değil.'])->withInput();
+        }if (! DB::table('depo_raflar')->whereKey($v['depo_raf_id'])->where('depo_id', $v['depo_id'])->exists()) {
+            return back()->withErrors(['depo_raf_id' => 'Seçilen raf seçilen depoya ait değil. Depoyu seçip rafı yeniden belirleyin.'])->withInput();
+        }if (! empty($v['cari_hesap_id']) && ! DB::table('cari_hesaplar')->whereKey($v['cari_hesap_id'])->where('firma_id', $id)->exists()) {
+            return back()->withErrors(['cari_hesap_id' => 'Seçilen cari bu firmaya ait değil.'])->withInput();
+        }if ($v['yon'] === 'cikis' && $p->stok_miktari < $v['miktar']) {
+            return back()->withErrors(['miktar' => 'Yetersiz stok.'])->withInput();
+        }try {
+            DB::transaction(function () use ($v, $p, $id) {
+                $alis = (float) ($v['birim_alis_fiyati'] ?? 0);
+                $toplam = round($v['miktar'] * $alis * (1 + ((float) $p->kdv_orani / 100)), 2);
+                $hid = DB::table('stok_hareketleri')->insertGetId(array_merge($v, ['birim_alis_fiyati' => $alis, 'toplam_tutar' => $toplam, 'olusturan_id' => auth()->id(), 'created_at' => now(), 'updated_at' => now()]));
+                $g = ['stok_miktari' => $p->stok_miktari + ($v['yon'] === 'giris' ? $v['miktar'] : -$v['miktar']), 'updated_at' => now()];
+                if ($v['yon'] === 'giris' && $alis > 0) {
+                    $g['alis_fiyati'] = $alis;
+                    if ((float) $p->satis_fiyati <= 0) {
+                        $g['satis_fiyati'] = $alis;
+                    }
+                }DB::table('stok_parcalar')->whereKey($p->id)->update($g);
+                if ($v['yon'] === 'giris' && $toplam > 0 && ! empty($v['cari_hesap_id'])) {
+                    $fid = DB::table('muhasebe_fisleri')->insertGetId(['firma_id' => $id, 'cari_hesap_id' => $v['cari_hesap_id'], 'fis_no' => 'STK-'.str_pad((string) $hid, 7, '0', STR_PAD_LEFT), 'tip' => 'Yedek Parça Alış Fişi', 'fis_tarihi' => now()->toDateString(), 'aciklama' => $p->parca_adi.' stok alımı', 'tutar' => $toplam, 'yon' => 'gider', 'kaynak' => 'stok_alim', 'kaynak_id' => $hid, 'durum' => 'onaylandi', 'olusturan_id' => auth()->id(), 'created_at' => now(), 'updated_at' => now()]);
+                    $net = round($v['miktar'] * $alis, 2);
+                    DB::table('muhasebe_fis_satirlari')->insert(['muhasebe_fis_id' => $fid, 'urun_adi' => $p->parca_adi, 'adet' => $v['miktar'], 'birim' => $p->birim, 'birim_fiyat' => $alis, 'kdv_orani' => $p->kdv_orani, 'kdv_haric_tutar' => $net, 'kdv_tutari' => $toplam - $net, 'kdv_dahil_tutar' => $toplam, 'created_at' => now(), 'updated_at' => now()]);
+                    DB::table('cari_hesaplar')->whereKey($v['cari_hesap_id'])->decrement('bakiye', $toplam);
+                }
+            });
+        } catch (Throwable $e) {
+            report($e);
+
+            return back()->withErrors(['stok' => 'Stok hareketi kaydedilemedi. Alanları kontrol edip tekrar deneyin.'])->withInput();
+        }
+
+return back()->with('success', 'Raf bazlı stok hareketi işlendi.');
+    }
+
+    private function parcaDogrula(Request $r): array
+    {
+        return $r->validate(['oem_no' => ['required', 'string', 'max:80', 'regex:/^[A-Za-z0-9.\-\/ ]{3,80}$/'], 'urun_kodu' => ['nullable', 'string', 'max:80'], 'barkod' => ['nullable', 'string', 'max:80'], 'parca_adi' => ['required', 'string', 'max:255'], 'marka' => ['nullable', 'string', 'max:100'], 'kategori' => ['nullable', 'string', 'max:255'], 'birim' => ['nullable', 'string', 'max:20'], 'kdv_orani' => ['nullable', 'numeric', 'min:0', 'max:100'], 'alis_fiyati' => ['nullable', 'numeric', 'min:0'], 'satis_fiyati' => ['nullable', 'numeric', 'min:0'], 'minimum_stok' => ['nullable', 'numeric', 'min:0']]);
+    }
+
+    private function oem(string $v): string
+    {
+        return strtoupper(preg_replace('/\s+/', '', $v));
+    }
+
+    private function rafFirmayaAit(int $raf, int $id): bool
+    {
+        return DB::table('depo_raflar')->join('depolar', 'depolar.id', '=', 'depo_raflar.depo_id')->where('depo_raflar.id', $raf)->where('depolar.firma_id', $id)->exists();
+    }
+
+    private function barkodOlustur(int $id): string
+    {
+        do {
+            $g = '869'.str_pad((string) $id, 3, '0', STR_PAD_LEFT).str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $t = 0;
+            foreach (str_split($g) as $i => $r) {
+                $t += (int) $r * ($i % 2 ? 3 : 1);
+            }$kod = $g.((10 - $t % 10) % 10);
+        } while (DB::table('stok_parcalar')->where('barkod',$kod)->exists());
+
+        return $kod;
+    }
+
+    private function rolGorunurlugu($q): void
+    {
+        if (! auth()->user()->tamSistemYetkisiVarMi()) {
+            $rol = (string) auth()->user()->role;
+            $q->where(fn ($x) => $x->whereNull('stok_parcalar.olusturan_rol')->orWhere('stok_parcalar.olusturan_rol',$rol));
+        }
+    }
+
+    private function parcaErisilebilir(int $parca,int $firmaId): bool
+    {
+        $q = DB::table('stok_parcalar')->whereKey($parca)->where('firma_id',$firmaId);
+        $this->rolGorunurlugu($q);
+
+        return $q->exists();
+    }
 }
