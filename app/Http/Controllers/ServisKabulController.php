@@ -11,6 +11,7 @@ use App\Models\Arac;
 use App\Models\Servis;
 use App\Models\ServisFotograf;
 use App\Services\IletisimOtomasyonServisi;
+use App\Services\FirmaBildirimServisi;
 
 class ServisKabulController extends Controller
 {
@@ -324,6 +325,7 @@ class ServisKabulController extends Controller
         );
 
         app(IletisimOtomasyonServisi::class)->servisKabulEdildi($servis);
+        app(FirmaBildirimServisi::class)->servisKabulEdildi($servis);
 
 
 

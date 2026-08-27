@@ -18,6 +18,7 @@ use App\Http\Controllers\AyarController;
 use App\Http\Controllers\SistemHataController;
 use App\Http\Controllers\DestekController;
 use App\Http\Controllers\SohbetController;
+use App\Http\Controllers\BildirimController;
 use App\Http\Controllers\SifreYonetimController;
 use App\Http\Controllers\TicariController;
 use App\Http\Controllers\MuhasebeMerkeziController;
@@ -445,6 +446,8 @@ Route::get('/sohbet', [SohbetController::class, 'index'])->name('sohbet.index');
 Route::post('/sohbet/oda', [SohbetController::class, 'odaOlustur'])->name('sohbet.oda.store');
 Route::post('/sohbet/{oda}/mesaj', [SohbetController::class, 'mesajGonder'])->name('sohbet.mesaj.store');
 Route::get('/sohbet/{oda}/mesajlar', [SohbetController::class, 'mesajlarJson'])->name('sohbet.mesajlar');
+Route::get('/bildirimler', [BildirimController::class, 'liste'])->name('bildirimler.liste');
+Route::post('/bildirimler/okundu', [BildirimController::class, 'okundu'])->name('bildirimler.okundu');
 
 
 
