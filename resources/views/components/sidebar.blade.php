@@ -254,11 +254,6 @@
         <i class="bi bi-plug-fill"></i><label>API ve Entegrasyonlar</label>
     </a>
     @endif
-    @if(auth()->user()?->isAdmin() && $aktifFirma)
-    <a href="{{ route('firma.show', $aktifFirma) }}" class="{{ request()->routeIs('firma.*', 'sube.*') ? 'active' : '' }}">
-        <i class="bi bi-building-gear"></i><label>Firma ve Şube Ayarları</label>
-    </a>
-    @endif
     @if(auth()->user()?->tamSistemYetkisiVarMi())
     <a href="{{ route('ayarlar.index') }}" class="{{ request()->routeIs('ayarlar.*', 'firma.*', 'sube.*') ? 'active' : '' }}">
         <i class="bi bi-gear-fill"></i><label>Sistem Ayarları</label>

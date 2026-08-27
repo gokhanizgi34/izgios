@@ -102,9 +102,6 @@ class SubeController extends Controller
 
     private function firmaYetkisi(Firma $firma): void
     {
-        abort_unless(auth()->check() && (auth()->user()->tamSistemYetkisiVarMi() || auth()->user()->isAdmin()), 403);
-        if (! auth()->user()->tamSistemYetkisiVarMi()) {
-            abort_unless((int) $firma->id === (int) auth()->user()->firmaPersoneli?->firma_id, 403, 'Yalnız kendi firmanızın şubelerini yönetebilirsiniz.');
-        }
+        abort_unless(auth()->check() && auth()->user()->tamSistemYetkisiVarMi(), 403);
     }
 }

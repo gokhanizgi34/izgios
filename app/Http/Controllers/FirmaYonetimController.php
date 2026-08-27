@@ -10,9 +10,8 @@ class FirmaYonetimController extends Controller
 {
     public function index()
     {
-        $this->yonetimYetkisi();
+        $this->sistemYetkisi();
         $firmalar = Firma::query()
-            ->when(! auth()->user()->tamSistemYetkisiVarMi(), fn ($query) => $query->whereKey($this->kullaniciFirmaId()))
             ->withCount(['subeler', 'personeller'])
             ->orderBy('unvan')
             ->get();
@@ -121,11 +120,6 @@ class FirmaYonetimController extends Controller
         ]);
     }
 
-    private function yonetimYetkisi(): void
-    {
-        abort_unless(auth()->check() && (auth()->user()->tamSistemYetkisiVarMi() || auth()->user()->isAdmin()), 403);
-    }
-
     private function sistemYetkisi(): void
     {
         abort_unless(auth()->check() && auth()->user()->tamSistemYetkisiVarMi(), 403);
@@ -133,16 +127,6 @@ class FirmaYonetimController extends Controller
 
     private function firmaYetkisi(Firma $firma): void
     {
-        $this->yonetimYetkisi();
-        if (! auth()->user()->tamSistemYetkisiVarMi()) {
-            abort_unless((int) $firma->id === $this->kullaniciFirmaId(), 403, 'Yalnız kendi firmanızın bilgilerini yönetebilirsiniz.');
-        }
-    }
-
-    private function kullaniciFirmaId(): int
-    {
-        $firmaId = (int) auth()->user()?->firmaPersoneli?->firma_id;
-        abort_unless($firmaId > 0, 403, 'Kullanıcının firma bağlantısı bulunmuyor.');
-        return $firmaId;
+        $this->sistemYetkisi();
     }
 }
