@@ -86,11 +86,17 @@ Route::get('/ciktilar/{tur}/{id}', [CiktiController::class, 'yazdir'])->name('ci
 Route::get('/ciktilar/{tur}/{id}/excel', [CiktiController::class, 'excel'])->name('ciktilar.excel');
 Route::post('/ciktilar/{tur}/{id}/gonder', [CiktiController::class, 'gonder'])->name('ciktilar.gonder');
 Route::post('/ticari/cari-hesaplar', [MuhasebeMerkeziController::class, 'cariKaydet'])->name('ticari.cari.kaydet');
+Route::put('/ticari/cari-hesaplar/{cari}', [MuhasebeMerkeziController::class, 'cariGuncelle'])->name('ticari.cari.guncelle');
+Route::delete('/ticari/cari-hesaplar/{cari}', [MuhasebeMerkeziController::class, 'cariSil'])->name('ticari.cari.sil');
 Route::get('/ticari/muhasebe-fisleri', [MuhasebeMerkeziController::class, 'fisler'])->name('ticari.fisler');
 Route::post('/ticari/muhasebe-fisleri', [TicariController::class, 'fisKaydet'])->name('ticari.fisler.kaydet');
+Route::put('/ticari/muhasebe-fisleri/{fis}', [MuhasebeMerkeziController::class, 'fisGuncelle'])->name('ticari.fisler.guncelle');
+Route::delete('/ticari/muhasebe-fisleri/{fis}', [MuhasebeMerkeziController::class, 'fisSil'])->name('ticari.fisler.sil');
 Route::get('/ticari/entegrasyonlar', [TicariController::class, 'apiAyarlari'])->name('ticari.entegrasyonlar');
 Route::get('/ticari/{tur}', [MuhasebeMerkeziController::class, 'belgeler'])->whereIn('tur',['teklif','fatura'])->name('ticari.belgeler');
 Route::post('/ticari/{tur}', [MuhasebeMerkeziController::class, 'belgeKaydet'])->whereIn('tur',['teklif','fatura'])->name('ticari.belge.kaydet');
+Route::put('/ticari/{tur}/{belge}', [MuhasebeMerkeziController::class, 'belgeGuncelle'])->whereIn('tur',['teklif','fatura'])->name('ticari.belge.guncelle');
+Route::delete('/ticari/{tur}/{belge}', [MuhasebeMerkeziController::class, 'belgeSil'])->whereIn('tur',['teklif','fatura'])->name('ticari.belge.sil');
 Route::post('/ticari/asistan', [MuhasebeAsistanController::class, 'yanitla'])->name('ticari.asistan');
 Route::post('/asistan/yanitla', [MuhasebeAsistanController::class, 'yanitla'])->name('asistan.yanitla');
 Route::view('/sss', 'sss.index')->name('sss.index');
