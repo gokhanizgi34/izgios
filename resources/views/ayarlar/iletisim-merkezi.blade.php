@@ -87,7 +87,7 @@
         <div class="card-body table-responsive">
             <h2 class="h5">Gönderim kayıtları</h2>
             <table class="table align-middle">
-                <thead><tr><th>Süreç</th><th>Kanal</th><th>Alıcı</th><th>Durum</th><th>Tarih</th></tr></thead>
+                <thead><tr><th>Süreç</th><th>Kanal</th><th>Alıcı</th><th>Durum</th><th>Deneme</th><th>Hata / Sonraki deneme</th><th>Tarih</th></tr></thead>
                 <tbody>
                     @forelse ($loglar as $log)
                         <tr>
@@ -95,10 +95,15 @@
                             <td>{{ strtoupper($log->kanal) }}</td>
                             <td>{{ $log->alici_maskeli }}</td>
                             <td>{{ $log->durum }}</td>
+                            <td>{{ $log->deneme_sayisi ?? 0 }}/5</td>
+                            <td>
+                                @if($log->son_hata ?? null)<span class="text-danger">{{ $log->son_hata }}</span>@else — @endif
+                                @if($log->sonraki_deneme_at ?? null)<small class="d-block text-muted">{{ \Carbon\Carbon::parse($log->sonraki_deneme_at)->format('d.m.Y H:i') }}</small>@endif
+                            </td>
                             <td>{{ \Carbon\Carbon::parse($log->created_at)->format('d.m.Y H:i') }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="text-muted">Henüz gönderim kaydı yok.</td></tr>
+                        <tr><td colspan="7" class="text-muted">Henüz gönderim kaydı yok.</td></tr>
                     @endforelse
                 </tbody>
             </table>

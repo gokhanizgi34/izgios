@@ -15,9 +15,14 @@ class IletisimKuyrugunuIsle extends Command
     public function handle(FirmaIletisimGonderici $gonderici): int
     {
         $kayitlar = DB::table('iletisim_gonderim_loglari')
-            ->where('durum', 'planlandi')
+            ->whereIn('durum', ['planlandi', 'hata', 'entegrasyon_bekliyor'])
             ->whereNotNull('planlanan_at')
             ->where('planlanan_at', '<=', now())
+            ->where(function ($sorgu) {
+                $sorgu->whereNull('sonraki_deneme_at')
+                    ->orWhere('sonraki_deneme_at', '<=', now());
+            })
+            ->where('deneme_sayisi', '<', 5)
             ->orderBy('id')
             ->limit(200)
             ->get();
@@ -35,14 +40,21 @@ class IletisimKuyrugunuIsle extends Command
                 DB::table('iletisim_gonderim_loglari')->where('id', $kayit->id)->update([
                     'durum' => 'gonderildi',
                     'gonderildi_at' => now(),
+                    'son_hata' => null,
+                    'sonraki_deneme_at' => null,
                     'updated_at' => now(),
                 ]);
             } catch (Throwable $exception) {
                 report($exception);
+                $denemeSayisi = ((int) $kayit->deneme_sayisi) + 1;
+                $entegrasyonEksik = str_contains($exception->getMessage(), 'eksik')
+                    || str_contains($exception->getMessage(), 'etkin değil');
+                $beklemeDakikasi = $entegrasyonEksik ? 60 : ([1 => 1, 2 => 5, 3 => 15, 4 => 60][$denemeSayisi] ?? 180);
                 DB::table('iletisim_gonderim_loglari')->where('id', $kayit->id)->update([
-                    'durum' => str_contains($exception->getMessage(), 'eksik') || str_contains($exception->getMessage(), 'etkin değil')
-                        ? 'entegrasyon_bekliyor'
-                        : 'hata',
+                    'durum' => $denemeSayisi >= 5 ? 'hata_kalici' : ($entegrasyonEksik ? 'entegrasyon_bekliyor' : 'hata'),
+                    'deneme_sayisi' => $denemeSayisi,
+                    'son_hata' => mb_substr($exception->getMessage(), 0, 2000),
+                    'sonraki_deneme_at' => $denemeSayisi >= 5 ? null : now()->addMinutes($beklemeDakikasi),
                     'updated_at' => now(),
                 ]);
             }
