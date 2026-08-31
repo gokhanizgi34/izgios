@@ -22,7 +22,7 @@
     @if(auth()->user()->tamSistemYetkisiVarMi())
     <article class="mail-card" style="border-left:4px solid #7c3aed">
         <div class="mail-status"><div><h2 class="h5 mb-1"><i class="bi bi-stars me-1"></i>Merkezi Yapay Zekâ API</h2><small class="text-muted">Bu tek bağlantı bütün firmalar ve tüm İZGİOS asistan ekranları tarafından kullanılır.</small></div><span class="badge text-bg-{{ $openAiGlobal ? 'success' : 'secondary' }}">{{ $openAiGlobal ? 'Tanımlı' : 'Kurulum gerekli' }}</span></div>
-        <form method="POST" action="{{ route('ticari.api.yapay-zeka') }}" autocapitalize="none" spellcheck="false">
+        <form method="POST" action="{{ route('ticari.api.yapay-zeka') }}" autocapitalize="none" spellcheck="false" data-preserve-case>
             @csrf
             <label for="ai_model">Model</label><input id="ai_model" class="form-control" name="model" value="{{ old('model', $aiAyarlar['model'] ?? config('services.izgios_ai.model', 'gpt-5.6')) }}" required>
             <label for="ai_key">OpenAI API anahtarı</label><input id="ai_key" class="form-control" type="password" name="api_anahtari" autocomplete="new-password" placeholder="{{ $openAiGlobal ? 'Kayıtlı anahtarı korumak için boş bırakın' : 'sk-...' }}">
@@ -33,7 +33,7 @@
     </article>
     <article class="mail-card" style="border-left:4px solid #0f766e">
         <div class="mail-status"><div><h2 class="h5 mb-1"><i class="bi bi-envelope-check-fill me-1"></i>Sistem Yöneticisi E-posta Hesabı</h2><small class="text-muted">Destek mesajları, sistem hataları ve tüm silme denetimleri bu merkezi hesaptan gönderilir ve bildirim adresine ulaşır.</small></div><span class="badge text-bg-{{ $sistemEmailHazir ? 'success' : 'secondary' }}">{{ $sistemEmailHazir ? 'Aktif' : 'Kurulum gerekli' }}</span></div>
-        <form method="POST" action="{{ route('ticari.api.sistem-email') }}" autocapitalize="none" spellcheck="false">
+        <form method="POST" action="{{ route('ticari.api.sistem-email') }}" autocapitalize="none" spellcheck="false" data-preserve-case>
             @csrf
             <label for="sys_smtp_host">SMTP sunucusu</label><input id="sys_smtp_host" class="form-control" name="smtp_host" value="{{ old('smtp_host', $sistemEmailAyarlar['smtp_host'] ?? '') }}" placeholder="mail.izgios.com" required>
             <div class="mail-grid"><div><label for="sys_smtp_port">SMTP portu</label><input id="sys_smtp_port" class="form-control" type="number" name="smtp_port" min="1" max="65535" value="{{ old('smtp_port', $sistemEmailAyarlar['smtp_port'] ?? 465) }}" required></div><div><label for="sys_sifreleme">Güvenlik</label><select id="sys_sifreleme" class="form-select" name="smtp_sifreleme"><option value="ssl" @selected(($sistemEmailAyarlar['smtp_sifreleme'] ?? 'ssl')==='ssl')>SSL</option><option value="tls" @selected(($sistemEmailAyarlar['smtp_sifreleme'] ?? '')==='tls')>TLS</option><option value="none" @selected(($sistemEmailAyarlar['smtp_sifreleme'] ?? '')==='none')>Yok</option></select></div></div>
@@ -55,7 +55,7 @@
       <div class="integration-grid">
         <article class="mail-card email-card">
             <div class="mail-status"><div><h2 class="h5 mb-1">SMTP gönderim hesabı</h2><small class="text-muted">Yalnızca e-posta gönderimi için gereken bilgiler saklanır.</small></div><span class="badge text-bg-{{ $hazir ? 'success' : 'secondary' }}">{{ $hazir ? 'Aktif' : 'Kurulum gerekli' }}</span></div>
-            <form method="POST" action="{{ route('ticari.api.kaydet') }}" autocapitalize="none" spellcheck="false">
+            <form method="POST" action="{{ route('ticari.api.kaydet') }}" autocapitalize="none" spellcheck="false" data-preserve-case>
                 @csrf
                 <input type="hidden" name="firma_id" value="{{ $firmaId }}"><input type="hidden" name="saglayici" value="email">
                 <label for="email_smtp_host">SMTP sunucusu</label><input id="email_smtp_host" class="form-control" name="smtp_host" value="{{ old('smtp_host', $ayar['smtp_host'] ?? '') }}" placeholder="mail.firmaniz.com" required>
@@ -71,7 +71,7 @@
         </article>
         <article class="mail-card">
             <div class="mail-status"><div><h2 class="h5 mb-1"><i class="bi bi-whatsapp text-success me-1"></i>WhatsApp</h2><small class="text-muted">Meta Cloud API veya JSON uyumlu sağlayıcı.</small></div><span class="badge text-bg-{{ $whatsappHazir ? 'success' : 'secondary' }}">{{ $whatsappHazir ? 'Aktif' : 'Kurulum gerekli' }}</span></div>
-            <form method="POST" action="{{ route('ticari.api.kaydet') }}" autocapitalize="none" spellcheck="false">
+            <form method="POST" action="{{ route('ticari.api.kaydet') }}" autocapitalize="none" spellcheck="false" data-preserve-case>
                 @csrf<input type="hidden" name="firma_id" value="{{ $firmaId }}"><input type="hidden" name="saglayici" value="whatsapp">
                 <label for="wa_tur">Bağlantı türü</label><select id="wa_tur" class="form-select" name="saglayici_turu"><option value="meta_cloud" @selected(($whatsappAyar['saglayici_turu'] ?? 'meta_cloud') === 'meta_cloud')>Meta WhatsApp Cloud API</option><option value="http_json" @selected(($whatsappAyar['saglayici_turu'] ?? '') === 'http_json')>Genel JSON API</option></select>
                 <label for="wa_endpoint">API adresi</label><input id="wa_endpoint" class="form-control" type="url" name="endpoint" value="{{ old('endpoint', $whatsappAyar['endpoint'] ?? '') }}" placeholder="https://graph.facebook.com/vXX.X/.../messages" required>
@@ -82,7 +82,7 @@
         </article>
         <article class="mail-card">
             <div class="mail-status"><div><h2 class="h5 mb-1"><i class="bi bi-chat-dots-fill text-primary me-1"></i>SMS</h2><small class="text-muted">JSON API destekli SMS sağlayıcısı.</small></div><span class="badge text-bg-{{ $smsHazir ? 'success' : 'secondary' }}">{{ $smsHazir ? 'Aktif' : 'Kurulum gerekli' }}</span></div>
-            <form method="POST" action="{{ route('ticari.api.kaydet') }}" autocapitalize="none" spellcheck="false">
+            <form method="POST" action="{{ route('ticari.api.kaydet') }}" autocapitalize="none" spellcheck="false" data-preserve-case>
                 @csrf<input type="hidden" name="firma_id" value="{{ $firmaId }}"><input type="hidden" name="saglayici" value="sms">
                 <label for="sms_tur">Sağlayıcı</label><select id="sms_tur" class="form-select" name="saglayici_turu"><option value="netgsm" @selected(($smsAyar['saglayici_turu'] ?? '') === 'netgsm')>Netgsm</option><option value="iletimerkezi" @selected(($smsAyar['saglayici_turu'] ?? '') === 'iletimerkezi')>İleti Merkezi</option><option value="http_json" @selected(($smsAyar['saglayici_turu'] ?? 'http_json') === 'http_json')>Genel JSON API</option></select>
                 <label for="sms_endpoint">API adresi</label><input id="sms_endpoint" class="form-control" type="url" name="endpoint" value="{{ old('endpoint', $smsAyar['endpoint'] ?? '') }}" placeholder="https://api.saglayici.com/sms" required>
