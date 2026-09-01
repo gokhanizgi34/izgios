@@ -20,5 +20,23 @@ class IletisimEmailiTest extends TestCase
 
         $this->assertStringContainsString('href="'.$url.'"', $html);
         $this->assertStringContainsString('Google Yorum Bağlantısını Aç', $html);
+        $this->assertSame(1, substr_count($html, 'href="'.$url.'"'));
+    }
+
+    public function test_servis_takip_baglantisini_tek_dugme_olarak_gosterir(): void
+    {
+        $url = 'https://izgios.com/qr-servis/test-token?ekran=servis';
+        $html = view('emails.iletisim-bildirimi', [
+            'firmaAdi' => 'Test Servisi',
+            'plaka' => null,
+            'mesaj' => 'Aracınız servise kabul edildi. Detaylar: '.$url.' Şifre: CY24',
+            'konu' => 'Servis kabul',
+            'tarih' => '01.09.2026 15:00',
+            'aksiyonUrl' => $url,
+        ])->render();
+
+        $this->assertSame(1, substr_count($html, 'href="'.$url.'"'));
+        $this->assertSame(1, substr_count($html, 'Bağlantıyı Aç'));
+        $this->assertStringContainsString('Şifre: CY24', $html);
     }
 }

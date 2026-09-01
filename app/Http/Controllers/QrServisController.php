@@ -8,6 +8,7 @@ use App\Models\ServisFotograf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Services\MusteriIletisimIzinServisi;
 
 
 
@@ -206,6 +207,8 @@ class QrServisController extends Controller
             ];
         })->filter(fn ($grup) => $grup['servis']->isNotEmpty() || $grup['bakim']->isNotEmpty())->values();
 
+        $iletisimIzni = app(MusteriIletisimIzinServisi::class)->izinKaydi($firmaId, $arac->musteri_id);
+
         return view(
 
             'qr.musteri-servis-v4',
@@ -223,12 +226,31 @@ class QrServisController extends Controller
                 'hizliIslemYetkisi',
                 'detayYetkisi',
                 'fotoGruplari'
+                ,'iletisimIzni'
 
             )
 
         );
 
 
+    }
+
+    public function iletisimIzniKaydet(Request $request, string $token, MusteriIletisimIzinServisi $izinServisi)
+    {
+        $arac = Arac::with('musteri')->where('qr_token', $token)->firstOrFail();
+        $izinServisi->kaydet($request, $arac, $request->boolean('servis_iletisim_izni'), $request->boolean('ticari_iletisim_izni'));
+
+        return redirect()->route('qr.servis.show', ['token' => $token, 'ekran' => $request->input('ekran', 'servis')])
+            ->with('izin_basarili', 'İletişim tercihleriniz tarih ve saat bilgisiyle kaydedildi.');
+    }
+
+    public function acikRizaMetni(string $token, string $tur)
+    {
+        $arac = Arac::where('qr_token', $token)->firstOrFail();
+        $metin = $tur === 'ticari' ? MusteriIletisimIzinServisi::TICARI_METIN : MusteriIletisimIzinServisi::SERVIS_METNI;
+        $baslik = $tur === 'ticari' ? 'Ticari İletişim Açık Rıza Metni' : 'Servis İletişimi Açık Rıza Metni';
+
+        return view('qr.acik-riza', compact('arac', 'baslik', 'metin'));
     }
 
     public function sifreDogrula(Request $request, string $token)

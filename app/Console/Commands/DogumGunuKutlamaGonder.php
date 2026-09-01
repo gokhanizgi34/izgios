@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Musteri;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use App\Services\MusteriIletisimIzinServisi;
 
 class DogumGunuKutlamaGonder extends Command
 {
@@ -26,7 +27,8 @@ class DogumGunuKutlamaGonder extends Command
             foreach(['whatsapp','sms','email'] as $kanal){$acik=$kanalAyari?(bool)$kanalAyari->{$kanal}:$kanal==='email';if(!$acik)continue;$alici=$kanal==='email'?$personel->email:$personel->phone;if(!$alici)continue;$varMi=DB::table('iletisim_gonderim_loglari')->where('kaynak_turu','personel_dogum_gunu')->where('kaynak_id',$personel->id)->where('firma_id',$firma->id)->where('kanal',$kanal)->whereYear('planlanan_at',now()->year)->exists();if($varMi)continue;DB::table('iletisim_gonderim_loglari')->insert(['firma_id'=>$firma->id,'user_id'=>$personel->id,'mesaj_grubu'=>'ozel_gunler','kanal'=>$kanal,'durum'=>'planlandi','alici'=>$alici,'alici_maskeli'=>$this->maskele($alici,$kanal),'mesaj'=>$mesaj,'planlanan_at'=>now(),'kaynak_turu'=>'personel_dogum_gunu','kaynak_id'=>$personel->id,'created_at'=>now(),'updated_at'=>now()]);$planlanan++;}
         }
         $musteriler=Musteri::query()->whereNotNull('firma_id')->whereNotNull('dogum_tarihi')->whereMonth('dogum_tarihi',now()->month)->whereDay('dogum_tarihi',now()->day)->with('firma')->get();
-        foreach($musteriler as $musteri){$firma=$musteri->firma;if(!$firma||!$firma->aktif)continue;$kanalAyari=DB::table('firma_iletisim_kanal_ayarlari')->where(['firma_id'=>$firma->id,'mesaj_grubu'=>'ozel_gunler'])->first();if($kanalAyari&&!$kanalAyari->aktif)continue;$sablon=$kanalAyari?->sablon?:'{musteri_adi}, {firma_adi} ailesi olarak doğum gününüzü kutlar; sağlıklı ve mutlu yıllar dileriz.';$mesaj=strtr($sablon,['{musteri_adi}'=>$musteri->ad_soyad,'{firma_adi}'=>$firma->unvan]);
+        $izinServisi=app(MusteriIletisimIzinServisi::class);
+        foreach($musteriler as $musteri){$firma=$musteri->firma;if(!$firma||!$firma->aktif||!$izinServisi->izinliMi($firma->id,$musteri->id,'ticari'))continue;$kanalAyari=DB::table('firma_iletisim_kanal_ayarlari')->where(['firma_id'=>$firma->id,'mesaj_grubu'=>'ozel_gunler'])->first();if($kanalAyari&&!$kanalAyari->aktif)continue;$sablon=$kanalAyari?->sablon?:'{musteri_adi}, {firma_adi} ailesi olarak doğum gününüzü kutlar; sağlıklı ve mutlu yıllar dileriz.';$mesaj=strtr($sablon,['{musteri_adi}'=>$musteri->ad_soyad,'{firma_adi}'=>$firma->unvan]);
             foreach(['whatsapp','sms','email'] as $kanal){$acik=$kanalAyari?(bool)$kanalAyari->{$kanal}:$kanal==='email';if(!$acik)continue;$alici=$kanal==='email'?$musteri->email:$musteri->telefon;if(!$alici)continue;$varMi=DB::table('iletisim_gonderim_loglari')->where('kaynak_turu','musteri_dogum_gunu')->where('kaynak_id',$musteri->id)->where('firma_id',$firma->id)->where('kanal',$kanal)->whereYear('planlanan_at',now()->year)->exists();if($varMi)continue;DB::table('iletisim_gonderim_loglari')->insert(['firma_id'=>$firma->id,'musteri_id'=>$musteri->id,'mesaj_grubu'=>'ozel_gunler','kanal'=>$kanal,'durum'=>'planlandi','alici'=>$alici,'alici_maskeli'=>$this->maskele($alici,$kanal),'mesaj'=>$mesaj,'planlanan_at'=>now(),'kaynak_turu'=>'musteri_dogum_gunu','kaynak_id'=>$musteri->id,'created_at'=>now(),'updated_at'=>now()]);$planlanan++;}
         }
         $this->info("{$planlanan} personel/müşteri doğum günü bildirimi anlık kuyruğa alındı.");return self::SUCCESS;

@@ -3,19 +3,13 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;background:#f2f5f9;font-family:Arial,Helvetica,sans-serif;color:#14213d;">
     @php
-        $mesajHtml = preg_replace_callback('/(https?:\/\/[^\s<]+)/iu', function (array $eslesme): string {
-            $url = trim(html_entity_decode($eslesme[1], ENT_QUOTES, 'UTF-8'));
-
-            if (! filter_var($url, FILTER_VALIDATE_URL)) {
-                return e($eslesme[1]);
-            }
-
-            $etiket = str_contains(mb_strtolower($url), 'google') || str_contains(mb_strtolower($url), 'g.page')
-                ? 'Google yorum sayfasını aç'
-                : 'Bağlantıyı aç';
-
-            return '<a href="'.e($url).'" style="display:inline-block;margin-top:8px;padding:11px 16px;border-radius:8px;background:#e3b832;color:#14213d;font-weight:700;text-decoration:none;">'.e($etiket).'</a><br><a href="'.e($url).'" style="display:inline-block;margin-top:10px;color:#1d4ed8;font-size:12px;line-height:1.5;word-break:break-all;">'.e($url).'</a>';
-        }, e($mesaj));
+        $mesajMetni = (string) $mesaj;
+        if ($aksiyonUrl ?? null) {
+            $mesajMetni = str_replace($aksiyonUrl, '', $mesajMetni);
+            $mesajMetni = preg_replace('/\bDetaylar:\s*(?=Şifre)/iu', '', $mesajMetni);
+            $mesajMetni = preg_replace('/\s{2,}/u', ' ', $mesajMetni);
+        }
+        $mesajHtml = e(trim($mesajMetni));
     @endphp
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:28px 12px;background:#f2f5f9;">
         <tr><td align="center">

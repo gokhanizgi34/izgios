@@ -214,6 +214,12 @@ class IletisimOtomasyonServisi
         $musteri = $musteriId ? Musteri::find($musteriId) : null;
         $arac = $aracId ? Arac::find($aracId) : null;
         $firma = Firma::find($firmaId);
+        $izinServisi = app(MusteriIletisimIzinServisi::class);
+        $izinKaydi = $izinServisi->izinKaydi($firmaId, $musteriId);
+        $ticariGrup = in_array($grup, ['ozel_gunler', 'kampanya', 'sigorta', 'bakim_paketi'], true);
+        if ($ticariGrup && ! $izinServisi->izinliMi($firmaId, $musteriId, 'ticari')) {
+            return;
+        }
         $planlananAt = Carbon::parse($zaman);
         $sablon = $varsayilanSablon ?: ($ayar->sablon ?: $this->varsayilanSablon($grup));
         $qrTakipLinki = $arac?->qr_token ? route('qr.servis.show', ['token' => $arac->qr_token, 'ekran' => 'servis']) : null;
@@ -234,13 +240,18 @@ class IletisimOtomasyonServisi
             '{qr_sifre}' => $qrSifre ?: '-',
             '{yorum_linki}' => $firma?->google_yorum_linki ?: 'yorum bağlantısı yakında paylaşılacaktır',
         ]);
-        if ($qrTakipLinki && in_array($kaynakTuru, ['servis', 'servis_durum'], true) && ! str_contains($mesaj, 'Şifre:')) {
+        if ($qrTakipLinki && in_array($kaynakTuru, ['servis', 'servis_durum'], true) && ! str_contains($mesaj, $qrTakipLinki)) {
             $mesaj .= " Detaylar: {$qrTakipLinki} Şifre: {$qrSifre}";
         }
 
         foreach (['whatsapp', 'sms', 'email'] as $kanal) {
             if (! $ayar->{$kanal}) {
                 continue;
+            }
+            if (! $ticariGrup && ! $izinServisi->izinliMi($firmaId, $musteriId, 'servis')) {
+                if ($izinKaydi || $grup !== 'servis_kabul' || $kanal !== 'email') {
+                    continue;
+                }
             }
             $alici = $kanal === 'email' ? $musteri?->email : $musteri?->telefon;
             if (! $alici) {

@@ -25,7 +25,13 @@ class AracDijitalKimlikTest extends TestCase
             $table->id(); $table->boolean('aktif')->default(true); $table->string('telefon')->nullable(); $table->string('whatsapp_no')->nullable(); $table->timestamps();
         });
         Schema::create('musteris', function (Blueprint $table) {
-            $table->id(); $table->unsignedBigInteger('firma_id')->nullable(); $table->unsignedBigInteger('sube_id')->nullable(); $table->string('ad_soyad'); $table->string('telefon')->nullable(); $table->timestamps();
+            $table->id(); $table->unsignedBigInteger('firma_id')->nullable(); $table->unsignedBigInteger('sube_id')->nullable(); $table->string('ad_soyad'); $table->string('email')->nullable(); $table->string('telefon')->nullable(); $table->timestamps();
+        });
+        Schema::create('musteri_iletisim_izinleri', function (Blueprint $table) {
+            $table->id(); $table->unsignedBigInteger('firma_id'); $table->unsignedBigInteger('musteri_id'); $table->boolean('servis_iletisim_izni')->default(false); $table->boolean('ticari_iletisim_izni')->default(false); $table->timestamp('tercih_at')->nullable(); $table->timestamps();
+        });
+        Schema::create('musteri_iletisim_izin_hareketleri', function (Blueprint $table) {
+            $table->id(); $table->unsignedBigInteger('firma_id'); $table->unsignedBigInteger('musteri_id'); $table->unsignedBigInteger('servis_id')->nullable(); $table->string('firma_unvani')->nullable(); $table->string('musteri_adi')->nullable(); $table->string('email')->nullable(); $table->string('telefon')->nullable(); $table->boolean('servis_iletisim_izni'); $table->boolean('ticari_iletisim_izni'); $table->string('servis_metni_surumu'); $table->string('ticari_metni_surumu'); $table->string('servis_metni_hash', 64); $table->string('ticari_metni_hash', 64); $table->string('ip_adresi', 45)->nullable(); $table->text('user_agent')->nullable(); $table->string('qr_token_hash', 64); $table->timestamp('onay_at'); $table->timestamp('created_at')->nullable();
         });
         Schema::create('araclar', function (Blueprint $table) {
             $table->id(); $table->unsignedBigInteger('musteri_id'); $table->unsignedBigInteger('firma_id')->nullable(); $table->unsignedBigInteger('sube_id')->nullable(); $table->string('plaka'); $table->string('marka'); $table->string('model'); $table->string('model_yili')->nullable(); $table->integer('kilometre')->nullable(); $table->uuid('qr_token')->nullable(); $table->timestamp('qr_created_at')->nullable(); $table->timestamps();
@@ -49,7 +55,7 @@ class AracDijitalKimlikTest extends TestCase
 
     protected function tearDown(): void
     {
-        foreach (['muhasebe_entegrasyonlari','servis_parcalar','servis_fotograflari','servis_islemleri','servisler','araclar','musteris','subes','firmas'] as $table) {
+        foreach (['muhasebe_entegrasyonlari','servis_parcalar','servis_fotograflari','servis_islemleri','servisler','araclar','musteri_iletisim_izin_hareketleri','musteri_iletisim_izinleri','musteris','subes','firmas'] as $table) {
             Schema::dropIfExists($table);
         }
         parent::tearDown();
@@ -127,5 +133,57 @@ class AracDijitalKimlikTest extends TestCase
             ->assertDontSee('Rot ayarı')
             ->assertDontSee('Sırada')
             ->assertSee('https://wa.me/905320000000', false);
+    }
+
+    public function test_musteri_qr_ekranindan_iki_iletisim_iznini_ayri_ayri_kaydeder(): void
+    {
+        $firma = Firma::create(['unvan' => 'Test Servisi']);
+        $musteri = Musteri::create([
+            'firma_id' => $firma->id,
+            'ad_soyad' => 'Ayşe Test',
+            'email' => 'ayse@example.com',
+            'telefon' => '05320000001',
+        ]);
+        $arac = Arac::create([
+            'firma_id' => $firma->id,
+            'musteri_id' => $musteri->id,
+            'plaka' => '34 TEST 456',
+            'marka' => 'Fiat',
+            'model' => 'Doblo',
+        ]);
+        Servis::create([
+            'firma_id' => $firma->id,
+            'musteri_id' => $musteri->id,
+            'arac_id' => $arac->id,
+            'servis_no' => 'SRV-TEST-2',
+            'servis_tarihi' => now(),
+        ]);
+
+        $this->get(route('araclar.qr.show', $arac->qr_token))
+            ->assertOk()
+            ->assertSee('Servis iletişimleri için sesli ve yazılı iletişime izin veriyorum.')
+            ->assertSee('Ticari iletişimler için sesli ve yazılı iletişime izin veriyorum.')
+            ->assertSee('Onayla');
+
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.10'])
+            ->post(route('qr.servis.iletisim-izni', $arac->qr_token), [
+                'servis_iletisim_izni' => '1',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('musteri_iletisim_izinleri', [
+            'firma_id' => $firma->id,
+            'musteri_id' => $musteri->id,
+            'servis_iletisim_izni' => 1,
+            'ticari_iletisim_izni' => 0,
+        ]);
+        $this->assertDatabaseHas('musteri_iletisim_izin_hareketleri', [
+            'firma_id' => $firma->id,
+            'musteri_id' => $musteri->id,
+            'email' => 'ayse@example.com',
+            'ip_adresi' => '203.0.113.10',
+            'servis_iletisim_izni' => 1,
+            'ticari_iletisim_izni' => 0,
+        ]);
     }
 }

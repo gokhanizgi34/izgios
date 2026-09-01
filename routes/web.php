@@ -288,6 +288,8 @@ Route::get(
 )
 ->name('qr.servis.show');
 Route::post('/qr-servis/{token}/sifre', [QrServisController::class, 'sifreDogrula'])->middleware('throttle:10,1')->name('qr.servis.sifre');
+Route::post('/qr-servis/{token}/iletisim-izni', [QrServisController::class, 'iletisimIzniKaydet'])->middleware('throttle:10,1')->name('qr.servis.iletisim-izni');
+Route::get('/qr-servis/{token}/acik-riza/{tur}', [QrServisController::class, 'acikRizaMetni'])->whereIn('tur', ['servis', 'ticari'])->name('qr.servis.acik-riza');
 Route::get('/qr-servis/{token}/fotograflar/{fotograf}', [QrServisController::class, 'fotograf'])->name('qr.servis.fotograf');
 
 /*
