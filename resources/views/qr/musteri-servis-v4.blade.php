@@ -20,17 +20,21 @@
         @if($musteri)<span style="margin-top:7px">Araç sahibi: {{ $musteri['ad_soyad'] }}</span>@endif
     </section>
 
+    @php($servisIletisimOnayli=$hizliIslemYetkisi || (bool) ($iletisimIzni?->servis_iletisim_izni))
     @if(session('izin_basarili'))<div class="consent-success">{{ session('izin_basarili') }}</div>@endif
+    @unless($servisIletisimOnayli)
     <section class="consent">
         <h2>İletişim onayları</h2>
         <p>Onay verdiğiniz iletişim türleri firma tarafından e-posta, SMS, WhatsApp veya telefon kanallarından yürütülebilir.</p>
         <form method="POST" action="{{ route('qr.servis.iletisim-izni',$arac->qr_token) }}">
             @csrf<input type="hidden" name="ekran" value="{{ request('ekran','servis') }}">
+            @if($errors->has('servis_iletisim_izni'))<p class="error">{{ $errors->first('servis_iletisim_izni') }}</p>@endif
             <label class="consent-option"><input type="checkbox" name="servis_iletisim_izni" value="1" @checked($iletisimIzni?->servis_iletisim_izni)><span><strong>Servis iletişimleri için sesli ve yazılı iletişime izin veriyorum.</strong><a href="{{ route('qr.servis.acik-riza',[$arac->qr_token,'servis']) }}">Açık Rıza metnini okuyunuz</a></span></label>
             <label class="consent-option"><input type="checkbox" name="ticari_iletisim_izni" value="1" @checked($iletisimIzni?->ticari_iletisim_izni)><span><strong>Ticari iletişimler için sesli ve yazılı iletişime izin veriyorum.</strong><a href="{{ route('qr.servis.acik-riza',[$arac->qr_token,'ticari']) }}">Açık Rıza metnini okuyunuz</a></span></label>
             <button type="submit">Onayla</button>
         </form>
     </section>
+    @endunless
 
     @if($hizliIslemYetkisi)
         <section class="staff-actions">
@@ -43,7 +47,7 @@
         </section>
     @endif
 
-    @if($detayYetkisi)
+    @if($servisIletisimOnayli && $detayYetkisi)
     <nav class="tabs" aria-label="Araç geçmişi bölümleri">
         <a class="{{ request('ekran','servis') === 'servis' ? 'active' : '' }}" href="?ekran=servis#kayitlar">Servis İşlemleri</a>
         <a class="{{ request('ekran') === 'bakim' ? 'active' : '' }}" href="?ekran=bakim#kayitlar">Bakım</a>
@@ -67,10 +71,10 @@
     @php($fotoTuru=request('ekran','servis') === 'bakim' ? 'bakim' : 'servis')
     @php($gorunenFotoGruplari=$fotoGruplari->filter(fn($grup) => $grup[$fotoTuru]->isNotEmpty()))
     <section class="photo-groups"><h2>{{$fotoTuru === 'bakim' ? 'Bakım Fotoğrafları' : 'Servis Fotoğrafları'}}</h2>@forelse($gorunenFotoGruplari as $grup)<details class="photo-group"><summary>{{ number_format($grup['km'],0,',','.') }} KM · {{ $grup['tarih']->format('d.m.Y') }} · {{ $grup['servis_no'] }} · {{$grup[$fotoTuru]->count()}} fotoğraf</summary><div class="photo-tabs"><div class="photo-box"><div class="photos">@foreach($grup[$fotoTuru] as $foto)<a href="{{route('qr.servis.fotograf',[$arac->qr_token,$foto])}}" target="_self"><img src="{{route('qr.servis.fotograf',[$arac->qr_token,$foto])}}" alt="{{$foto->aciklama ?: ($fotoTuru === 'bakim' ? 'Bakım fotoğrafı' : 'Servis fotoğrafı')}}"><small>{{$foto->aciklama ?: ($fotoTuru === 'bakim' ? 'Bakım fotoğrafı' : 'Servis fotoğrafı')}}</small></a>@endforeach</div></div></div></details>@empty<div class="empty">Bu bölümde henüz {{$fotoTuru === 'bakim' ? 'bakım' : 'servis'}} fotoğrafı bulunmuyor.</div>@endforelse</section>
-    @else
+    @elseif($servisIletisimOnayli)
     <section class="unlock"><h2>Detaylar için şifreyi girin</h2><p>Servis işlemleri, bakım kayıtları ve fotoğrafları görmek için size gönderilen dört karakterli şifreyi yazın.</p>@if($errors->has('sifre'))<p class="error">{{$errors->first('sifre')}}</p>@endif<form method="POST" action="{{route('qr.servis.sifre',$arac->qr_token)}}">@csrf<input type="hidden" name="ekran" value="{{request('ekran','servis')}}"><input name="sifre" maxlength="4" autocomplete="one-time-code" required placeholder="••••"><button type="submit">Detayları Aç</button></form></section>
     @endif
-    @if($whatsappUrl)<footer class="contact"><a href="{{ $whatsappUrl }}" target="_blank" rel="noopener">İlgili Servise WhatsApp Mesajı Gönder</a></footer>@endif
+    @if($servisIletisimOnayli && $whatsappUrl)<footer class="contact"><a href="{{ $whatsappUrl }}" target="_blank" rel="noopener">İlgili Servise WhatsApp Mesajı Gönder</a></footer>@endif
 </main>
 </body>
 </html>

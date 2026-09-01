@@ -108,8 +108,25 @@ class AracDijitalKimlikTest extends TestCase
         $this->get(route('araclar.qr.show', $arac->qr_token))
             ->assertOk()
             ->assertSee('Araç Dijital Kimliği')
-            ->assertSee('Detaylar için şifreyi girin')
+            ->assertSee('İletişim onayları')
+            ->assertDontSee('Detaylar için şifreyi girin')
             ->assertDontSee('Rot ayarı');
+
+        $this->post(route('qr.servis.sifre', $arac->qr_token), ['sifre' => 'T123'])
+            ->assertSessionHasErrors('servis_iletisim_izni');
+        $this->assertFalse(session()->get('qr_detay_'.$arac->qr_token, false));
+
+        $this->post(route('qr.servis.iletisim-izni', $arac->qr_token), [
+            'servis_iletisim_izni' => '1',
+        ])->assertRedirect();
+
+        $this->get(route('araclar.qr.show', $arac->qr_token))
+            ->assertOk()
+            ->assertDontSee('İletişim onayları')
+            ->assertSee('Detaylar için şifreyi girin');
+
+        $this->post(route('qr.servis.sifre', $arac->qr_token), ['sifre' => 'YANLIS'])
+            ->assertSessionHasErrors(['sifre' => 'Şifre hatalı.']);
 
         $this->post(route('qr.servis.sifre', $arac->qr_token), ['sifre' => 'T123'])
             ->assertRedirect();
@@ -165,6 +182,11 @@ class AracDijitalKimlikTest extends TestCase
             ->assertSee('Ticari iletişimler için sesli ve yazılı iletişime izin veriyorum.')
             ->assertSee('Onayla');
 
+        $this->get(route('qr.servis.acik-riza', [$arac->qr_token, 'ticari']))
+            ->assertOk()
+            ->assertSee('6563 sayılı Elektronik Ticaretin Düzenlenmesi Hakkında Kanun')
+            ->assertSee('6698 sayılı Kişisel Verilerin Korunması Kanunu');
+
         $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.10'])
             ->post(route('qr.servis.iletisim-izni', $arac->qr_token), [
                 'servis_iletisim_izni' => '1',
@@ -185,5 +207,10 @@ class AracDijitalKimlikTest extends TestCase
             'servis_iletisim_izni' => 1,
             'ticari_iletisim_izni' => 0,
         ]);
+
+        $this->get(route('araclar.qr.show', $arac->qr_token))
+            ->assertOk()
+            ->assertDontSee('İletişim onayları')
+            ->assertSee('Detaylar için şifreyi girin');
     }
 }

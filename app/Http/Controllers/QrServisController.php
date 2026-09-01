@@ -237,6 +237,12 @@ class QrServisController extends Controller
 
     public function iletisimIzniKaydet(Request $request, string $token, MusteriIletisimIzinServisi $izinServisi)
     {
+        $request->validate([
+            'servis_iletisim_izni' => ['accepted'],
+            'ticari_iletisim_izni' => ['nullable', 'boolean'],
+        ], [
+            'servis_iletisim_izni.accepted' => 'Servis ekranına devam etmek için servis iletişimi izni gereklidir.',
+        ]);
         $arac = Arac::with('musteri')->where('qr_token', $token)->firstOrFail();
         $izinServisi->kaydet($request, $arac, $request->boolean('servis_iletisim_izni'), $request->boolean('ticari_iletisim_izni'));
 
@@ -247,20 +253,30 @@ class QrServisController extends Controller
     public function acikRizaMetni(string $token, string $tur)
     {
         $arac = Arac::where('qr_token', $token)->firstOrFail();
-        $metin = $tur === 'ticari' ? MusteriIletisimIzinServisi::TICARI_METIN : MusteriIletisimIzinServisi::SERVIS_METNI;
+        $ozet = $tur === 'ticari' ? MusteriIletisimIzinServisi::TICARI_METIN : MusteriIletisimIzinServisi::SERVIS_METNI;
+        $metin = $tur === 'ticari' ? MusteriIletisimIzinServisi::TICARI_HUKUKI_METIN : MusteriIletisimIzinServisi::SERVIS_HUKUKI_METIN;
         $baslik = $tur === 'ticari' ? 'Ticari İletişim Açık Rıza Metni' : 'Servis İletişimi Açık Rıza Metni';
 
-        return view('qr.acik-riza', compact('arac', 'baslik', 'metin'));
+        return view('qr.acik-riza', compact('arac', 'baslik', 'ozet', 'metin'));
     }
 
-    public function sifreDogrula(Request $request, string $token)
+    public function sifreDogrula(Request $request, string $token, MusteriIletisimIzinServisi $izinServisi)
     {
         $arac = Arac::where('qr_token', $token)->firstOrFail();
+        $kullanici = auth()->user();
+        $aktifFirmaId = session('aktif_firma_id') ?: $kullanici?->firmaPersoneli?->firma_id;
+        $personelYetkili = $kullanici
+            && ($kullanici->isUsta() || $kullanici->isAdmin())
+            && $aktifFirmaId
+            && (int) $aktifFirmaId === (int) $arac->firma_id;
+        if (! $personelYetkili && ! $izinServisi->izinliMi($arac->firma_id, $arac->musteri_id, 'servis')) {
+            return back()->withErrors(['servis_iletisim_izni' => 'Servis ekranına devam etmek için önce servis iletişimi izni verilmelidir.']);
+        }
         $veri = $request->validate(['sifre' => ['required', 'string', 'max:12']]);
         $beklenen = mb_substr(preg_replace('/[^A-Z0-9]/u', '', mb_strtoupper($arac->plaka)), -4);
         $girilen = preg_replace('/[^A-Z0-9]/u', '', mb_strtoupper($veri['sifre']));
         if (! hash_equals($beklenen, $girilen)) {
-            return back()->withErrors(['sifre' => 'Şifre hatalı. Plakanızın son dört karakterini yazın.']);
+            return back()->withErrors(['sifre' => 'Şifre hatalı.']);
         }
         $request->session()->put('qr_detay_'.$arac->qr_token, true);
         return redirect()->to(route('qr.servis.show', ['token' => $token, 'ekran' => $request->input('ekran', 'servis')]).'#kayitlar');
