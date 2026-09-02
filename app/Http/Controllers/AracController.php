@@ -206,7 +206,7 @@ if($request->filled('plaka'))
         $this->aracErisiminiDogrula($arac);
 
         $arac->load(
-            ['musteri', 'servisler' => fn ($query) => $query->latest('servis_tarihi')]
+            ['musteri', 'servisler' => fn ($query) => $query->with('fotograflar')->latest('servis_tarihi')]
         );
 
 

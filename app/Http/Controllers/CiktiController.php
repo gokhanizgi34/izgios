@@ -53,7 +53,7 @@ class CiktiController extends Controller
             $request->validate(['alici' => ['email']]);
         }
 
-        $mesaj = $this->paylasimMesaji($baslik, $belge, $satirlar, $firma);
+        $mesaj = $this->paylasimMesaji($baslik, $belge, $satirlar, $firma, $veri['kanal']);
         $entegrasyonAktif = DB::table('muhasebe_entegrasyonlari')->where('firma_id', $belge->firma_id)->where('saglayici', $veri['kanal'])->where('aktif', true)->exists();
 
         if ($entegrasyonAktif) {
@@ -149,8 +149,24 @@ class CiktiController extends Controller
         return [$baslik, $belge, $satirlar, $firma, $resmiFatura];
     }
 
-    private function paylasimMesaji(string $baslik, object $belge, $satirlar, object $firma): string
+    private function paylasimMesaji(string $baslik, object $belge, $satirlar, object $firma, string $kanal): string
     {
+        if ($kanal === 'whatsapp' && $baslik === 'SERVİS İŞ EMRİ ÖZETİ') {
+            $mesaj = trim(sprintf(
+                "%s\n%s · %s%s",
+                $firma->gosterim_adi ?? $firma->unvan,
+                $baslik,
+                $belge->belge_no,
+                ! empty($belge->plaka) ? "\nAraç: {$belge->plaka}" : ''
+            ));
+            if (! empty($belge->qr_token) && ! empty($belge->plaka)) {
+                $sifre = mb_substr(preg_replace('/[^A-Z0-9]/u', '', mb_strtoupper($belge->plaka)), -4);
+                $mesaj .= "\n\nServis detayları: ".route('qr.servis.show', ['token' => $belge->qr_token, 'ekran' => 'servis'])."\nŞifre: {$sifre}";
+            }
+
+            return $mesaj;
+        }
+
         $satirOzeti = $satirlar->take(8)->map(fn ($satir) => sprintf(
             '- %s: %s %s · ₺%s',
             $satir->urun_adi,

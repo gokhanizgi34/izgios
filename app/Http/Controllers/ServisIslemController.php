@@ -16,6 +16,7 @@ use App\Services\BakimHatirlatmaTarihi;
 use App\Services\ServisMuhasebeAktarimServisi;
 use App\Services\ServisDurumAkisi;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 
@@ -313,6 +314,20 @@ class ServisIslemController extends Controller
         $yol = $request->file('foto')->store('servisler/'.$servis->id, 'public');
         ServisFotograf::create(['servis_id' => $servis->id, 'kategori' => $veri['kategori'], 'dosya_yolu' => $yol, 'aciklama' => $veri['aciklama']]);
         return back()->with('success', 'Servis fotoğrafı eklendi.');
+    }
+
+    public function fotografSil(Servis $servis, ServisFotograf $fotograf)
+    {
+        $this->islemYetkisi($servis);
+        abort_unless((int) $fotograf->servis_id === (int) $servis->id, 404);
+
+        $dosyaYolu = $fotograf->dosya_yolu;
+        $fotograf->delete();
+        if ($dosyaYolu) {
+            Storage::disk('public')->delete($dosyaYolu);
+        }
+
+        return back()->with('success', 'Hatalı veya uygun olmayan fotoğraf silindi.');
     }
 
     private function tutarlariGuncelle(Servis $servis): void

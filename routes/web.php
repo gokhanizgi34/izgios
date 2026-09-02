@@ -235,6 +235,7 @@ Route::delete('/servisler/{servis}/islemler/{islem}', [ServisIslemController::cl
 Route::post('/servisler/{servis}/parcalar', [ServisIslemController::class, 'parcaEkle'])->name('servis.parca.ekle');
 Route::post('/servisler/{servis}/hasarlar', [ServisIslemController::class, 'hasarEkle'])->name('servis.hasar.ekle');
 Route::post('/servisler/{servis}/fotograflar', [ServisIslemController::class, 'fotografEkle'])->name('servis.fotograf.ekle');
+Route::delete('/servisler/{servis}/fotograflar/{fotograf}', [ServisIslemController::class, 'fotografSil'])->name('servis.fotograf.sil');
 
 
 
