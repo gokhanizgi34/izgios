@@ -14,7 +14,6 @@ use App\Models\ServisDurumNotu;
 use App\Services\IletisimOtomasyonServisi;
 use App\Services\BakimHatirlatmaTarihi;
 use App\Services\ServisMuhasebeAktarimServisi;
-use App\Services\ServisDurumAkisi;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -95,7 +94,7 @@ class ServisIslemController extends Controller
         return redirect()->route('servis.islem', $servis)->with('success', 'İş emri üzerinize alındı.');
     }
 
-    public function durumGuncelle(Request $request, Servis $servis, ServisDurumAkisi $akis)
+    public function durumGuncelle(Request $request, Servis $servis)
     {
         $this->islemYetkisi($servis);
         $akisNotu = $request->boolean('akis_notu');
@@ -107,18 +106,17 @@ class ServisIslemController extends Controller
         $oncekiDurum = $servis->durum;
 
         if ($akisNotu) {
-            if ($servis->durumNotlari()->where('durum', $oncekiDurum)->exists()) {
-                throw ValidationException::withMessages(['usta_notu' => $oncekiDurum.' aşaması için zaten bir not bulunuyor. Mevcut notu düzenleyebilirsiniz.']);
+            if ($servis->durumNotlari()->exists()) {
+                throw ValidationException::withMessages(['usta_notu' => 'Bu iş emri için son işlem notu zaten kaydedilmiş. Mevcut notu düzenleyebilirsiniz.']);
             }
-            $sonrakiDurum = $akis->sonraki($oncekiDurum);
-            DB::transaction(function () use ($servis, $veri, $oncekiDurum, $sonrakiDurum) {
+            DB::transaction(function () use ($servis, $veri) {
                 ServisDurumNotu::create([
                     'servis_id' => $servis->id,
                     'kullanici_id' => auth()->id(),
-                    'durum' => $oncekiDurum,
+                    'durum' => 'Tamamlandı',
                     'not' => $veri['usta_notu'],
                 ]);
-                $servis->update(['durum' => $sonrakiDurum]);
+                $servis->update(['durum' => 'Tamamlandı']);
             });
         } else {
             $servis->update(array_filter([
@@ -133,7 +131,7 @@ class ServisIslemController extends Controller
             app(ServisMuhasebeAktarimServisi::class)->aktar($guncelServis);
         }
         return back()->with('success', $akisNotu
-            ? $oncekiDurum.' notu kaydedildi. Sıradaki aşama: '.$guncelServis->durum.'.'
+            ? 'Son işlem notu kaydedildi ve iş emri kapatıldı.'
             : 'Servis durumu güncellendi.');
     }
 

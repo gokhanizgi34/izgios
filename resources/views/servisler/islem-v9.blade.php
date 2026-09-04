@@ -29,7 +29,46 @@
     <section class="sb-photo-section"><header><h3><i class="bi bi-car-front-fill"></i> Araç kabul ve dört cephe</h3><span>{{$kabulFotograflari->count()}} fotoğraf</span></header><div class="sb-photos">@forelse($kabulFotograflari as $foto)<article><a href="{{asset('storage/'.$foto->dosya_yolu)}}" target="_blank"><img src="{{asset('storage/'.$foto->dosya_yolu)}}" alt="{{$fotoEtiketleri[$foto->kategori] ?? 'Araç kabul fotoğrafı'}}"></a><div><b>{{$fotoEtiketleri[$foto->kategori] ?? 'Araç kabul fotoğrafı'}}</b><p>{{$foto->aciklama ?: 'Araç kabulünde çekildi.'}}</p><small>{{optional($foto->created_at)->format('d.m.Y H:i')}}</small><form method="POST" action="{{route('servis.fotograf.sil',[$servis,$foto])}}" onsubmit="return confirm('Bu fotoğraf kalıcı olarak silinsin mi?')">@csrf @method('DELETE')<button class="sb-photo-delete" type="submit"><i class="bi bi-trash3"></i> Sil</button></form></div></article>@empty<p class="sb-empty">Araç kabul fotoğrafı bulunmuyor.</p>@endforelse</div></section>
     <section class="sb-photo-section"><header><h3><i class="bi bi-tools"></i> Servis süreci fotoğrafları</h3><span>{{$servisFotograflari->count()}} fotoğraf</span></header><div class="sb-photos">@forelse($servisFotograflari as $foto)<article><a href="{{asset('storage/'.$foto->dosya_yolu)}}" target="_blank"><img src="{{asset('storage/'.$foto->dosya_yolu)}}" alt="{{$fotoEtiketleri[$foto->kategori] ?? 'Servis fotoğrafı'}}"></a><div><b>{{$fotoEtiketleri[$foto->kategori] ?? 'Diğer servis fotoğrafı'}}</b><p>{{$foto->aciklama ?: 'Açıklama girilmemiş.'}}</p><small>{{optional($foto->created_at)->format('d.m.Y H:i')}}</small><form method="POST" action="{{route('servis.fotograf.sil',[$servis,$foto])}}" onsubmit="return confirm('Bu fotoğraf kalıcı olarak silinsin mi?')">@csrf @method('DELETE')<button class="sb-photo-delete" type="submit"><i class="bi bi-trash3"></i> Sil</button></form></div></article>@empty<p class="sb-empty">Servis süreci fotoğrafı bulunmuyor.</p>@endforelse</div></section>
   </section>
-  <section class="sb-view" data-panel="not"><div class="sb-note-flow"><header><div><small>AKTİF AŞAMA</small><h3>{{$servis->durum}}</h3></div><span>@if($servis->durum==='Bekliyor')Sonraki: İşlemde@elseif($servis->durum==='İşlemde')Sonraki: Teslime Hazır@elseif($servis->durum==='Teslime Hazır')Sonraki: Tamamlandı@else Final notu @endif</span></header>@if($servis->durumNotlari->contains('durum',$servis->durum))<div class="sb-note-closed"><i class="bi bi-check-circle-fill"></i><div><b>{{$servis->durum}} aşamasının notu kaydedildi</b><small>Bu aşamaya ikinci not eklenemez. Mevcut notu düzenleyebilir veya silebilirsiniz.</small></div></div>@else<form method="POST" action="{{route('servis.islem.durum',$servis)}}">@csrf<input type="hidden" name="akis_notu" value="1"><textarea name="usta_notu" required placeholder="{{$servis->durum}} aşamasında yapılanları yazın"></textarea><button>{{$servis->durum==='Tamamlandı' ? 'Tamamlandı Final Notunu Kaydet' : 'Notu Kaydet ve Sonraki Aşamaya Geç'}}</button></form>@endif</div><div class="sb-note-history"><h3>Süreç notları</h3>@forelse($servis->durumNotlari as $not)<article><span>{{$not->durum}}</span><div><p>{{$not->not}}</p><small>{{optional($not->created_at)->format('d.m.Y H:i')}} · {{$not->kullanici?->tamAdi() ?: 'Sistem kullanıcısı'}}</small><div class="sb-note-actions"><details><summary><i class="bi bi-pencil-square"></i> Düzenle</summary><form method="POST" action="{{route('servis.durum-notu.guncelle',[$servis,$not])}}">@csrf @method('PATCH')<textarea name="not" required>{{$not->not}}</textarea><button>Değişikliği Kaydet</button></form></details><form method="POST" action="{{route('servis.durum-notu.sil',[$servis,$not])}}" onsubmit="return confirm('Bu süreç notu silinsin mi? Servis durumu değişmeyecektir.')">@csrf @method('DELETE')<button class="delete"><i class="bi bi-trash3"></i> Sil</button></form></div></div></article>@empty<p class="sb-empty">Henüz süreç notu girilmedi.</p>@endforelse</div></section>
+  @php($sonIslemNotu = $servis->durumNotlari->sortByDesc('id')->first())
+  <section class="sb-view" data-panel="not">
+    <div class="sb-note-flow">
+      <header>
+        <div><small>İŞ KAPATMA</small><h3>Son işlem notu</h3></div>
+        <span>{{$servis->durum}}</span>
+      </header>
+      @if($sonIslemNotu)
+        <div class="sb-note-closed">
+          <i class="bi bi-check-circle-fill"></i>
+          <div><b>İş emri kapatma notu kaydedildi</b><small>Tek not üzerinden düzenleme yapabilirsiniz.</small></div>
+        </div>
+      @else
+        <form method="POST" action="{{route('servis.islem.durum',$servis)}}">
+          @csrf
+          <input type="hidden" name="akis_notu" value="1">
+          <textarea name="usta_notu" required placeholder="Yapılan işlemleri ve teslim durumunu özetleyin"></textarea>
+          <button>Son Notu Kaydet ve İşi Kapat</button>
+        </form>
+      @endif
+    </div>
+    <div class="sb-note-history">
+      <h3>Son işlem notu</h3>
+      @if($sonIslemNotu)
+        <article>
+          <span>Tamamlandı</span>
+          <div>
+            <p>{{$sonIslemNotu->not}}</p>
+            <small>{{optional($sonIslemNotu->created_at)->format('d.m.Y H:i')}} · {{$sonIslemNotu->kullanici?->tamAdi() ?: 'Sistem kullanıcısı'}}</small>
+            <div class="sb-note-actions">
+              <details><summary><i class="bi bi-pencil-square"></i> Düzenle</summary><form method="POST" action="{{route('servis.durum-notu.guncelle',[$servis,$sonIslemNotu])}}">@csrf @method('PATCH')<textarea name="not" required>{{$sonIslemNotu->not}}</textarea><button>Değişikliği Kaydet</button></form></details>
+              <form method="POST" action="{{route('servis.durum-notu.sil',[$servis,$sonIslemNotu])}}" onsubmit="return confirm('Son işlem notu silinsin mi? Servis kapalı kalacaktır.')">@csrf @method('DELETE')<button class="delete"><i class="bi bi-trash3"></i> Sil</button></form>
+            </div>
+          </div>
+        </article>
+      @else
+        <p class="sb-empty">İşi kapatmak için henüz son işlem notu girilmedi.</p>
+      @endif
+    </div>
+  </section>
   <footer class="sb-actions"><a href="{{route('ciktilar.yazdir',['tur'=>'servis','id'=>$servis->id])}}" target="_blank">Yazdır</a><a href="{{route('servisler.show',$servis)}}">Servis Detayı</a>@if($servis->musteri?->email)<form method="POST" action="{{route('ciktilar.gonder',['tur'=>'servis','id'=>$servis->id])}}">@csrf<input type="hidden" name="kanal" value="email"><input type="hidden" name="alici" value="{{$servis->musteri->email}}"><button type="submit"><i class="bi bi-envelope-fill"></i> Mail At</button></form>@endif @if($servis->musteri?->telefon)<form method="POST" action="{{route('ciktilar.gonder',['tur'=>'servis','id'=>$servis->id])}}" target="_blank">@csrf<input type="hidden" name="kanal" value="whatsapp"><input type="hidden" name="alici" value="{{$servis->musteri->telefon}}"><button type="submit"><i class="bi bi-whatsapp"></i> WhatsApp'tan At</button></form><form method="POST" action="{{route('ciktilar.gonder',['tur'=>'servis','id'=>$servis->id])}}" target="_blank">@csrf<input type="hidden" name="kanal" value="sms"><input type="hidden" name="alici" value="{{$servis->musteri->telefon}}"><button type="submit"><i class="bi bi-chat-dots-fill"></i> SMS At</button></form>@endif<strong>Toplam ₺{{number_format($servis->toplam_tutar,2,',','.')}}</strong></footer></section>
 </section>
 @endif
