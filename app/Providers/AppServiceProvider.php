@@ -33,7 +33,7 @@ class AppServiceProvider extends ServiceProvider
                     config(['services.izgios_ai.provider'=>null, 'services.izgios_ai.key'=>null]);
                 } elseif (($ayarlar['aktif'] ?? '0') === '1' && filled($ayarlar['api_anahtari'] ?? null)) {
                     config([
-                        'services.izgios_ai.provider' => 'openai',
+                        'services.izgios_ai.provider' => $ayarlar['saglayici'] ?? 'openai',
                         'services.izgios_ai.key' => Crypt::decryptString($ayarlar['api_anahtari']),
                         'services.izgios_ai.model' => $ayarlar['model'] ?? config('services.izgios_ai.model', 'gpt-5.6'),
                     ]);

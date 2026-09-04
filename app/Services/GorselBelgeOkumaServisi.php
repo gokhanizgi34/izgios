@@ -3,15 +3,16 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class GorselBelgeOkumaServisi
 {
+    public function __construct(private readonly YapayZekaIstemcisi $istemci) {}
+
     public function oku(UploadedFile $dosya, string $tur): array
     {
-        if (config('services.izgios_ai.provider') !== 'openai' || blank(config('services.izgios_ai.key'))) {
+        if (! $this->istemci->hazirMi()) {
             throw new RuntimeException('Merkezi yapay zekâ bağlantısı aktif değil. API ve İletişim Entegrasyonları ayarını kontrol edin.');
         }
 
@@ -26,28 +27,7 @@ class GorselBelgeOkumaServisi
             : 'Görüntüdeki muhasebe fişi veya faturayı Türkçe oku. Firma, belge numarası, tarih, genel toplam, KDV oranı ve okunabilen kalemleri çıkar. Genel toplamı yalnız belgede açıkça gördüğün değerden yaz. Emin olmadığın alanları boş bırak; tutar uydurma.';
 
         try {
-            $yanit = Http::acceptJson()->withToken(config('services.izgios_ai.key'))->timeout(60)->retry(1, 800)
-                ->post('https://api.openai.com/v1/responses', [
-                    'model' => config('services.izgios_ai.model', 'gpt-5.6'),
-                    'store' => false,
-                    'input' => [[
-                        'role' => 'user',
-                        'content' => [
-                            ['type'=>'input_text','text'=>$istem],
-                            ['type'=>'input_image','detail'=>'high','image_url'=>'data:'.$mime.';base64,'.base64_encode($dosya->get())],
-                        ],
-                    ]],
-                    'text' => ['format'=>['type'=>'json_schema','name'=>$tur.'_okuma','strict'=>true,'schema'=>$sema]],
-                    'max_output_tokens' => 1200,
-                ]);
-            if (! $yanit->successful()) {
-                Log::warning('Görsel belge yapay zekâ okuması başarısız.', ['tur'=>$tur,'status'=>$yanit->status()]);
-                throw new RuntimeException('Yapay zekâ görüntüyü şu anda okuyamadı. Tekrar deneyin.');
-            }
-            $metin = data_get($yanit->json(), 'output.0.content.0.text') ?? data_get($yanit->json(), 'output_text');
-            $veri = is_string($metin) ? json_decode($metin, true) : null;
-            if (! is_array($veri)) throw new RuntimeException('Yapay zekâdan geçerli okuma sonucu alınamadı.');
-            return $veri;
+            return $this->istemci->gorselJson($istem, $mime, $dosya->get(), $sema);
         } catch (RuntimeException $hata) {
             throw $hata;
         } catch (\Throwable $hata) {

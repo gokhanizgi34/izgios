@@ -19,7 +19,7 @@ class DervisBilgiBankasiTest extends TestCase
     public function test_merkezi_yapay_zeka_sss_kaydi_baglami_besler(): void
     {
         $baglam = (new DervisBilgiBankasiServisi())->asistanBaglami();
-        $this->assertStringContainsString('tek OpenAI anahtarı', $baglam);
+        $this->assertStringContainsString('OpenAI veya Google Gemini', $baglam);
         $this->assertStringContainsString('her 10 dakikada', $baglam);
     }
 }

@@ -3,12 +3,11 @@
 namespace App\Services;
 
 use App\Models\DestekTalebi;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class YapayZekaDestekServisi
 {
-    public function __construct(private readonly DervisBilgiBankasiServisi $bilgiBankasi)
+    public function __construct(private readonly DervisBilgiBankasiServisi $bilgiBankasi, private readonly YapayZekaIstemcisi $istemci)
     {
     }
 
@@ -22,7 +21,7 @@ class YapayZekaDestekServisi
             return ['durum' => 'cozum_onerildi', 'ozet' => $bilgiCevabi['ozet'], 'cozum' => $bilgiCevabi['cozum']];
         }
 
-        if (config('services.izgios_ai.provider') !== 'openai' || blank(config('services.izgios_ai.key'))) {
+        if (! $this->istemci->hazirMi()) {
             return ['durum' => 'sistem_yoneticisine_yonlendirildi', 'ozet' => 'Derviş, bu konu için Bilgi Merkezi eşleşmesi bulamadı.', 'cozum' => 'Talep Sistem Yöneticisi inceleme kuyruğuna alındı. Ekran adresi, yapılan adım ve varsa hata kodunu ekleyin.'];
         }
 
@@ -43,15 +42,7 @@ Talep: {$metin}
 TEXT;
 
         try {
-            $yanit = Http::acceptJson()->withToken(config('services.izgios_ai.key'))->timeout(30)
-                ->post('https://api.openai.com/v1/responses', ['model' => config('services.izgios_ai.model', 'gpt-5.6'), 'input' => $istem]);
-
-            if (!$yanit->successful()) {
-                Log::warning('İZGİOS AI destek analizi başarısız.', ['status' => $yanit->status(), 'talep_id' => $talep->id]);
-                return ['durum' => 'sistem_yoneticisine_yonlendirildi', 'ozet' => 'Yapay zekâ analizi şu an tamamlanamadı.', 'cozum' => 'Talep Sistem Yöneticisi inceleme kuyruğuna alındı.'];
-            }
-
-            $cevap = data_get($yanit->json(), 'output.0.content.0.text') ?? data_get($yanit->json(), 'output_text') ?? '';
+            $cevap = $this->istemci->metin($istem);
             return $this->cevabiAyristir($cevap);
         } catch (\Throwable $hata) {
             Log::warning('İZGİOS AI destek bağlantı hatası.', ['talep_id' => $talep->id, 'sebep' => $hata->getMessage()]);
@@ -67,7 +58,7 @@ TEXT;
             return $bilgiCevabi['cozum'];
         }
 
-        if (config('services.izgios_ai.provider') !== 'openai' || blank(config('services.izgios_ai.key'))) {
+        if (! $this->istemci->hazirMi()) {
             return 'Bu mesaj için Bilgi Merkezi’nde doğrudan bir yanıt bulunamadı. Ekran adresini, yaptığınız son adımı ve varsa hata kodunu paylaşın; Sistem Yöneticisi inceleme kuyruğuna aktarılır.';
         }
 
@@ -81,9 +72,7 @@ Kullanıcı mesajı: {$metin}
 TEXT;
 
         try {
-            $yanit = Http::acceptJson()->withToken(config('services.izgios_ai.key'))->timeout(30)
-                ->post('https://api.openai.com/v1/responses', ['model' => config('services.izgios_ai.model', 'gpt-5.6'), 'input' => $istem]);
-            $cevap = data_get($yanit->json(), 'output.0.content.0.text') ?? data_get($yanit->json(), 'output_text');
+            $cevap = $this->istemci->metin($istem);
 
             return filled($cevap)
                 ? mb_strimwidth(trim($cevap), 0, 1800, '…', 'UTF-8')

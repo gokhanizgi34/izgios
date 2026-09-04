@@ -90,11 +90,11 @@ class TicariController extends Controller
     public function merkeziYapayZekaKaydet(Request $request)
     {
         abort_unless(auth()->check() && auth()->user()->tamSistemYetkisiVarMi(), 403);
-        $veri = $request->validate(['api_anahtari'=>['nullable','string','max:4000'],'model'=>['required','string','max:100'],'aktif'=>['nullable','boolean']]);
+        $veri = $request->validate(['saglayici'=>['required','in:openai,gemini'],'api_anahtari'=>['nullable','string','max:4000'],'model'=>['required','string','max:100'],'aktif'=>['nullable','boolean']]);
         $mevcut = DB::table('yonetim_ayarlari')->where(['grup'=>'yapay_zeka','anahtar'=>'api_anahtari'])->value('deger');
         $apiAnahtari = filled($veri['api_anahtari'] ?? null) ? Crypt::encryptString($veri['api_anahtari']) : $mevcut;
         abort_if(blank($apiAnahtari) && $request->boolean('aktif'), 422, 'Yapay zekâyı etkinleştirmek için API anahtarı girin.');
-        foreach (['api_anahtari'=>$apiAnahtari,'model'=>$veri['model'],'aktif'=>$request->boolean('aktif')?'1':'0'] as $anahtar=>$deger) {
+        foreach (['saglayici'=>$veri['saglayici'],'api_anahtari'=>$apiAnahtari,'model'=>$veri['model'],'aktif'=>$request->boolean('aktif')?'1':'0'] as $anahtar=>$deger) {
             DB::table('yonetim_ayarlari')->updateOrInsert(['grup'=>'yapay_zeka','anahtar'=>$anahtar], ['deger'=>$deger,'guncelleyen_id'=>auth()->id(),'updated_at'=>now(),'created_at'=>now()]);
         }
         return back()->with('success', 'Merkezi yapay zekâ bağlantısı tüm sistem için güncellendi.');
