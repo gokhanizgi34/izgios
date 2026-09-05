@@ -430,6 +430,8 @@ Route::get('/ayarlar/{grup}-ayarlari', [AyarController::class, 'yonetimAyarlari'
 Route::post('/ayarlar/{grup}-ayarlari', [AyarController::class, 'yonetimAyarlariKaydet'])->whereIn('grup', ['bildirim', 'servis', 'sistem'])->name('ayarlar.yonetim.kaydet');
 Route::get('/ayarlar/kdv-urun-gruplari', [AyarController::class, 'kdvGruplari'])->name('ayarlar.kdv.gruplari');
 Route::post('/ayarlar/kdv-urun-gruplari', [AyarController::class, 'kdvGrubuKaydet'])->name('ayarlar.kdv.gruplari.kaydet');
+Route::get('/ayarlar/periyodik-bakim-kalemleri', [AyarController::class, 'bakimKalemleri'])->name('ayarlar.bakim-kalemleri');
+Route::post('/ayarlar/periyodik-bakim-kalemleri', [AyarController::class, 'bakimKalemleriKaydet'])->name('ayarlar.bakim-kalemleri.kaydet');
 
 Route::view('/ayarlar/roller', 'ayarlar.roller-kurumsal')
     ->name('ayarlar.roller');

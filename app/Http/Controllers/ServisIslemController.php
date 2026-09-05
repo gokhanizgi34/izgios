@@ -14,6 +14,7 @@ use App\Models\ServisDurumNotu;
 use App\Services\IletisimOtomasyonServisi;
 use App\Services\BakimHatirlatmaTarihi;
 use App\Services\ServisMuhasebeAktarimServisi;
+use App\Services\PeriyodikBakimKalemiServisi;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -22,8 +23,6 @@ use Illuminate\Validation\ValidationException;
 
 class ServisIslemController extends Controller
 {
-
-
     /*
     |--------------------------------------------------------------------------
     | Usta İşlem Ekranı
@@ -76,7 +75,7 @@ class ServisIslemController extends Controller
 
             'servisler.islem-v9',
 
-            ['servis' => $servis, 'hasarlar' => AracHasar::where('servis_id', $servis->id)->latest()->get(), 'ustaUzerineAlabilir' => $ustaUzerineAlabilir, 'stokParcalar' => DB::table('stok_parcalar')->where('firma_id', $servis->firma_id)->where('aktif', true)->orderBy('parca_adi')->get(), 'gununIsleri' => $gununIsleri]
+            ['servis' => $servis, 'hasarlar' => AracHasar::where('servis_id', $servis->id)->latest()->get(), 'ustaUzerineAlabilir' => $ustaUzerineAlabilir, 'stokParcalar' => DB::table('stok_parcalar')->where('firma_id', $servis->firma_id)->where('aktif', true)->orderBy('parca_adi')->get(), 'gununIsleri' => $gununIsleri, 'periyodikBakimKalemleri' => app(PeriyodikBakimKalemiServisi::class)->firmaIcin((int) $servis->firma_id)]
 
         );
 
@@ -269,24 +268,7 @@ class ServisIslemController extends Controller
     public function periyodikBakimEkle(Request $request, Servis $servis)
     {
         $this->islemYetkisi($servis);
-        $bakimlar = [
-            'motor_yagi' => 'Motor Yağı', 'yag_filtresi' => 'Yağ Filtresi',
-            'hava_filtresi' => 'Hava Filtresi', 'polen_filtresi' => 'Polen Filtresi',
-            'yakit_filtresi' => 'Yakıt Filtresi', 'triger_seti' => 'Triger Seti',
-            'v_kayisi' => 'V Kayışı', 'gergi_rulmani' => 'Gergi ve Rulmanlar',
-            'devirdaim_pompasi' => 'Devirdaim Pompası', 'sanziman_yagi' => 'Şanzıman Yağı',
-            'diferansiyel_yagi' => 'Diferansiyel Yağı', 'fren_bakimi' => 'Fren Bakımı',
-            'fren_hidroligi' => 'Fren Hidroliği', 'fren_disk_balata' => 'Fren Disk ve Balata',
-            'lastik_bakimi' => 'Lastik Bakımı', 'rot_balans' => 'Rot ve Balans',
-            'amortisor_kontrolu' => 'Amortisör Kontrolü', 'direksiyon_bakimi' => 'Direksiyon Sistemi',
-            'aku_bakimi' => 'Akü Bakımı', 'sarj_sistemi' => 'Şarj Sistemi',
-            'buji_bakimi' => 'Buji Bakımı', 'atesleme_sistemi' => 'Ateşleme Sistemi',
-            'enjektor_temizligi' => 'Enjektör Temizliği', 'egzoz_emisyon' => 'Egzoz ve Emisyon',
-            'klima_bakimi' => 'Klima Bakımı', 'klima_gazi' => 'Klima Gazı',
-            'sogutma_sistemi' => 'Soğutma Sistemi', 'antifriz' => 'Antifriz Kontrolü',
-            'silecek_bakimi' => 'Silecek Bakımı', 'far_ayari' => 'Far Ayarı',
-            'genel_kontrol' => 'Genel Kontrol', 'iscilik' => 'İşçilik',
-        ];
+        $bakimlar = app(PeriyodikBakimKalemiServisi::class)->firmaIcin((int) $servis->firma_id);
         $veri = $request->validate(['bakim_turu' => ['required', 'in:'.implode(',', array_keys($bakimlar))], 'bakim_durumu' => ['nullable', 'in:degistirildi,kontrol_edildi'], 'tutar' => ['nullable', 'numeric', 'min:0'], 'aciklama' => ['nullable', 'string', 'max:2000']]);
         ServisIslem::create(['servis_id' => $servis->id, 'kategori' => 'periyodik_bakim', 'islem_adi' => $bakimlar[$veri['bakim_turu']], 'tutar' => $veri['tutar'] ?? 0, 'aciklama' => $veri['aciklama'] ?? null, 'durum' => $veri['bakim_durumu'] ?? 'degistirildi']);
         $this->tutarlariGuncelle($servis);

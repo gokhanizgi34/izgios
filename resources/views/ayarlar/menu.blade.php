@@ -92,6 +92,13 @@
         </article>
 
         <article class="settings-menu__card">
+            <div class="settings-menu__icon"><i class="bi bi-wrench-adjustable-circle-fill"></i></div>
+            <h2>Periyodik Bakım Kalemleri</h2>
+            <p>Her firma için bakım kalemlerini ekleyin, yeniden adlandırın, sıralayın veya listeden çıkarın.</p>
+            <a href="{{ route('ayarlar.bakim-kalemleri') }}">Bakım listesini yönet <i class="bi bi-arrow-right"></i></a>
+        </article>
+
+        <article class="settings-menu__card">
             <div class="settings-menu__icon"><i class="bi bi-database-fill-gear"></i></div>
             <h2>Sistem Bilgileri</h2>
             <p>Yedekleme, sürüm ve teknik sistem ayarları.</p>

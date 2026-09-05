@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Firma;
 use App\Models\Sube;
+use App\Services\PeriyodikBakimKalemiServisi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AyarController extends Controller
 {
@@ -66,6 +69,43 @@ class AyarController extends Controller
         $veri = $request->validate(['grup_adi' => ['required', 'string', 'max:100', 'unique:kdv_urun_gruplari,grup_adi'], 'kdv_orani' => ['required', 'numeric', 'min:0', 'max:100']]);
         DB::table('kdv_urun_gruplari')->insert(array_merge($veri, ['aktif' => true, 'created_at' => now(), 'updated_at' => now()]));
         return back()->with('success', 'Ürün grubu KDV oranı kaydedildi.');
+    }
+
+    public function bakimKalemleri(Request $request, PeriyodikBakimKalemiServisi $bakimServisi)
+    {
+        $this->sistemYoneticisiKontrol();
+        $firmalar = Firma::where('aktif', true)->orderBy('unvan')->get();
+        $firmaId = $request->integer('firma_id') ?: $firmalar->first()?->id;
+        $kalemler = $firmaId ? $bakimServisi->firmaIcin($firmaId) : [];
+
+        return view('ayarlar.bakim-kalemleri', compact('firmalar', 'firmaId', 'kalemler'));
+    }
+
+    public function bakimKalemleriKaydet(Request $request, PeriyodikBakimKalemiServisi $bakimServisi)
+    {
+        $this->sistemYoneticisiKontrol();
+        $veri = $request->validate([
+            'firma_id' => ['required', 'exists:firmas,id'],
+            'kalemler' => ['nullable', 'array'],
+            'kalemler.*.kod' => ['required', 'alpha_dash', 'max:100'],
+            'kalemler.*.ad' => ['required', 'string', 'max:120'],
+            'kalemler.*.sira' => ['required', 'integer', 'min:1', 'max:999'],
+            'kalemler.*.sil' => ['nullable', 'boolean'],
+            'yeni_ad' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        $kalemler = collect($veri['kalemler'] ?? [])->reject(fn (array $kalem) => (bool) ($kalem['sil'] ?? false))
+            ->sortBy('sira')->values()->map(fn (array $kalem, int $sira) => ['kod'=>$kalem['kod'], 'ad'=>trim($kalem['ad']), 'sira'=>$sira + 1])->all();
+
+        if (filled($veri['yeni_ad'] ?? null)) {
+            $taban = Str::slug($veri['yeni_ad'], '_') ?: 'bakim_kalemi';
+            $kod = $taban; $sayac = 2;
+            while (collect($kalemler)->contains('kod', $kod)) $kod = $taban.'_'.($sayac++);
+            $kalemler[] = ['kod'=>$kod, 'ad'=>trim($veri['yeni_ad']), 'sira'=>count($kalemler) + 1];
+        }
+
+        $bakimServisi->kaydet((int) $veri['firma_id'], $kalemler, auth()->id());
+        return redirect()->route('ayarlar.bakim-kalemleri', ['firma_id'=>$veri['firma_id']])->with('success', 'Firmanın periyodik bakım listesi güncellendi.');
     }
 
     private function sistemYoneticisiKontrol(): void
