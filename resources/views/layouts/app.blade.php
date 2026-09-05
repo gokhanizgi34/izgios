@@ -39,10 +39,10 @@
 
     @stack('styles')
 
-    @if(auth()->user()?->isUsta())
+    @if(auth()->user()?->mobilOturumKorunurMu())
     <script>
     (() => {
-        const anahtar = @json('izgios-usta-son-ekran-'.auth()->id());
+        const anahtar = @json('izgios-mobil-son-ekran-'.auth()->id());
         const ucSaat = 3 * 60 * 60 * 1000;
         const mevcut = window.location.pathname + window.location.search;
         const isEmriEkrani = /^\/servisler\/\d+\/islem(?:\?|$)/.test(mevcut);

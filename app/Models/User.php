@@ -195,6 +195,12 @@ class User extends Authenticatable
 
     }
 
+    /** Mobilde uzun oturum ve son servis ekranına dönüş özelliğini kullanabilen roller. */
+    public function mobilOturumKorunurMu(): bool
+    {
+        return $this->isUsta() || $this->isAdmin();
+    }
+
 
 
 

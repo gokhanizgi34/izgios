@@ -214,8 +214,8 @@ class LoginController extends Controller
         */
 
 
-        $ustaMobilOturumu = $kullanici->isUsta();
-        if ($ustaMobilOturumu) {
+        $mobilOturumKorunacak = $kullanici->mobilOturumKorunurMu();
+        if ($mobilOturumKorunacak) {
             Auth::guard()->setRememberDuration(180);
         }
 
@@ -223,7 +223,7 @@ class LoginController extends Controller
 
             $kullanici,
 
-            $ustaMobilOturumu || $request->filled('remember')
+            $mobilOturumKorunacak || $request->filled('remember')
 
         );
 
