@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 
 use App\Models\Arac;
 use App\Models\Musteri;
+use App\Services\CariAktarimServisi;
 
 
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -32,6 +33,7 @@ class AracController extends Controller
 
 
         $query = Arac::with('musteri');
+        $this->firmaKapsami($query);
 
 if($request->filled('plaka'))
 {
@@ -71,7 +73,7 @@ if($request->filled('plaka'))
 
 
         return view(
-            'araclar.index',
+            'araclar.index-v2',
             compact('araclar')
         );
 
@@ -92,19 +94,23 @@ if($request->filled('plaka'))
     */
 
 
-    public function create()
+    public function create(Request $request)
     {
 
 
-        $musteriler = Musteri::orderBy(
+        $musteriler = Musteri::query();
+        $this->firmaKapsamiMusteri($musteriler);
+        $musteriler = $musteriler->orderBy(
             'ad_soyad'
         )->get();
 
 
 
+        $seciliMusteriId = $request->integer('musteri_id');
+
         return view(
-            'araclar.create',
-            compact('musteriler')
+            'araclar.create-v3',
+            compact('musteriler', 'seciliMusteriId')
         );
 
 
@@ -130,10 +136,24 @@ if($request->filled('plaka'))
 
 
         $validated = $this->validation($request);
+        $musteri = Musteri::findOrFail($validated['musteri_id']);
+        $this->musteriErisiminiDogrula($musteri);
+        if (! $musteri->firma_id) {
+            return back()->withInput()->withErrors([
+                'musteri_id' => 'Bu müşteri eski bir kayıttır ve firma bağlantısı yoktur. Müşteri kartından firma bağlantısını tamamlayın.',
+            ]);
+        }
+        $validated['firma_id'] = $musteri->firma_id;
+        $validated['sube_id'] = $musteri->sube_id;
+        $validated['plaka'] = $this->plakaNormalize($validated['plaka']);
+
+        if ($this->plakaMevcutMu($validated['firma_id'], $validated['plaka'])) {
+            return back()->withInput()->withErrors(['plaka' => 'Bu plaka aynı firmada zaten kayıtlıdır.']);
+        }
 
 
 
-        DB::transaction(function() use ($validated){
+        DB::transaction(function() use ($validated, &$arac){
 
 
 
@@ -143,23 +163,24 @@ if($request->filled('plaka'))
 
 
 
-            Arac::create(
+            $arac = Arac::create(
                 $validated
             );
 
 
         });
+        app(CariAktarimServisi::class)->musteriKarti($musteri->fresh());
 
 
 
 
         return redirect()
 
-            ->route('araclar.index')
+            ->route('servis.kabul', ['arac_id' => $arac->id])
 
             ->with(
                 'success',
-                'Araç başarıyla kaydedildi.'
+                'Araç kartı kaydedildi. Servis kabul bilgilerini tamamlayın.'
             );
 
 
@@ -182,10 +203,10 @@ if($request->filled('plaka'))
 
     public function show(Arac $arac)
     {
-
+        $this->aracErisiminiDogrula($arac);
 
         $arac->load(
-            'musteri'
+            ['musteri', 'servisler' => fn ($query) => $query->with('fotograflar')->latest('servis_tarihi')]
         );
 
 
@@ -215,9 +236,10 @@ if($request->filled('plaka'))
 
     public function edit(Arac $arac)
     {
-
-
-        $musteriler = Musteri::orderBy(
+        $this->aracErisiminiDogrula($arac);
+        $musteriler = Musteri::query();
+        $this->firmaKapsamiMusteri($musteriler);
+        $musteriler = $musteriler->orderBy(
             'ad_soyad'
         )->get();
 
@@ -251,15 +273,29 @@ if($request->filled('plaka'))
 
     public function update(Request $request, Arac $arac)
     {
-
-
+        $this->aracErisiminiDogrula($arac);
         $validated = $this->validation($request);
+        $musteri = Musteri::findOrFail($validated['musteri_id']);
+        $this->musteriErisiminiDogrula($musteri);
+        if (! $musteri->firma_id) {
+            return back()->withInput()->withErrors([
+                'musteri_id' => 'Bu müşterinin firma bağlantısı yoktur. Araç kaydedilmeden önce müşteri kartını güncelleyin.',
+            ]);
+        }
+        $validated['firma_id'] = $musteri->firma_id;
+        $validated['sube_id'] = $musteri->sube_id;
+        $validated['plaka'] = $this->plakaNormalize($validated['plaka']);
+
+        if ($this->plakaMevcutMu($validated['firma_id'], $validated['plaka'], $arac->id)) {
+            return back()->withInput()->withErrors(['plaka' => 'Bu plaka aynı firmada zaten kayıtlıdır.']);
+        }
 
 
 
         $arac->update(
             $validated
         );
+        app(CariAktarimServisi::class)->musteriKarti($musteri->fresh());
 
 
 
@@ -296,7 +332,13 @@ if($request->filled('plaka'))
 
     public function destroy(Arac $arac)
     {
+        $this->aracErisiminiDogrula($arac);
 
+        if ($arac->servisler()->exists()) {
+            return redirect()
+                ->route('araclar.index')
+                ->with('error', 'Servis geçmişi bulunan araç silinemez. Yalnızca hatalı ve işlem görmemiş araç kayıtları silinebilir.');
+        }
 
         $arac->delete();
 
@@ -333,7 +375,7 @@ if($request->filled('plaka'))
 
     public function qr(Arac $arac)
     {
-
+        $this->aracErisiminiDogrula($arac);
 
         if(!$arac->qr_token)
         {
@@ -604,6 +646,57 @@ if($request->filled('plaka'))
         ]);
 
 
+    }
+
+    private function plakaNormalize(string $plaka): string
+    {
+        return preg_replace('/[^0-9A-ZÇĞİÖŞÜ]/u', '', mb_strtoupper(trim($plaka), 'UTF-8')) ?: '';
+    }
+
+    private function plakaMevcutMu(int $firmaId, string $plaka, ?int $haricId = null): bool
+    {
+        return Arac::query()
+            ->where('firma_id', $firmaId)
+            ->when($haricId, fn ($query) => $query->whereKeyNot($haricId))
+            ->pluck('plaka')
+            ->contains(fn ($kayitliPlaka) => $this->plakaNormalize($kayitliPlaka) === $plaka);
+    }
+
+    private function aktifFirmaId(): ?int
+    {
+        return auth()->user()?->tamSistemYetkisiVarMi()
+            ? (session('aktif_firma_id') ?: null)
+            : (session('aktif_firma_id') ?: auth()->user()?->firmaPersoneli?->firma_id);
+    }
+
+    private function firmaKapsami($query): void
+    {
+        if (! auth()->user()?->tamSistemYetkisiVarMi()) {
+            $firmaId = $this->aktifFirmaId();
+            abort_unless($firmaId, 403, 'Kullanıcının firma bağlantısı bulunamadı.');
+            $query->where('firma_id', $firmaId);
+        }
+    }
+
+    private function firmaKapsamiMusteri($query): void
+    {
+        if (! auth()->user()?->tamSistemYetkisiVarMi()) {
+            $query->where('firma_id', $this->aktifFirmaId());
+        }
+    }
+
+    private function musteriErisiminiDogrula(Musteri $musteri): void
+    {
+        if (! auth()->user()?->tamSistemYetkisiVarMi()) {
+            abort_unless((int) $musteri->firma_id === (int) $this->aktifFirmaId(), 403);
+        }
+    }
+
+    private function aracErisiminiDogrula(Arac $arac): void
+    {
+        if (! auth()->user()?->tamSistemYetkisiVarMi()) {
+            abort_unless((int) $arac->firma_id === (int) $this->aktifFirmaId(), 403);
+        }
     }
 
 

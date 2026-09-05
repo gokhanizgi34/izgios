@@ -721,7 +721,7 @@ RUSAT ARAÇTA MI?
 <select name="ruhsat_aracta">
 
 
-<option value="Var">
+<option value="1">
 
 Var
 
@@ -729,7 +729,7 @@ Var
 
 
 
-<option value="Yok">
+<option value="0">
 
 Yok
 
@@ -1715,15 +1715,11 @@ document
 .getElementById('qrOku')
 .addEventListener(
 'click',
-function()
+async function()
 {
-
-
-alert(
-'QR kamera modülü sonraki aşamada bağlanacak.'
-);
-
-
+if(!('BarcodeDetector' in window)||!navigator.mediaDevices?.getUserMedia){alert('Bu tarayıcı QR kamera taramayı desteklemiyor. Lütfen güncel Chrome kullanın.');return;}
+const modal=kameraTaramaEkrani('QR kodu kameraya gösterin');let stream;
+try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});modal.video.srcObject=stream;await modal.video.play();const detector=new BarcodeDetector({formats:['qr_code']});const tara=async()=>{if(!document.body.contains(modal.kutu))return;try{const kodlar=await detector.detect(modal.video);if(kodlar[0]?.rawValue){kameraKapat(modal,stream);const ham=kodlar[0].rawValue;const token=ham.match(/arac\/([^/?#]+)/)?.[1]||ham.match(/qr-servis\/([^/?#]+)/)?.[1]||ham;fetch('/servis-kabul/qr-bul?token='+encodeURIComponent(token)).then(r=>r.json()).then(data=>{if(!data.success)return alert('Bu QR koduna ait araç bulunamadı.');aracBilgileriniDoldur(data.arac);document.getElementById('plaka').value=data.arac.plaka||'';});return;}}catch(hata){console.warn('QR tarama hatası',hata);}requestAnimationFrame(tara);};tara();}catch(hata){kameraKapat(modal,stream);alert('Kamera açılamadı. Kamera iznini kontrol edin.');}
 });
 
 
@@ -1747,14 +1743,19 @@ document
 'click',
 function()
 {
-
-
-alert(
-'Plaka OCR kamera modülü sonraki aşamada bağlanacak.'
-);
-
-
+const input=document.createElement('input');input.type='file';input.accept='image/*';input.capture='environment';input.onchange=async()=>{const dosya=input.files?.[0];if(!dosya)return;if(!('TextDetector' in window)){alert('Kamera açıldı ve fotoğraf alındı. Bu tarayıcı plaka metni algılamayı desteklemediği için plakayı manuel girin. Güncel Chrome ile tekrar deneyin.');return;}try{const resim=await createImageBitmap(dosya);const metinler=await new TextDetector().detect(resim);const ham=metinler.map(item=>item.rawValue).join(' ').toUpperCase().replace(/[^A-Z0-9]/g,'');const eslesme=ham.match(/\d{2,3}[A-Z]{1,3}\d{2,4}/);if(!eslesme)return alert('Plaka algılanamadı. Fotoğrafı daha net çekin veya plakayı manuel girin.');document.getElementById('plaka').value=eslesme[0];document.getElementById('plakaAra').click();}catch(hata){alert('Plaka görüntüsü okunamadı. Lütfen tekrar deneyin.');}};input.click();
 });
+
+
+function kameraTaramaEkrani(baslik){const kutu=document.createElement('div');kutu.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(3,12,25,.94);display:grid;place-items:center;padding:20px';kutu.innerHTML='<div style="width:min(100%,520px);color:#fff;text-align:center"><b style="display:block;margin-bottom:14px">'+baslik+'</b><video autoplay playsinline style="width:100%;border-radius:16px;background:#000"></video><button type="button" style="margin-top:14px;padding:12px 18px;border:0;border-radius:10px;background:#fff;color:#10203a;font-weight:800">Kamerayı Kapat</button></div>';document.body.appendChild(kutu);const video=kutu.querySelector('video');kutu.querySelector('button').addEventListener('click',()=>kameraKapat({kutu,video},video.srcObject));return {kutu,video};}
+function kameraKapat(modal,stream){stream?.getTracks?.().forEach(track=>track.stop());modal?.kutu?.remove();}
+
+const seciliAracId = @json($seciliAracId ?? null);
+if (seciliAracId) {
+    const aracSelect = document.getElementById('aracSelect');
+    aracSelect.value = String(seciliAracId);
+    aracSelect.dispatchEvent(new Event('change'));
+}
 
 
 

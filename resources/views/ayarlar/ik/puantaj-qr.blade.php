@@ -1,0 +1,6 @@
+@extends('layouts.app')
+@section('title','Personel Puantaj QR')
+@section('content')
+<style>.pqr{max-width:720px;margin:auto}.pqr-card{padding:34px;text-align:center;background:#fff;border:1px solid #dbe4ef;border-radius:22px;box-shadow:0 18px 45px #10284a14}.pqr-card h1{font-size:25px;color:#10284a}.pqr-code{display:inline-flex;margin:20px;padding:18px;background:#fff;border:2px solid #10284a;border-radius:18px}.pqr-note{padding:14px;border-radius:12px;background:#f4f7fb;color:#526277}@media print{header,aside,footer,.no-print{display:none!important}.pqr-card{box-shadow:none;border:0}.pqr{max-width:none}}</style>
+<section class="pqr"><article class="pqr-card"><small>PERSONEL GİRİŞ / ÇIKIŞ KARTI</small><h1>{{ $personel->name }} {{ $personel->surname }}</h1><div class="pqr-code">{!! $qrCode !!}</div><p>QR okutulduğunda güvenli puantaj ekranı açılır. İlk kayıt giriş, ikinci kayıt çıkış olarak işlenir.</p><div class="pqr-note">Bu kart yalnızca Sistem Yöneticisi, İnsan Kaynakları ve Firma Sahibi tarafından görüntülenip yazdırılabilir.</div><button class="btn btn-primary mt-3 no-print" onclick="window.print()"><i class="bi bi-printer"></i> QR Kartını Yazdır</button></article></section>
+@endsection

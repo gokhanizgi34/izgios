@@ -1,0 +1,20 @@
+@extends('layouts.app')
+@section('title', $durum === 'aktif' ? 'Aktif Personel' : 'Pasif Personel')
+@section('content')
+<x-kurumsal-kart-stil />
+<section class="personel-liste-sayfa">
+    <header class="personel-liste-baslik"><div><p>İNSAN KAYNAKLARI</p><h1>♟ {{ $durum === 'aktif' ? 'Aktif Personel' : 'Pasif Personel' }}</h1><span>Personel, rol ve iletişim bilgileri standart kart yapısında gösterilir.</span></div><a class="personel-ana-btn" href="{{ route('kullanicilar.create') }}">＋ Yeni Personel</a></header>
+    <nav class="personel-sekmeler"><a class="{{ $durum === 'aktif' ? 'aktif' : '' }}" href="{{ route('kullanicilar.aktifler') }}">Aktif Personel</a><a class="{{ $durum === 'pasif' ? 'aktif' : '' }}" href="{{ route('kullanicilar.pasifler') }}">Pasif Personel</a></nav>
+    @if(session('success'))<div class="personel-mesaj">✓ {{ session('success') }}</div>@endif @if(session('error'))<div class="personel-mesaj hata">⚠ {{ session('error') }}</div>@endif
+    <div class="izgi-card-grid">
+    @forelse($kullanicilar as $kullanici)
+        <article class="izgi-card" style="--izgi-card-actions:2">
+            <div class="izgi-card__head"><span class="izgi-card__icon">{{ mb_strtoupper(mb_substr($kullanici->name,0,1)).mb_strtoupper(mb_substr($kullanici->surname,0,1)) }}</span><div class="izgi-card__title-wrap"><p class="izgi-card__eyebrow">Personel kartı · #{{ $kullanici->id }}</p><h2 class="izgi-card__title">{{ $kullanici->tamAdi() }}</h2><p class="izgi-card__subtitle">{{ $kullanici->rolAdi() }}</p></div></div>
+            <div class="izgi-card__body"><div class="izgi-card__meta izgi-card__meta--single"><div class="izgi-card__meta-item"><span class="izgi-card__label">E-posta</span><strong class="izgi-card__value">{{ $kullanici->email }}</strong></div><div class="izgi-card__meta-item"><span class="izgi-card__label">Telefon</span><strong class="izgi-card__value">{{ $kullanici->phone ?: 'Tanımlanmadı' }}</strong></div><div class="izgi-card__meta-item"><span class="izgi-card__label">Durum</span><span class="izgi-card__status {{ $kullanici->status === 'aktif' ? '' : 'izgi-card__status--passive' }}">● {{ $kullanici->aktifDurum() }}</span></div></div></div>
+            <footer class="izgi-card__footer"><a class="izgi-card__action izgi-card__action--outline" href="{{ route('kullanicilar.edit',$kullanici) }}">✎ Düzenle</a><a class="izgi-card__action izgi-card__action--primary" href="{{ route('kullanicilar.edit',$kullanici) }}">◉ Kartı Aç</a></footer>
+        </article>
+    @empty <div class="personel-bos">♟<br><strong>Bu listede personel bulunmuyor.</strong></div>@endforelse
+    </div>
+</section>
+<style>.personel-liste-sayfa{max-width:1450px;margin:auto;padding:28px}.personel-liste-baslik{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:16px}.personel-liste-baslik p{margin:0 0 5px;color:#d4a80f;font-size:12px;font-weight:850;letter-spacing:.08em}.personel-liste-baslik h1{margin:0;color:#102b52;font-size:30px}.personel-liste-baslik span{display:block;margin-top:7px;color:#687c9a}.personel-ana-btn{min-height:46px;padding:0 19px;border-radius:13px;background:#e3b82e;color:#fff;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-weight:850}.personel-sekmeler{display:flex;gap:9px;margin-bottom:20px}.personel-sekmeler a{min-height:39px;padding:0 14px;border:1px solid #dce5f1;border-radius:11px;background:#fff;color:#637795;display:inline-flex;align-items:center;text-decoration:none;font-size:13px;font-weight:800}.personel-sekmeler a.aktif{background:#fff8de;border-color:#e3b82e;color:#7b5a00}.personel-mesaj{padding:12px 14px;border-radius:12px;margin-bottom:15px;background:#eaf8ef;color:#15723b}.personel-mesaj.hata{background:#fff0ef;color:#bf3d33}.personel-bos{grid-column:1/-1;padding:48px;text-align:center;border:1px dashed #bfd0e5;border-radius:20px;background:#fff;color:#647894}@media(max-width:640px){.personel-liste-sayfa{padding:16px}.personel-liste-baslik{align-items:stretch;flex-direction:column}.personel-ana-btn{width:100%}}</style>
+@endsection

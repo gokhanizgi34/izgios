@@ -243,6 +243,10 @@ value="{{ $arac->kilometre }}">
 Benzin
 </option>
 
+<option {{ in_array($arac->yakit_tipi, ['Benzin + LPG', 'BENZİN + LPG'])?'selected':'' }}>
+Benzin + LPG
+</option>
+
 <option {{ $arac->yakit_tipi=='Dizel'?'selected':'' }}>
 Dizel
 </option>

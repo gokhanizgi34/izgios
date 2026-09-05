@@ -17,12 +17,12 @@
 
 
 <h1>
-🔧 Servis Listesi
+🔧 İş Emirleri
 </h1>
 
 
 <p>
-Araç servis kayıtlarını yönetin.
+Servis kabulden oluşan açık ve tamamlanmış iş emirlerini yönetin.
 </p>
 
 
@@ -51,13 +51,13 @@ align-items:center;
 
 <i class="bi bi-tools"></i>
 
-Servis Kayıtları
+İş Emirleri
 
 </h3>
 
 
 
-<a href="{{ route('servisler.create') }}"
+<a href="{{ route('servis.kabul') }}"
 style="
 background:#2563eb;
 color:white;
@@ -72,7 +72,9 @@ gap:8px;
 
 <i class="bi bi-plus-circle"></i>
 
-Yeni Servis
+<i class="bi bi-clipboard2-plus"></i>
+
+Servis Kabul
 
 </a>
 

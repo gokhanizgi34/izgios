@@ -99,6 +99,28 @@ method="POST">
 
 <div class="form-grid">
 
+@if(auth()->user()?->tamSistemYetkisiVarMi())
+<div class="form-group">
+<label>Firma *</label>
+<select id="firma_id" name="firma_id" class="form-input" required>
+<option value="">Firma seçin</option>
+@foreach($firmalar as $firma)
+<option value="{{ $firma->id }}" @selected(old('firma_id', $musteri->firma_id ?: $firmaId) == $firma->id)>{{ $firma->gosterim_adi }}</option>
+@endforeach
+</select>
+</div>
+
+<div class="form-group">
+<label>Şube</label>
+<select id="sube_id" name="sube_id" class="form-input">
+<option value="">Firma merkezi / şube seçilmedi</option>
+@foreach($subeler as $sube)
+<option value="{{ $sube->id }}" data-firma="{{ $sube->firma_id }}" @selected(old('sube_id', $musteri->sube_id) == $sube->id)>{{ $sube->sube_adi }}</option>
+@endforeach
+</select>
+</div>
+@endif
+
 
 
 
@@ -236,6 +258,26 @@ class="form-input">
 </div>
 
 
+<div class="form-group">
+
+
+<label>
+Doğum Tarihi
+</label>
+
+
+<input type="date"
+
+name="dogum_tarihi"
+
+value="{{ old('dogum_tarihi', $musteri->dogum_tarihi?->format('Y-m-d')) }}"
+
+class="form-input">
+
+
+</div>
+
+
 
 
 
@@ -296,6 +338,10 @@ class="form-textarea">{{ old('notlar',$musteri->notlar) }}</textarea>
 
 
 
+
+</div>
+</form>
+</div>
 
 <style>
 
@@ -687,6 +733,28 @@ padding:20px;
 
 
 </style>
+
+@if(auth()->user()?->tamSistemYetkisiVarMi())
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const firma = document.getElementById('firma_id');
+    const sube = document.getElementById('sube_id');
+    if (!firma || !sube) return;
+    const options = [...sube.options];
+    function filterBranches() {
+        options.forEach(option => {
+            if (!option.value) return;
+            const hidden = firma.value && option.dataset.firma !== firma.value;
+            option.hidden = hidden;
+            option.disabled = hidden;
+        });
+        if (sube.selectedOptions[0]?.disabled) sube.value = '';
+    }
+    firma.addEventListener('change', filterBranches);
+    filterBranches();
+});
+</script>
+@endif
 
 
 

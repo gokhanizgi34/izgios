@@ -39,6 +39,10 @@ class Arac extends Model
 
     protected $fillable = [
 
+        'firma_id',
+
+        'sube_id',
+
 
         'musteri_id',
 
@@ -126,6 +130,16 @@ class Arac extends Model
         );
 
 
+    }
+
+    public function firma()
+    {
+        return $this->belongsTo(Firma::class);
+    }
+
+    public function sube()
+    {
+        return $this->belongsTo(Sube::class);
     }
 
 /*
