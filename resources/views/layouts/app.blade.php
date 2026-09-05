@@ -39,6 +39,30 @@
 
     @stack('styles')
 
+    @if(auth()->user()?->isUsta())
+    <script>
+    (() => {
+        const anahtar = @json('izgios-usta-son-ekran-'.auth()->id());
+        const ucSaat = 3 * 60 * 60 * 1000;
+        const mevcut = window.location.pathname + window.location.search;
+        const isEmriEkrani = /^\/servisler\/\d+\/islem(?:\?|$)/.test(mevcut);
+
+        if (isEmriEkrani) {
+            localStorage.setItem(anahtar, JSON.stringify({ adres: mevcut, zaman: Date.now() }));
+        } else if (window.location.pathname === @json(route('dashboard', [], false))) {
+            try {
+                const son = JSON.parse(localStorage.getItem(anahtar) || 'null');
+                if (son?.adres && Date.now() - Number(son.zaman) <= ucSaat && /^\/servisler\/\d+\/islem(?:\?|$)/.test(son.adres)) {
+                    window.location.replace(son.adres);
+                }
+            } catch (_) {
+                localStorage.removeItem(anahtar);
+            }
+        }
+    })();
+    </script>
+    @endif
+
 
 
 </head>
