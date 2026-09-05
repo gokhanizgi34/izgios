@@ -26,12 +26,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Mobil çalışanlar uygulamayı arka plana aldığında oturum en az üç saat korunur.
-        config([
-            'session.lifetime' => max(180, (int) config('session.lifetime')),
-            'session.expire_on_close' => false,
-        ]);
-
         try {
             if (Schema::hasTable('yonetim_ayarlari')) {
                 $ayarlar = DB::table('yonetim_ayarlari')->where('grup', 'yapay_zeka')->pluck('deger', 'anahtar');
