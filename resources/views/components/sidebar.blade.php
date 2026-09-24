@@ -232,6 +232,9 @@
 @if(auth()->user()?->tamSistemYetkisiVarMi())
 <div class="sidebar-section">
     <span>YAPAY ZEKÂ</span>
+    <a href="{{ route('arac-qr-havuzu.index') }}" class="{{ request()->routeIs('arac-qr-havuzu.*') ? 'active' : '' }}">
+        <i class="bi bi-qr-code"></i><label>Araç QR Havuzu</label>
+    </a>
     <a href="{{ route('sistem.hatalari') }}" class="{{ request()->routeIs('sistem.hatalari') ? 'active' : '' }}">
         <i class="bi bi-shield-exclamation"></i><label>Sistem Hataları</label>
     </a>

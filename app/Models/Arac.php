@@ -5,7 +5,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 
 
 
@@ -164,50 +163,6 @@ public function servisler()
 
 
 
-
-
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | QR Otomatik Oluşturma
-    |--------------------------------------------------------------------------
-    */
-
-
-    protected static function boot()
-    {
-
-
-        parent::boot();
-
-
-
-
-        static::creating(function($arac){
-
-
-
-            if(empty($arac->qr_token))
-            {
-
-
-                $arac->qr_token = Str::uuid();
-
-
-
-                $arac->qr_created_at = now();
-
-
-            }
-
-
-
-        });
-
-
-
-    }
 
 
 

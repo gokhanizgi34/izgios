@@ -10,6 +10,7 @@ use App\Models\ServisIslem;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AracDijitalKimlikTest extends TestCase
@@ -77,6 +78,8 @@ class AracDijitalKimlikTest extends TestCase
             'model' => 'Egea',
             'model_yili' => 2024,
             'kilometre' => 20000,
+            'qr_token' => (string) Str::uuid(),
+            'qr_created_at' => now(),
         ]);
         $servis = Servis::create([
             'firma_id' => $firma->id,
@@ -167,6 +170,8 @@ class AracDijitalKimlikTest extends TestCase
             'plaka' => '34 TEST 456',
             'marka' => 'Fiat',
             'model' => 'Doblo',
+            'qr_token' => (string) Str::uuid(),
+            'qr_created_at' => now(),
         ]);
         Servis::create([
             'firma_id' => $firma->id,

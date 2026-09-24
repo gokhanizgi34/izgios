@@ -34,6 +34,7 @@ use App\Http\Controllers\IletisimAyarController;
 use App\Http\Controllers\CiktiController;
 use App\Http\Controllers\SilmeDenetimController;
 use App\Http\Controllers\GorselOkumaController;
+use App\Http\Controllers\AracQrHavuzuController;
 
 use App\Http\Controllers\FirmaYonetimController;
 use App\Http\Controllers\SubeController;
@@ -221,6 +222,11 @@ Route::resource(
     'servisler',
     ServisController::class
 );
+
+Route::get('/sistem/arac-qr-havuzu', [AracQrHavuzuController::class, 'index'])->name('arac-qr-havuzu.index');
+Route::post('/sistem/arac-qr-havuzu/uret', [AracQrHavuzuController::class, 'uret'])->name('arac-qr-havuzu.uret');
+Route::get('/sistem/arac-qr-havuzu/{parti}/yazdir', [AracQrHavuzuController::class, 'yazdir'])->name('arac-qr-havuzu.yazdir');
+Route::delete('/araclar/{arac}/qr', [AracController::class, 'qrSil'])->name('araclar.qr.sil');
 
 Route::get('/servisler/{servis}/islem', [ServisIslemController::class, 'show'])->name('servis.islem');
 Route::post('/servisler/{servis}/uzerine-al', [ServisIslemController::class, 'uzerineAl'])->name('servis.uzerine.al');

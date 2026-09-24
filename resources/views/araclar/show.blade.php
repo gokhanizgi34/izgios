@@ -54,16 +54,6 @@ class="btn-edit">
 
 
 
-<a href="{{ route('araclar.qr',$arac->id) }}"
-class="btn-qr">
-
-▣ QR Yazdır
-
-</a>
-
-
-
-
 <a href="{{ route('araclar.index') }}"
 class="btn-back">
 
@@ -495,36 +485,13 @@ Motor No
 <div class="qr-box">
 
 
-<p>
-
-Araç QR kimlik sistemi hazır.
-
-</p>
-
-
-
 @if($arac->qr_token)
-
-
-<div class="token">
-
-
-{{ $arac->qr_token }}
-
-
-</div>
-
+<p><strong>Fiziksel QR etiketi araca atanmış.</strong></p>
+<p>Etiket değişimi veya iptali için araç düzenleme ekranını kullanın.</p>
 
 @else
-
-
-<p>
-
-QR oluşturulacak.
-
-</p>
-
-
+<p><strong>Fiziksel QR etiketi atanmamış.</strong></p>
+<p>Düzenle ekranından havuzdaki boş bir QR kodunu okutun.</p>
 @endif
 
 

@@ -85,6 +85,18 @@ selected
 
 </div>
 
+<x-arac-qr-okuyucu alan-id="aracDuzenleQr" :mevcut-token="$arac->qr_token" />
+
+@if($arac->qr_token)
+<div class="edit-card">
+    <h2>Eski QR etiketi</h2>
+    <p>Etiket yırtıldı, kayboldu veya kullanılamıyorsa eski QR’ı iptal edin. İptal edilen QR tekrar kullanılamaz.</p>
+    <button type="submit" form="arac-qr-sil-form" class="btn btn-outline-danger" onclick="return confirm('Eski QR kalıcı olarak iptal edilecek. Devam edilsin mi?')">
+        <i class="bi bi-trash3"></i> Eski QR’ı Sil / İptal Et
+    </button>
+</div>
+@endif
+
 
 
 
@@ -400,6 +412,10 @@ rows="5">
 
 
 </form>
+
+@if($arac->qr_token)
+<form id="arac-qr-sil-form" method="POST" action="{{ route('araclar.qr.sil', $arac) }}">@csrf @method('DELETE')</form>
+@endif
 
 
 </div>
