@@ -43,8 +43,8 @@ class AracQrHavuzuController extends Controller
 
         AracQrKodu::insert($satirlar);
 
-        return redirect()->route('arac-qr-havuzu.yazdir', $parti)
-            ->with('success', '100 adet araç QR kodu üretildi.');
+        return redirect()->route('arac-qr-havuzu.index', ['parti' => $parti])
+            ->with('success', '100 adet araç QR kodu üretildi. Yeni parti aşağıda vurgulandı; Aç / PDF Kaydet ile baskıya hazırlayabilirsiniz.');
     }
 
     public function yazdir(string $parti)
