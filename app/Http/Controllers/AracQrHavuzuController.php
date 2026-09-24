@@ -55,8 +55,6 @@ class AracQrHavuzuController extends Controller
         abort_if($kodlar->isEmpty(), 404);
 
         $etiketler = $kodlar->map(fn (AracQrKodu $kod) => [
-            'sira' => $kod->sira_no,
-            'seri' => 'IZG-'.$kod->created_at->format('ymd').'-'.strtoupper(substr(str_replace('-', '', $kod->parti_kodu), 0, 6)).'-'.str_pad((string) $kod->sira_no, 3, '0', STR_PAD_LEFT),
             'qr' => QrCode::format('svg')->size(220)->margin(1)->generate(route('araclar.qr.show', $kod->token)),
         ]);
 
