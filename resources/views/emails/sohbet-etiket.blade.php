@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="tr"><body style="margin:0;background:#f4f7fb;color:#102a4d;font-family:Arial,sans-serif">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px"><tr><td align="center"><table role="presentation" width="620" cellspacing="0" cellpadding="0" style="max-width:620px;background:#fff;border:1px solid #dbe5f2;border-radius:18px;overflow:hidden">
+<tr><td style="padding:24px 28px;background:#102a4d;color:#fff"><strong style="font-size:24px">İZGİOS</strong><div style="margin-top:6px;color:#e1bc32;font-weight:bold">Firma içi sohbet bildirimi</div></td></tr>
+<tr><td style="padding:28px"><h1 style="margin:0 0 12px;font-size:21px">Sohbette sizden bahsedildi</h1><p style="color:#60708b"><strong>{{ $gonderen }}</strong>, <strong>{{ $firma }}</strong> genel sohbetinde sizi etiketledi.</p><div style="padding:16px;background:#f4f7fb;border-radius:12px;white-space:pre-line;line-height:1.6">{{ $mesaj }}</div><p style="margin:22px 0 0"><a href="{{ $sohbetUrl }}" style="display:inline-block;padding:12px 18px;background:#e1bc32;color:#102a4d;font-weight:bold;border-radius:9px;text-decoration:none">Sohbeti aç</a></p></td></tr>
+</table></td></tr></table></body></html>

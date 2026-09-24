@@ -87,10 +87,47 @@ padding:15px!important;
 
 .izgios-footer{
 
+padding:18px 16px;
+
 font-size:12px;
+
+flex-direction:column;
+
+justify-content:center;
+
+gap:8px;
+
+text-align:center;
 
 }
 
+.footer-left,
+.footer-right{
 
+justify-content:center;
 
+width:100%;
+
+}
+
+.footer-left span:last-child{
+
+overflow-wrap:anywhere;
+
+}
+
+}
+
+/* Ortak işlem alanları: tablet ve telefonda butonların taşmasını engeller. */
+@media(max-width:900px){
+.izgios-content :is(.page-header,.card-header,.kart-baslik,.panel-head,.role-dashboard__heading){flex-wrap:wrap;gap:12px}
+.izgios-content :is(.servis-aksiyonlar,.form-actions,.personel-actions-bar,.appointment-actions,.is-emri-actions,.firma-detail__actions){flex-wrap:wrap;max-width:100%}
+.izgios-content :is(a.btn,button.btn,input.btn){max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere}
+.izgios-content .table-responsive{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+
+@media(max-width:640px){
+.izgios-content :is(.form-actions,.personel-actions-bar,.servis-aksiyonlar){display:flex;flex-direction:column;align-items:stretch}
+.izgios-content :is(.form-actions,.personel-actions-bar,.servis-aksiyonlar)>:is(a,button,form),.izgios-content :is(.form-actions,.personel-actions-bar,.servis-aksiyonlar) .btn{width:100%}
+.izgios-content td :is(.btn,button){min-height:40px}
 }

@@ -5,7 +5,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
 
 
 
@@ -38,6 +37,10 @@ class Arac extends Model
 
 
     protected $fillable = [
+
+        'firma_id',
+
+        'sube_id',
 
 
         'musteri_id',
@@ -128,6 +131,16 @@ class Arac extends Model
 
     }
 
+    public function firma()
+    {
+        return $this->belongsTo(Firma::class);
+    }
+
+    public function sube()
+    {
+        return $this->belongsTo(Sube::class);
+    }
+
 /*
 |--------------------------------------------------------------------------
 | Servis Kayıtları
@@ -150,50 +163,6 @@ public function servisler()
 
 
 
-
-
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | QR Otomatik Oluşturma
-    |--------------------------------------------------------------------------
-    */
-
-
-    protected static function boot()
-    {
-
-
-        parent::boot();
-
-
-
-
-        static::creating(function($arac){
-
-
-
-            if(empty($arac->qr_token))
-            {
-
-
-                $arac->qr_token = Str::uuid();
-
-
-
-                $arac->qr_created_at = now();
-
-
-            }
-
-
-
-        });
-
-
-
-    }
 
 
 

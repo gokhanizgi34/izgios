@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'izgios_ai' => [
+        'provider' => env('IZGIOS_AI_PROVIDER'),
+        'key' => env('IZGIOS_AI_API_KEY'),
+        'model' => env('IZGIOS_AI_MODEL', 'gpt-5.6'),
+    ],
+
 ];

@@ -1,0 +1,17 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ $arac->plaka }} | İZGİOS</title><style>body{margin:0;background:#081426;color:#eef5ff;font-family:Arial,sans-serif}.app{max-width:620px;margin:auto;min-height:100vh}.head{padding:24px 20px;background:#0e203b}.head h1{margin:0;font-size:22px}.head p{margin:7px 0 0;color:#a9bbd4}.vehicle{margin:16px;padding:18px;border-radius:15px;background:#0d3140}.plate{font-size:27px;font-weight:800}.tabs{display:grid;grid-template-columns:1fr 1fr;margin:16px;gap:10px}.tabs a{padding:13px;text-align:center;border-radius:10px;text-decoration:none;background:#132641;color:#bed1ea;font-weight:700}.tabs a.active{background:#12cfa5;color:#04271f}.content{padding:0 16px 25px}.year{font-size:22px;margin:22px 0 10px}.record{display:grid;grid-template-columns:82px 1fr 24px;background:#10203a;margin:9px 0;border-radius:13px;overflow:hidden;color:#fff}.date{background:#f2c400;color:#182238;text-align:center;padding:15px 6px;font-weight:800}.date b{font-size:25px;display:block}.detail{padding:14px}.detail strong{font-size:20px}.detail small{display:block;color:#b9c9de;margin-top:6px}.arrow{display:grid;place-items:center;color:#12cfa5;font-size:26px}.maintenance{display:flex;align-items:center;gap:16px;background:#0e203b;padding:17px;margin:9px 0;border-radius:12px;border-left:4px solid #12cfa5}.maintenance.pending{border-color:#18a8e1}.maintenance b{font-size:22px}.maintenance span{margin-left:auto;color:#12cfa5;font-weight:700}.maintenance.pending span{color:#18a8e1}.empty{padding:20px;border-radius:12px;background:#10203a;color:#afc0d8}</style></head><body><main class="app"><header class="head"><h1>{{ $arac->plaka }} · Araç Geçmişi</h1><p>{{ $arac->marka }} {{ $arac->model }} · {{ number_format($arac->kilometre ?? 0,0,',','.') }} KM</p></header><section class="vehicle"><div class="plate">{{ $arac->plaka }}</div><small>{{ $arac->model_yili ?: '' }} · Müşteri: {{ $musteri['ad_soyad'] ?? 'Kayıtlı müşteri' }}</small></section><nav class="tabs"><a class="{{ request('ekran','servis') === 'servis' ? 'active' : '' }}" href="?ekran=servis">Servis Geçmişi</a><a class="{{ request('ekran') === 'bakim' ? 'active' : '' }}" href="?ekran=bakim">Periyodik Bakım</a></nav><section class="content">
+@if(request('ekran','servis') === 'bakim')
+<h2>Periyodik Bakımlar</h2>
+@foreach($bakimPlan as $plan)
+<div class="maintenance {{ $plan['tamam'] ? '' : 'pending' }}"><div><b>{{ number_format($plan['km'],0,',','.') }} km</b><small>veya {{ $plan['yil'] }}. yıl</small></div><span>{{ $plan['tamam'] ? '✓ Yapıldı' : '◷ Sırada' }}</span><b>›</b></div>
+@endforeach
+@else
+@php($servisYillari = $arac->servisler->groupBy(fn ($kayit) => ($kayit->servis_tarihi ?? $kayit->created_at)->format('Y')))
+@foreach($servisYillari as $yil => $kayitlar)
+<div class="year">{{ $yil }}</div>
+@foreach($kayitlar as $servis)
+<div class="record"><div class="date"><b>{{ ($servis->servis_tarihi ?? $servis->created_at)->format('d') }}</b>{{ ($servis->servis_tarihi ?? $servis->created_at)->translatedFormat('M') }}</div><div class="detail"><strong>{{ number_format($servis->giris_km ?? 0,0,',','.') }} KM</strong><small>{{ $servis->sikayet ?: 'Servis işlemi' }} · {{ $servis->durum }}</small></div><div class="arrow">›</div></div>
+@endforeach
+@endforeach
+@if($arac->servisler->isEmpty())<div class="empty">Bu araç için henüz servis kaydı yok.</div>@endif
+@endif
+</section></main></body></html>

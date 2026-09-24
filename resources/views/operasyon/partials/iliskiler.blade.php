@@ -1,0 +1,1 @@
+<label>Müşteri</label><select name="musteri_id"><option value="">Seçiniz</option>@foreach($musteriler as $m)<option value="{{$m->id}}">{{$m->ad_soyad}}</option>@endforeach</select><label>Araç</label><select name="arac_id"><option value="">Seçiniz</option>@foreach($araclar as $a)<option value="{{$a->id}}">{{$a->plaka}}</option>@endforeach</select>

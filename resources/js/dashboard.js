@@ -1,72 +1,56 @@
-console.log("İZGİOS Dashboard JS Yüklendi");
+document.addEventListener('DOMContentLoaded', () => {
+    const menuButton = document.querySelector('#mobile-menu-btn');
+    const sidebar = document.querySelector('#izgios-sidebar');
+    const overlay = document.querySelector('#sidebar-overlay');
+    const closeButton = document.querySelector('#sidebar-close');
 
-
-document.addEventListener("DOMContentLoaded", function () {
-
-
-    const menuButton = document.querySelector("#mobile-menu-btn");
-    const sidebar = document.querySelector("#izgios-sidebar");
-    const overlay = document.querySelector("#sidebar-overlay");
-
-
-    if(!menuButton || !sidebar){
-        console.log("Menü elemanı bulunamadı");
+    if (!menuButton || !sidebar) {
         return;
     }
 
+    const setMenuState = (isOpen) => {
+        sidebar.classList.toggle('active', isOpen);
+        overlay?.classList.toggle('active', isOpen);
+        document.body.classList.toggle('menu-open', isOpen);
+        menuButton.setAttribute('aria-expanded', String(isOpen));
 
-
-    function menuToggle(){
-
-
-        sidebar.classList.toggle("open");
-
-        if(overlay){
-            overlay.classList.toggle("active");
+        if (window.innerWidth <= 1024) {
+            sidebar.setAttribute('aria-hidden', String(!isOpen));
+        } else {
+            sidebar.removeAttribute('aria-hidden');
         }
+    };
 
-
-        document.body.classList.toggle("menu-open");
-
-
-    }
-
-
-
-
-
-    menuButton.addEventListener("click",function(e){
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        menuToggle();
-
+    menuButton.addEventListener('click', () => {
+        setMenuState(!sidebar.classList.contains('active'));
     });
 
+    const closeMenuAndRestoreFocus = () => {
+        setMenuState(false);
+        menuButton.focus();
+    };
 
+    overlay?.addEventListener('click', closeMenuAndRestoreFocus);
+    closeButton?.addEventListener('click', closeMenuAndRestoreFocus);
 
+    sidebar.addEventListener('click', (event) => {
+        if (window.innerWidth <= 1024 && event.target.closest('a')) {
+            setMenuState(false);
+        }
+    });
 
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && sidebar.classList.contains('active')) {
+            setMenuState(false);
+            menuButton.focus();
+        }
+    });
 
-    if(overlay){
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 1024 && sidebar.classList.contains('active')) {
+            setMenuState(false);
+        }
+    });
 
-
-        overlay.addEventListener("click",function(){
-
-
-            sidebar.classList.remove("open");
-
-            overlay.classList.remove("active");
-
-            document.body.classList.remove("menu-open");
-
-
-        });
-
-
-    }
-
-
-
-
+    setMenuState(false);
 });

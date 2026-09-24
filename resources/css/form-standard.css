@@ -1,0 +1,53 @@
+/* İZGİOS ortak form standardı: tüm modüllerde belirgin, aynı görsel dilde alanlar. */
+.izgios-content form input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.izgios-content form select,
+.izgios-content form textarea{
+    width:100% !important;
+    min-height:46px !important;
+    padding:11px 13px !important;
+    color:#1e293b !important;
+    background:#fff !important;
+    border:1px solid #cfd9e6 !important;
+    border-radius:10px !important;
+    box-shadow:inset 0 1px 1px rgba(15,23,42,.02) !important;
+    font:500 14px/1.4 Poppins,system-ui,sans-serif !important;
+    outline:none !important;
+    transition:border-color .16s ease,box-shadow .16s ease !important;
+}
+
+.izgios-content form textarea{
+    min-height:110px !important;
+    resize:vertical !important;
+}
+
+.izgios-content form select{
+    padding-right:38px !important;
+    cursor:pointer;
+}
+
+.izgios-content form input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):focus,
+.izgios-content form select:focus,
+.izgios-content form textarea:focus{
+    border-color:#2563eb !important;
+    box-shadow:0 0 0 3px rgba(37,99,235,.14) !important;
+}
+
+.izgios-content form input::placeholder,
+.izgios-content form textarea::placeholder{
+    color:#94a3b8 !important;
+    opacity:1;
+}
+
+.izgios-content .form-group > label,
+.izgios-content .form-label,
+.izgios-content .form-label-izgios{
+    display:block;
+    margin-bottom:8px;
+    color:#334155;
+    font-size:13px;
+    font-weight:750;
+}
+
+.izgios-content .form-group{
+    min-width:0;
+}
