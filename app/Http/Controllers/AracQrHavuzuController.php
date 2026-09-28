@@ -55,7 +55,7 @@ class AracQrHavuzuController extends Controller
         abort_if($kodlar->isEmpty(), 404);
 
         $etiketler = $kodlar->map(fn (AracQrKodu $kod) => [
-            'qr' => QrCode::format('svg')->size(220)->margin(1)->generate(route('araclar.qr.show', $kod->token)),
+            'qr' => QrCode::format('svg')->size(240)->margin(4)->color(0, 0, 0)->backgroundColor(255, 255, 255)->generate(route('araclar.qr.show', $kod->token)),
         ]);
 
         return view('araclar.qr-havuzu-yazdir', compact('etiketler', 'parti'));
