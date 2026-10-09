@@ -411,7 +411,7 @@ if($request->filled('plaka'))
 
         $qrCode = QrCode::size(300)
 
-            ->margin(2)
+            ->errorCorrection('Q')->margin(4)->color(0, 0, 0)->backgroundColor(255, 255, 255)
 
             ->generate($qrData);
 
@@ -670,7 +670,7 @@ if($request->filled('plaka'))
     private function bosQrKodunuKilitle(string $token): AracQrKodu
     {
         $qr = AracQrKodu::where('token', $token)->lockForUpdate()->first();
-        if (! $qr || $qr->durum !== 'bos' || $qr->arac_id) {
+        if (! $qr || $qr->durum !== 'bos' || $qr->arac_id || Arac::where('qr_token', $token)->exists()) {
             throw ValidationException::withMessages([
                 'qr_havuz_token' => 'Bu QR daha önce kullanılmış, iptal edilmiş veya araç atamasına uygun değil.',
             ]);

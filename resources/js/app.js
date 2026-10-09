@@ -4,3 +4,5 @@ console.log('İZGİOS JS Yüklendi');
 import './form-uppercase';
 import './arac-modelleri';
 import './dashboard';
+
+import './arac-qr-okuyucu';
