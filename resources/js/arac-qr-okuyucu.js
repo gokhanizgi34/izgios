@@ -1,4 +1,5 @@
 import { tokenFromQr } from './arac-qr-token.js';
+import { scanPasses, boundedDetection } from './arac-qr-scan.js';
 
 function initReader(box) {
     const get = name => box.querySelector(`[data-qr-${name}]`);
@@ -7,20 +8,22 @@ function initReader(box) {
     const gallery = document.getElementById(box.dataset.qrOkuyucu + 'Galeri');
     const video = get('video'), modal = get('kamera-modal'), status = get('durum');
     const hint = get('kamera-durum'), torch = get('fener'), zoom = get('zoom'), cameras = get('cihaz');
-    let stream, worker, pending, timer, generation = 0, torchOn = false, overflow = '';
+    let stream, worker, pending, timer, generation = 0, torchOn = false, overflow = '', workerTimer;
     let detector;
     try { detector = new BarcodeDetector({ formats: ['qr_code'] }); } catch { /* Safari: bundled decoder */ }
     function stop() {
         generation++;
         clearTimeout(timer);
+        clearTimeout(workerTimer);
         worker?.terminate(); worker = null;
         pending?.(''); pending = null;
         stream?.getTracks().forEach(track => track.stop()); stream = null;
         video.srcObject = null;
         if (!modal.hidden) document.body.style.overflow = overflow;
         modal.hidden = true; modal.style.display = 'none';
-        torchOn = false; torch.hidden = true; torch.setAttribute('aria-pressed', 'false');
+        torchOn = false; torch.hidden = true; torch.setAttribute('aria-pressed', 'false'); torch.textContent = 'Feneri aç';
         zoom.parentElement.hidden = true;
+        cameras.parentElement.hidden = true;
     }
     function success(value) {
         const parsed = tokenFromQr(value);
@@ -36,8 +39,12 @@ function initReader(box) {
         const image = canvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, canvas.width, canvas.height);
         return new Promise((resolve, reject) => {
             pending = resolve;
-            worker.onmessage = ({ data }) => { pending = null; data.error ? reject(new Error(data.error)) : resolve(data.token); };
-            worker.onerror = () => { pending = null; reject(new Error('QR okuyucu başlatılamadı. Sayfayı yenileyin.')); };
+            worker.onmessage = ({ data }) => { clearTimeout(workerTimer); pending = null; data.error ? reject(new Error(data.error)) : resolve(data.token); };
+            worker.onerror = () => { clearTimeout(workerTimer); pending = null; worker.terminate(); worker = null; reject(new Error('QR okuyucu yeniden hazırlanıyor…')); };
+            workerTimer = setTimeout(() => {
+                worker?.terminate(); worker = null; pending = null;
+                reject(new Error('Görüntü yeniden taranıyor. Etiketi sabit tutun.'));
+            }, 5000);
             worker.postMessage({ pixels: image.data.buffer, width: image.width, height: image.height, enhancement }, [image.data.buffer]);
         });
     }
@@ -56,10 +63,10 @@ function initReader(box) {
         if (detector) {
             for (let orientation = 0; orientation < 2; orientation++) {
                 try {
-                    const codes = await detector.detect(canvas);
+                    const codes = await boundedDetection(detector, canvas);
                     if (session !== generation) return '';
                     for (const code of codes) if (tokenFromQr(code.rawValue)) return code.rawValue;
-                } catch { /* A native decoder error must not disable software decoding. */ }
+                } catch { detector = null; break; /* Continue with the independent software decoder. */ }
                 if (orientation === 0) {
                     const ctx = canvas.getContext('2d');
                     ctx.save(); ctx.translate(canvas.width, 0); ctx.scale(-1, 1); ctx.drawImage(canvas, 0, 0); ctx.restore();
@@ -127,13 +134,13 @@ function initReader(box) {
                 try {
                     if (video.readyState >= 2 && video.videoWidth) {
                         // Alternate full frame and centre crops; never discard the full field of view.
-                        const crop = [1, .8, .55][turn % 3];
-                        const canvas = frame(video, video.videoWidth, video.videoHeight, crop, 1280);
+                        const pass = scanPasses[turn++ % scanPasses.length];
+                        const canvas = frame(video, video.videoWidth, video.videoHeight, pass.crop, pass.limit);
                         hint.textContent = guidance(canvas, turn);
-                        const value = await scan(canvas, turn % 3, session);
+                        const value = await scan(canvas, pass.enhancement, session);
                         if (session !== generation) return;
                         if (success(value)) return;
-                        turn++;
+
                     }
                 } catch (error) { if (session === generation) hint.textContent = error.message; }
                 if (session === generation) timer = setTimeout(loop, 120);
@@ -159,7 +166,7 @@ function initReader(box) {
                 bitmap = new Image(); bitmap.src = objectUrl; await bitmap.decode();
             }
             if (session !== generation) return;
-            for (const [crop, limit, enhancement] of [[1, 1280, 0], [1, 2000, 1], [.8, 1600, 1], [.5, 1600, 2], [1, 2000, 2]]) {
+            for (const [crop, limit, enhancement] of [[1, 1280, 0], [1, 2000, 1], [.8, 1600, 1], [.5, 1600, 2], [1, 2000, 2], [1, 2000, 3], [.5, 1600, 3]]) {
                 const canvas = frame(bitmap, bitmap.width, bitmap.height, crop, limit);
                 const value = await scan(canvas, enhancement, session);
                 if (session !== generation) return;

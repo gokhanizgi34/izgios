@@ -49,3 +49,32 @@ test('pagehide stops an active camera without optional capabilities', async () =
     assert.equal(stopped, 1);
     assert.equal(get('[data-qr-kamera-modal]').hidden, true);
 });
+
+test('a stalled worker is replaced and camera scanning continues', async () => {
+    let created = 0, terminated = 0;
+    globalThis.Worker = class {
+        constructor() { created++; }
+        postMessage() {} // Simulate a decoder that never replies.
+        terminate() { terminated++; }
+    };
+    documentMock.createElement = () => ({
+        width: 0, height: 0,
+        getContext: () => ({
+            fillRect() {}, drawImage() {},
+            getImageData: () => ({ data: new Uint8ClampedArray(16).fill(255), width: 2, height: 2 }),
+        }),
+    });
+    const video = get('[data-qr-video]');
+    video.readyState = 2; video.videoWidth = 2; video.videoHeight = 2;
+    try {
+        get('[data-qr-kamera]').click(); await flush();
+        assert.equal(created, 1);
+        await new Promise(resolve => setTimeout(resolve, 5350));
+        assert.ok(created >= 2);
+        assert.ok(terminated >= 1);
+    } finally {
+        window.dispatchEvent(new Event('pagehide'));
+        video.readyState = 0;
+        delete globalThis.Worker;
+    }
+});

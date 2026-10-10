@@ -51,3 +51,14 @@ test('existing L-level printed labels remain readable in both orientations', () 
     assert.equal(decodePixels(pixels, size, size, 0), token);
     assert.equal(decodePixels(mirrorPixels(pixels, size, size), size, size, 0), token);
 });
+test('uneven low-contrast lighting is recovered in both orientations', () => {
+    const { pixels, size } = fixture();
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+        const i = (y * size + x) * 4;
+        const value = 35 + 150 * x / size + (pixels[i] ? 14 : 0);
+        pixels[i] = pixels[i + 1] = pixels[i + 2] = value;
+    }
+    assert.equal(decodePixels(pixels, size, size, 0), '', 'This fixture requires local lighting correction');
+    assert.equal(decodePixels(pixels, size, size, 3), token);
+    assert.equal(decodePixels(mirrorPixels(pixels, size, size), size, size, 3), token);
+});
