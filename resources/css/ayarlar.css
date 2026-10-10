@@ -1,0 +1,1237 @@
+/* =====================================================
+   FİRMA YÖNETİM KART SİSTEMİ
+===================================================== */
+
+
+
+.firma-grid{
+
+
+    display:grid;
+
+    grid-template-columns:repeat(3,1fr);
+
+    gap:20px;
+
+    margin-top:25px;
+
+
+}
+
+
+
+
+
+
+
+.firma-card{
+
+
+    background:#ffffff;
+
+    border-radius:20px;
+
+    padding:25px;
+
+    box-shadow:0 5px 20px rgba(0,0,0,.06);
+
+    border:1px solid #edf0f5;
+
+    display:flex;
+
+    flex-direction:column;
+
+
+}
+
+
+
+
+
+
+
+.firma-header{
+
+
+    border-bottom:1px solid #eee;
+
+    padding-bottom:15px;
+
+    margin-bottom:15px;
+
+
+}
+
+
+
+
+
+
+.firma-header h2{
+
+
+    margin:0;
+
+    font-size:24px;
+
+    font-weight:800;
+
+    color:#111827;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+
+}
+
+
+
+
+
+
+.firma-header span{
+
+
+    font-size:13px;
+
+    color:#64748b;
+
+    font-weight:600;
+
+
+}
+
+
+
+
+
+
+
+
+.firma-info{
+
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:15px;
+
+    flex:1;
+
+
+}
+
+
+
+
+
+
+
+.firma-info div{
+
+
+    display:flex;
+
+    flex-direction:column;
+
+
+}
+
+
+
+
+
+
+
+.firma-info span{
+
+
+    color:#64748b;
+
+    font-size:13px;
+
+
+}
+
+
+
+
+
+
+
+.firma-info strong{
+
+
+    color:#111827;
+
+    font-size:15px;
+
+    margin-top:3px;
+
+
+}
+
+
+
+
+
+
+
+
+.aktif{
+
+
+    color:#16a34a;
+
+    font-weight:800;
+
+
+}
+
+
+
+
+
+
+
+.pasif{
+
+
+    color:#dc2626;
+
+    font-weight:800;
+
+
+}
+
+
+
+
+
+
+
+
+.firma-actions{
+
+
+    display:flex;
+
+    gap:10px;
+
+    margin-top:25px;
+
+    width:100%;
+
+
+}
+
+
+
+
+
+
+
+.firma-actions form{
+
+
+    flex:1;
+
+    display:flex;
+
+
+}
+
+
+
+
+
+
+
+.btn-firma{
+
+
+    flex:1;
+
+    height:42px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:6px;
+
+    border-radius:12px;
+
+    font-size:13px;
+
+    font-weight:800;
+
+    text-decoration:none;
+
+    border:none;
+
+    cursor:pointer;
+
+    width:100%;
+
+
+}
+
+
+
+
+
+
+
+
+.btn-detay{
+
+
+    background:#dbeafe;
+
+    color:#1d4ed8;
+
+
+}
+
+
+
+
+
+
+
+.btn-duzenle{
+
+
+    background:#fef3c7;
+
+    color:#92400e;
+
+
+}
+
+
+
+
+
+
+
+.btn-durum{
+
+
+    background:#fee2e2;
+
+    color:#b91c1c;
+
+
+}
+
+
+
+
+
+
+
+
+.btn-firma:hover{
+
+
+    opacity:.85;
+
+
+}
+
+
+
+
+
+
+
+
+
+@media(max-width:1200px){
+
+
+    .firma-grid{
+
+
+        grid-template-columns:repeat(2,1fr);
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+@media(max-width:768px){
+
+
+    .firma-grid{
+
+
+        grid-template-columns:1fr;
+
+
+    }
+
+
+
+
+    .firma-actions{
+
+
+        flex-direction:column;
+
+
+    }
+
+
+}
+
+.btn-sube{
+
+    background:#ede9fe;
+
+    color:#6d28d9;
+
+}
+
+/* Yeni Firma Butonu */
+
+.btn-new{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:8px;
+
+    background:#2563eb;
+
+    color:white !important;
+
+    padding:12px 25px;
+
+    border-radius:12px;
+
+    font-weight:800;
+
+    text-decoration:none;
+
+    height:42px;
+
+}
+
+
+.btn-new:hover{
+
+    opacity:.85;
+
+}
+
+/* =====================================================
+   FIRMA DETAY EKRANI
+===================================================== */
+
+
+.firma-top-actions{
+
+display:flex;
+
+gap:10px;
+
+}
+
+
+
+.firma-detail-card{
+
+
+background:white;
+
+border-radius:20px;
+
+padding:30px;
+
+box-shadow:0 5px 20px rgba(0,0,0,.06);
+
+margin-top:25px;
+
+
+}
+
+
+
+
+.firma-detail-header{
+
+
+border-bottom:1px solid #eee;
+
+padding-bottom:15px;
+
+margin-bottom:25px;
+
+
+}
+
+
+
+.firma-detail-header h2{
+
+
+font-size:22px;
+
+font-weight:800;
+
+
+}
+
+
+
+
+
+.firma-detail-grid{
+
+
+display:grid;
+
+grid-template-columns:1fr 1fr;
+
+gap:25px;
+
+
+}
+
+
+
+
+.firma-detail-grid div{
+
+
+display:flex;
+
+flex-direction:column;
+
+
+}
+
+
+
+.firma-detail-grid span{
+
+
+color:#64748b;
+
+font-size:14px;
+
+
+}
+
+
+
+.firma-detail-grid strong{
+
+
+font-size:16px;
+
+margin-top:5px;
+
+
+}
+
+
+
+.firma-detail-grid .full{
+
+
+grid-column:1 / -1;
+
+
+}
+
+
+
+
+.firma-detail-actions{
+
+
+display:flex;
+
+gap:10px;
+
+margin-top:30px;
+
+
+}
+
+
+
+.firma-detail-actions .btn-firma{
+
+
+flex:1;
+
+}
+
+
+
+@media(max-width:768px){
+
+
+.firma-detail-grid{
+
+
+grid-template-columns:1fr;
+
+
+}
+
+
+.firma-top-actions{
+
+
+flex-direction:column;
+
+
+}
+
+
+}
+
+/* =====================================================
+   FIRMA DETAY ÜST BUTONLARI
+===================================================== */
+
+
+.firma-actions-top{
+
+display:grid;
+
+grid-template-columns:repeat(4,1fr);
+
+gap:12px;
+
+margin-bottom:25px;
+
+}
+
+
+
+.firma-actions-top .btn-firma{
+
+
+height:50px;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+border-radius:14px;
+
+font-weight:800;
+
+text-decoration:none;
+
+font-size:15px;
+
+
+}
+
+
+
+.btn-back{
+
+background:#dbeafe;
+
+color:#1d4ed8;
+
+}
+
+
+
+.btn-settings{
+
+background:#fef3c7;
+
+color:#92400e;
+
+}
+
+
+
+.btn-edit{
+
+background:#fef3c7;
+
+color:#92400e;
+
+}
+
+
+
+.btn-branch{
+
+background:#ede9fe;
+
+color:#6d28d9;
+
+}
+
+
+
+
+@media(max-width:900px){
+
+.firma-actions-top{
+
+grid-template-columns:repeat(2,1fr);
+
+}
+
+
+}
+
+
+
+@media(max-width:500px){
+
+.firma-actions-top{
+
+grid-template-columns:1fr;
+
+}
+
+
+}
+
+/* =====================================================
+   AYARLAR FORM ALANLARI
+===================================================== */
+
+
+.form-group input,
+.form-group textarea,
+.form-group select,
+input.form-control,
+textarea.form-control,
+select.form-control{
+
+
+    width:100%;
+
+    min-height:48px;
+
+    background:#ffffff !important;
+
+    border:1px solid #dbe3ef !important;
+
+    border-radius:12px;
+
+    padding:12px 16px;
+
+    font-size:15px;
+
+    color:#111827;
+
+    outline:none;
+
+    box-sizing:border-box;
+
+
+}
+
+
+
+.form-group textarea,
+textarea.form-control{
+
+    min-height:120px;
+
+    resize:vertical;
+
+}
+
+
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus{
+
+
+    border-color:#2563eb !important;
+
+    box-shadow:0 0 0 3px rgba(37,99,235,.15);
+
+
+}
+
+
+
+.form-group label{
+
+
+    display:block;
+
+    margin-bottom:8px;
+
+    font-weight:700;
+
+    color:#334155;
+
+
+}
+
+/* =====================================================
+   AYARLAR FORM SİSTEMİ
+===================================================== */
+
+
+.form-card{
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:30px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.06);
+
+}
+
+
+
+.form-grid{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:25px;
+
+}
+
+
+
+.form-group{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:8px;
+
+}
+
+
+
+.form-group label{
+
+    font-size:14px;
+
+    font-weight:700;
+
+    color:#475569;
+
+}
+
+
+
+.form-group input,
+.form-group textarea,
+.form-group select{
+
+
+    width:100%;
+
+    height:50px;
+
+    background:#fff;
+
+    border:1px solid #dbe3ef;
+
+    border-radius:12px;
+
+    padding:0 16px;
+
+    font-size:15px;
+
+    color:#111827;
+
+}
+
+
+
+.form-group textarea{
+
+    height:120px;
+
+    padding:15px;
+
+}
+
+
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus{
+
+
+    border-color:#2563eb;
+
+    outline:none;
+
+    box-shadow:0 0 0 3px rgba(37,99,235,.15);
+
+}
+
+
+
+.form-actions{
+
+
+    display:flex;
+
+    gap:12px;
+
+    margin-top:30px;
+
+}
+
+
+
+.form-actions a,
+.form-actions button{
+
+
+    flex:1;
+
+    height:48px;
+
+    border-radius:12px;
+
+    border:none;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-weight:800;
+
+    cursor:pointer;
+
+}
+
+
+.btn-save{
+
+    background:#2563eb;
+
+    color:white;
+
+}
+
+
+
+.btn-cancel{
+
+    background:#e2e8f0;
+
+    color:#334155;
+
+}
+
+
+
+.btn-danger{
+
+    background:#fee2e2;
+
+    color:#b91c1c;
+
+}
+
+
+
+@media(max-width:800px){
+
+.form-grid{
+
+grid-template-columns:1fr;
+
+}
+
+}
+/* =====================================================
+   FIRMA FORM EKRANI
+===================================================== */
+
+
+.dashboard-box .card{
+
+
+    background:#fff;
+
+    border-radius:20px;
+
+    padding:25px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.06);
+
+    margin-bottom:20px;
+
+
+}
+
+
+
+.grid{
+
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:20px;
+
+
+}
+
+
+
+
+.form-control-izgios{
+
+
+    width:100%;
+
+    height:48px;
+
+    border:1px solid #dbe3ef;
+
+    background:#fff;
+
+    border-radius:12px;
+
+    padding:0 15px;
+
+    font-size:15px;
+
+    color:#111827;
+
+    box-sizing:border-box;
+
+
+}
+
+
+
+textarea.form-control-izgios{
+
+
+    height:120px;
+
+    padding:15px;
+
+    resize:none;
+
+
+}
+
+
+
+
+.form-control-izgios:focus{
+
+
+    outline:none;
+
+    border-color:#2563eb;
+
+    box-shadow:0 0 0 3px rgba(37,99,235,.15);
+
+
+}
+
+
+
+.form-label-izgios{
+
+
+    display:block;
+
+    margin-bottom:8px;
+
+    color:#475569;
+
+    font-weight:700;
+
+
+}
+
+
+
+
+
+.actions{
+
+
+    display:flex;
+
+    gap:12px;
+
+    margin-top:25px;
+
+
+}
+
+
+
+.actions > *{
+
+
+    flex:1;
+
+    height:48px;
+
+
+}
+
+
+
+.btn-save,
+.btn-danger,
+.btn-back{
+
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:8px;
+
+    border-radius:12px;
+
+    text-decoration:none;
+
+    font-weight:800;
+
+    border:none;
+
+    cursor:pointer;
+
+
+}
+
+
+
+.btn-save{
+
+    background:#2563eb;
+
+    color:white;
+
+}
+
+
+
+.btn-danger{
+
+    background:#fee2e2;
+
+    color:#b91c1c;
+
+}
+
+
+
+.btn-back{
+
+    background:#e2e8f0;
+
+    color:#334155;
+
+}
+
+
+
+@media(max-width:800px){
+
+
+.grid{
+
+grid-template-columns:1fr;
+
+}
+
+/* Merkez gösterim alanındaki onay kutusu, genel giriş alanı stilinden ayrıdır. */
+.dashboard-box .form-group input[type="checkbox"]{
+    width:18px !important;
+    min-width:18px !important;
+    height:18px !important;
+    min-height:18px !important;
+    margin:0 !important;
+    padding:0 !important;
+    border-radius:4px !important;
+    accent-color:#2563eb;
+    cursor:pointer;
+}
+
+.dashboard-box .form-group input[type="checkbox"] + span{
+    line-height:1.5;
+}
+
+.merkez-gosterim-secimi{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.merkez-gosterim-secimi input.merkez-gosterim-secimi__checkbox{
+    appearance:auto !important;
+    -webkit-appearance:checkbox !important;
+    box-sizing:border-box !important;
+    display:block !important;
+    flex:0 0 18px !important;
+    width:18px !important;
+    min-width:18px !important;
+    max-width:18px !important;
+    height:18px !important;
+    min-height:18px !important;
+    max-height:18px !important;
+    margin:0 !important;
+    padding:0 !important;
+    border:0 !important;
+    box-shadow:none !important;
+    accent-color:#2563eb;
+}
+
+
+.actions{
+
+flex-direction:column;
+
+}
+
+
+}

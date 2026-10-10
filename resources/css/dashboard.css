@@ -1,134 +1,1495 @@
-/* =====================================================
-   İZGİOS v3.0
-   ANA TASARIM SİSTEMİ
-   PART 1
-===================================================== */
+/*
+|--------------------------------------------------------------------------
+| İZGİOS DASHBOARD
+|--------------------------------------------------------------------------
+| Sistem Yöneticisi / Admin Panel Tasarımı
+|--------------------------------------------------------------------------
+*/
 
 
-/* =====================================================
-   ROOT
-===================================================== */
+/*
+|--------------------------------------------------------------------------
+| ANA DASHBOARD ALANI
+|--------------------------------------------------------------------------
+*/
 
-:root {
 
-    --izgios-yellow:#D4AF37;
+.izgios-home {
 
-    --izgios-blue:#2563EB;
-
-    --izgios-dark:#111827;
-
-    --izgios-bg:#F4F7FB;
-
-    --white:#FFFFFF;
-
-    --text:#111827;
-
-    --muted:#64748B;
-
-    --border:#E5E7EB;
-
-    --sidebar-width:285px;
-
-    --radius:20px;
+    width:100%;
 
 }
 
 
 
-
-/* =====================================================
-   RESET
-===================================================== */
-
-
-* {
-
-    margin:0;
-
-    padding:0;
-
-    box-sizing:border-box;
-
-}
+/*
+|--------------------------------------------------------------------------
+| HOŞ GELDİN PANELİ
+|--------------------------------------------------------------------------
+*/
 
 
+.welcome-panel {
 
-html,
-body {
+    width:100%;
 
-    min-height:100%;
+    background:#ffffff;
 
-}
+    border-radius:18px;
 
-
-
-body {
-
-    font-family:'Poppins',sans-serif;
-
-    background:var(--izgios-bg);
-
-    color:var(--text);
-
-    overflow-x:hidden;
-
-}
-
-
-
-a {
-
-    text-decoration:none;
-
-    color:inherit;
-
-}
-
-
-
-
-
-/* =====================================================
-   ANA YAPI
-===================================================== */
-
-
-.izgios-layout {
-
-
-    min-height:100vh;
+    padding:28px 32px;
 
     display:flex;
 
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:25px;
+
+    border:1px solid #e5e7eb;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.04);
 
 }
 
 
 
-.izgios-main {
+.welcome-panel h1 {
+
+    margin:0;
+
+    font-size:28px;
+
+    font-weight:800;
+
+    color:#111827;
+
+}
 
 
-    margin-left:var(--sidebar-width);
 
-    width:calc(100% - var(--sidebar-width));
+.welcome-panel p {
 
-    min-height:100vh;
+    margin-top:8px;
+
+    color:#6b7280;
+
+    font-size:15px;
+
+}
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| SAĞ BİLGİ ALANI
+|--------------------------------------------------------------------------
+*/
+
+
+.welcome-info {
+
+    display:flex;
+
+    gap:25px;
+
+}
+
+
+
+.welcome-info-box {
+
+    background:#f9fafb;
+
+    padding:15px 20px;
+
+    border-radius:14px;
+
+    min-width:150px;
+
+}
+
+
+
+.welcome-info-box span {
+
+    display:block;
+
+    font-size:12px;
+
+    color:#6b7280;
+
+    margin-bottom:5px;
+
+}
+
+
+
+.welcome-info-box strong {
+
+    font-size:16px;
+
+    color:#111827;
+
+}
+
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| ÖZET KARTLAR
+|--------------------------------------------------------------------------
+*/
+
+
+.summary-grid {
+
+    display:grid;
+
+    grid-template-columns:repeat(4,1fr);
+
+    gap:20px;
+
+    margin-bottom:25px;
+
+}
+
+
+
+
+
+.summary-card {
+
+    background:#ffffff;
+
+    border-radius:18px;
+
+    padding:22px;
+
+    border:1px solid #e5e7eb;
+
+    position:relative;
+
+    overflow:hidden;
+
+    transition:.25s ease;
+
+}
+
+
+
+.summary-card:hover {
+
+    transform:translateY(-4px);
+
+    box-shadow:0 15px 35px rgba(0,0,0,.08);
+
+}
+
+
+
+
+
+.summary-card .icon {
+
+    width:48px;
+
+    height:48px;
+
+    border-radius:14px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:22px;
+
+    margin-bottom:15px;
+
+}
+
+
+
+
+
+.summary-card h3 {
+
+    font-size:14px;
+
+    font-weight:600;
+
+    color:#6b7280;
+
+    margin:0 0 8px;
+
+}
+
+
+
+
+
+.summary-card strong {
+
+    display:block;
+
+    font-size:32px;
+
+    font-weight:800;
+
+    color:#111827;
+
+}
+
+
+
+
+
+.summary-card small {
+
+    display:block;
+
+    margin-top:8px;
+
+    color:#6b7280;
+
+    font-size:13px;
+
+}
+
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| KART RENKLERİ
+|--------------------------------------------------------------------------
+*/
+
+
+.summary-card.users .icon {
+
+    background:#dbeafe;
+
+    color:#2563eb;
+
+}
+
+
+
+.summary-card.vehicle .icon {
+
+    background:#dcfce7;
+
+    color:#16a34a;
+
+}
+
+
+
+.summary-card.service .icon {
+
+    background:#fef3c7;
+
+    color:#d97706;
+
+}
+
+
+
+.summary-card.finance .icon {
+
+    background:#fce7f3;
+
+    color:#db2777;
+
+}
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| DASHBOARD BAŞLIK
+|--------------------------------------------------------------------------
+*/
+
+
+.dashboard-title {
+
+    font-size:20px;
+
+    font-weight:800;
+
+    color:#111827;
+
+    margin-bottom:18px;
+
+}
+/*
+|--------------------------------------------------------------------------
+| DASHBOARD İKİLİ KOLON YAPISI
+|--------------------------------------------------------------------------
+*/
+
+
+.dashboard-columns {
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:25px;
+
+    margin-bottom:25px;
+
+}
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| GENEL DASHBOARD KUTUSU
+|--------------------------------------------------------------------------
+*/
+
+
+.dashboard-box {
+
+    background:#ffffff;
+
+    border-radius:18px;
+
+    border:1px solid #e5e7eb;
+
+    padding:25px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.04);
+
+}
+
+
+
+.dashboard-box-header {
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:20px;
+
+}
+
+
+
+.dashboard-box-header h3 {
+
+    margin:0;
+
+    font-size:18px;
+
+    font-weight:800;
+
+    color:#111827;
+
+}
+
+
+
+.dashboard-box-header span {
+
+    color:#6b7280;
+
+    font-size:13px;
+
+}
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| SİSTEM DURUMU
+|--------------------------------------------------------------------------
+*/
+
+
+.system-status {
 
     display:flex;
 
     flex-direction:column;
 
+    gap:14px;
 
 }
 
+
+
+.status-item {
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:14px;
+
+    background:#f9fafb;
+
+    border-radius:12px;
+
+}
+
+
+
+
+
+.status-left {
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+}
+
+
+
+.status-icon {
+
+    width:38px;
+
+    height:38px;
+
+    border-radius:10px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:#ecfdf5;
+
+    color:#16a34a;
+
+}
+
+
+
+.status-left strong {
+
+    display:block;
+
+    font-size:14px;
+
+    color:#111827;
+
+}
+
+
+
+.status-left span {
+
+    display:block;
+
+    font-size:12px;
+
+    color:#6b7280;
+
+}
+
+
+
+
+.status-active {
+
+    color:#16a34a;
+
+    font-size:13px;
+
+    font-weight:700;
+
+}
+
+
+
+
+
+.status-warning {
+
+    color:#d97706;
+
+    font-size:13px;
+
+    font-weight:700;
+
+}
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| HIZLI İŞLEMLER
+|--------------------------------------------------------------------------
+*/
+
+
+.quick-actions {
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:15px;
+
+}
+
+
+
+
+
+.quick-card {
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    padding:18px;
+
+    background:#f9fafb;
+
+    border-radius:14px;
+
+    border:1px solid #eef0f3;
+
+    text-decoration:none;
+
+    transition:.25s ease;
+
+}
+
+
+
+.quick-card:hover {
+
+    background:#ffffff;
+
+    transform:translateY(-3px);
+
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+
+}
+
+
+
+
+
+.quick-card .quick-icon {
+
+    width:45px;
+
+    height:45px;
+
+    border-radius:12px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:#111827;
+
+    color:#ffffff;
+
+    font-size:20px;
+
+}
+
+
+
+
+
+.quick-card h4 {
+
+    margin:0;
+
+    font-size:14px;
+
+    color:#111827;
+
+    font-weight:700;
+
+}
+
+
+
+
+
+.quick-card p {
+
+    margin:4px 0 0;
+
+    font-size:12px;
+
+    color:#6b7280;
+
+}
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| ADMİN YÖNETİM ALANI
+|--------------------------------------------------------------------------
+*/
+
+
+.admin-panel-grid {
+
+    display:grid;
+
+    grid-template-columns:repeat(4,1fr);
+
+    gap:20px;
+
+    margin-bottom:25px;
+
+}
+
+
+
+
+
+.admin-mini-card {
+
+    background:#ffffff;
+
+    border-radius:16px;
+
+    padding:20px;
+
+    border:1px solid #e5e7eb;
+
+}
+
+
+
+.admin-mini-card span {
+
+    color:#6b7280;
+
+    font-size:13px;
+
+}
+
+
+
+.admin-mini-card strong {
+
+    display:block;
+
+    margin-top:10px;
+
+    font-size:24px;
+
+    font-weight:800;
+
+    color:#111827;
+
+}/*
+|--------------------------------------------------------------------------
+| SON AKTİVİTELER
+|--------------------------------------------------------------------------
+*/
+
+
+.activity-list {
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:12px;
+
+}
+
+
+
+
+
+.activity-item {
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:15px;
+
+    background:#f9fafb;
+
+    border-radius:12px;
+
+}
+
+
+
+
+
+.activity-user {
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+}
+
+
+
+
+
+.activity-avatar {
+
+    width:40px;
+
+    height:40px;
+
+    border-radius:50%;
+
+    background:#111827;
+
+    color:#ffffff;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-weight:700;
+
+    font-size:14px;
+
+}
+
+
+
+
+
+.activity-info strong {
+
+    display:block;
+
+    color:#111827;
+
+    font-size:14px;
+
+}
+
+
+
+.activity-info span {
+
+    color:#6b7280;
+
+    font-size:12px;
+
+}
+
+
+
+
+
+.activity-time {
+
+    color:#6b7280;
+
+    font-size:12px;
+
+}
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| SERVİS ÖZET TABLOSU
+|--------------------------------------------------------------------------
+*/
+
+
+.service-table-wrapper {
+
+    width:100%;
+
+    overflow-x:auto;
+
+}
+
+
+
+
+
+.service-table {
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+
+
+
+
+.service-table thead tr {
+
+    background:#f9fafb;
+
+}
+
+
+
+
+
+.service-table th {
+
+    text-align:left;
+
+    padding:14px;
+
+    font-size:13px;
+
+    font-weight:700;
+
+    color:#6b7280;
+
+    border-bottom:1px solid #e5e7eb;
+
+}
+
+
+
+
+
+.service-table td {
+
+    padding:15px 14px;
+
+    border-bottom:1px solid #f0f1f3;
+
+    font-size:14px;
+
+    color:#374151;
+
+}
+
+
+
+
+
+.service-table tbody tr:hover {
+
+    background:#fafafa;
+
+}
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| DURUM ETİKETLERİ
+|--------------------------------------------------------------------------
+*/
+
+
+.badge {
+
+    display:inline-flex;
+
+    align-items:center;
+
+    padding:5px 12px;
+
+    border-radius:20px;
+
+    font-size:12px;
+
+    font-weight:700;
+
+}
+
+
+
+.badge-success {
+
+    background:#dcfce7;
+
+    color:#15803d;
+
+}
+
+
+
+.badge-warning {
+
+    background:#fef3c7;
+
+    color:#b45309;
+
+}
+
+
+
+.badge-danger {
+
+    background:#fee2e2;
+
+    color:#b91c1c;
+
+}
+
+
+
+.badge-info {
+
+    background:#dbeafe;
+
+    color:#1d4ed8;
+
+}
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| GRAFİK / RAPOR ALANI
+|--------------------------------------------------------------------------
+*/
+
+
+.chart-box {
+
+    background:#ffffff;
+
+    border-radius:18px;
+
+    border:1px solid #e5e7eb;
+
+    padding:25px;
+
+    min-height:250px;
+
+}
+
+
+
+
+
+.chart-header {
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:20px;
+
+}
+
+
+
+.chart-header h3 {
+
+    margin:0;
+
+    font-size:18px;
+
+    font-weight:800;
+
+    color:#111827;
+
+}
+
+
+
+.chart-header span {
+
+    font-size:13px;
+
+    color:#6b7280;
+
+}
+
+
+
+
+
+.chart-placeholder {
+
+    height:150px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border-radius:15px;
+
+    background:#f9fafb;
+
+    color:#9ca3af;
+
+    font-size:14px;
+
+}
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| BOŞ VERİ ALANI
+|--------------------------------------------------------------------------
+*/
+
+
+.empty-state {
+
+    padding:40px 20px;
+
+    text-align:center;
+
+}
+
+
+
+.empty-state .empty-icon {
+
+    width:60px;
+
+    height:60px;
+
+    margin:0 auto 15px;
+
+    border-radius:50%;
+
+    background:#f3f4f6;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:26px;
+
+}
+
+
+
+
+
+.empty-state h4 {
+
+    margin:0 0 8px;
+
+    color:#111827;
+
+    font-size:16px;
+
+    font-weight:700;
+
+}
+
+
+
+.empty-state p {
+
+    margin:0;
+
+    color:#6b7280;
+
+    font-size:14px;
+
+}
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| GENEL KART ALT BOŞLUKLARI
+|--------------------------------------------------------------------------
+*/
+
+
+.dashboard-section {
+
+    margin-bottom:25px;
+
+}
+
+
+
+.dashboard-section-title {
+
+    font-size:20px;
+
+    font-weight:800;
+
+    color:#111827;
+
+    margin-bottom:18px;
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| RESPONSIVE - TABLET
+|--------------------------------------------------------------------------
+*/
+
+
+@media (max-width:1200px) {
+
+
+    .summary-grid {
+
+        grid-template-columns:repeat(2,1fr);
+
+    }
+
+
+
+    .admin-panel-grid {
+
+        grid-template-columns:repeat(2,1fr);
+
+    }
+
+
+
+    .dashboard-columns {
+
+        grid-template-columns:1fr;
+
+    }
+
+
+
+    .welcome-panel {
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+        gap:20px;
+
+    }
+
+
+
+    .welcome-info {
+
+        width:100%;
+
+    }
+
+
+
+    .welcome-info-box {
+
+        flex:1;
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| RESPONSIVE - TABLET KÜÇÜK
+|--------------------------------------------------------------------------
+*/
+
+
+@media (max-width:900px) {
+
+
+    .summary-grid {
+
+        grid-template-columns:1fr;
+
+    }
+
+
+
+    .quick-actions {
+
+        grid-template-columns:1fr;
+
+    }
+
+
+
+    .admin-panel-grid {
+
+        grid-template-columns:1fr;
+
+    }
+
+
+
+    .welcome-panel {
+
+        padding:22px;
+
+    }
+
+
+
+    .welcome-panel h1 {
+
+        font-size:22px;
+
+    }
+
+
+
+    .dashboard-box {
+
+        padding:20px;
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| RESPONSIVE - MOBİL
+|--------------------------------------------------------------------------
+*/
+
+
+@media (max-width:600px) {
+
+
+
+    .welcome-panel {
+
+        border-radius:14px;
+
+        padding:18px;
+
+    }
+
+
+
+
+
+    .welcome-info {
+
+        flex-direction:column;
+
+        gap:12px;
+
+    }
+
+
+
+
+
+    .welcome-info-box {
+
+        width:100%;
+
+    }
+
+
+
+
+
+    .summary-card {
+
+        padding:18px;
+
+        border-radius:14px;
+
+    }
+
+
+
+
+
+    .summary-card strong {
+
+        font-size:26px;
+
+    }
+
+
+
+
+
+    .dashboard-box {
+
+        border-radius:14px;
+
+        padding:16px;
+
+    }
+
+
+
+
+
+    .dashboard-box-header h3 {
+
+        font-size:16px;
+
+    }
+
+
+
+
+
+    .activity-item {
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+        gap:10px;
+
+    }
+
+
+
+
+
+    .service-table th,
+
+    .service-table td {
+
+        padding:10px;
+
+        font-size:12px;
+
+    }
+
+
+
+
+
+    .chart-box {
+
+        padding:18px;
+
+        min-height:200px;
+
+    }
+
+
+
+
+}
+
+
+
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| GENEL DÜZELTMELER
+|--------------------------------------------------------------------------
+*/
 
 
 .izgios-content {
 
+    animation:dashboardFade .35s ease;
 
-    flex:1;
+}
 
-    padding:30px;
+
+
+
+
+@keyframes dashboardFade {
+
+
+    from {
+
+        opacity:0;
+
+        transform:translateY(10px);
+
+    }
+
+
+
+    to {
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
 
 
 }
@@ -138,88 +1499,38 @@ a {
 
 
 
-/* =====================================================
-   SIDEBAR
-===================================================== */
+
+/*
+|--------------------------------------------------------------------------
+| DARK HAZIRLIK (İLERİ VERSİYON)
+|--------------------------------------------------------------------------
+*/
 
 
-.izgios-sidebar {
+.dashboard-dark-ready {
 
-
-    position:fixed;
-
-
-    left:0;
-
-
-    top:0;
-
-
-    bottom:0;
-
-
-    width:var(--sidebar-width);
-
-
-    background:#101827;
-
-
-    color:white;
-
-
-    z-index:1000;
-
-
-    overflow-y:auto;
-
+    transition:.3s ease;
 
 }
 
 
 
 
-/* LOGO */
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN ÖZEL VURGULARI
+|--------------------------------------------------------------------------
+*/
 
 
-.sidebar-brand {
+.admin-highlight {
 
-
-    padding:28px 20px;
-
-
-    text-align:center;
-
-
-}
-
-
-
-.sidebar-logo-text {
-
-
-    display:flex;
-
-
-    justify-content:center;
-
-
-    align-items:center;
-
-
-    font-size:46px;
-
-
-    font-weight:900;
-
-
-    letter-spacing:-3px;
-
-
-}
-
-
-
-.logo-white {
+    background:linear-gradient(
+        135deg,
+        #111827,
+        #374151
+    );
 
     color:white;
 
@@ -227,898 +1538,22 @@ a {
 
 
 
-.logo-yellow {
 
-    color:var(--izgios-yellow);
 
-}
+.admin-highlight h3,
 
-
-
-.sidebar-logo-subtitle {
-
-
-    margin-top:8px;
-
-
-    color:var(--izgios-yellow);
-
-
-    font-size:12px;
-
-
-    font-weight:600;
-
-
-}
-
-
-
-
-
-/* PROFİL */
-
-
-.sidebar-profile {
-
-
-    margin:15px;
-
-
-    padding:18px;
-
-
-    background:rgba(255,255,255,.06);
-
-
-    border-radius:18px;
-
-
-    display:flex;
-
-
-    align-items:center;
-
-
-    gap:15px;
-
-
-}
-
-
-
-.profile-icon {
-
-
-    font-size:42px;
-
-
-}
-
-
-
-.profile-info {
-
-
-    display:flex;
-
-
-    flex-direction:column;
-
-
-}
-
-
-
-.profile-info strong {
-
-
-    font-size:15px;
-
-
-}
-
-
-
-.profile-info span {
-
-
-    font-size:12px;
-
-
-    color:#CBD5E1;
-
-
-}
-
-
-
-
-
-
-/* =====================================================
-   SIDEBAR MENÜ
-===================================================== */
-
-
-.sidebar-navigation {
-
-
-    padding:10px 15px;
-
-
-}
-
-
-
-.sidebar-section {
-
-
-    margin-bottom:25px;
-
-
-}
-
-
-
-.sidebar-section > span {
-
-
-    display:block;
-
-
-    color:#64748B;
-
-
-    font-size:11px;
-
-
-    font-weight:700;
-
-
-    letter-spacing:1px;
-
-
-    margin:0 10px 10px;
-
-
-}
-
-
-
-.sidebar-section a {
-
-
-    display:flex;
-
-
-    align-items:center;
-
-
-    gap:14px;
-
-
-    padding:13px 15px;
-
-
-    margin-bottom:5px;
-
-
-    border-radius:12px;
-
-
-    color:#E5E7EB;
-
-
-    font-size:14px;
-
-
-    font-weight:500;
-
-
-    transition:.25s ease;
-
-
-}
-
-
-
-.sidebar-section a i {
-
-
-    width:22px;
-
-
-    text-align:center;
-
-
-    font-size:18px;
-
-
-}
-
-
-
-.sidebar-section a:hover {
-
-
-    background:rgba(255,255,255,.08);
-
+.admin-highlight strong {
 
     color:white;
 
-
-}
-
-
-
-.sidebar-section a.active {
-
-
-    background:#2563EB;
-
-
-    color:white;
-
-
-    box-shadow:
-
-    0 8px 20px rgba(37,99,235,.35);
-
-
-}
-/* =====================================================
-   SIDEBAR ALT ALAN
-===================================================== */
-
-
-.sidebar-footer {
-
-
-    padding:18px 15px;
-
-
-    border-top:1px solid rgba(255,255,255,.1);
-
-
-}
-
-
-
-.sidebar-user-mini {
-
-
-    display:flex;
-
-
-    align-items:center;
-
-
-    gap:12px;
-
-
-    margin-bottom:15px;
-
-
-}
-
-
-
-.mini-avatar {
-
-
-    font-size:38px;
-
-
-}
-
-
-
-.mini-info {
-
-
-    display:flex;
-
-
-    flex-direction:column;
-
-
-}
-
-
-
-.mini-info strong {
-
-
-    font-size:14px;
-
-
-}
-
-
-
-.mini-info span {
-
-
-    color:#94A3B8;
-
-
-    font-size:12px;
-
-
-}
-
-
-
-.sidebar-footer-menu {
-
-
-    display:flex;
-
-
-    flex-direction:column;
-
-
-    gap:5px;
-
-
-}
-
-
-
-.sidebar-footer-menu a {
-
-
-    display:flex;
-
-
-    align-items:center;
-
-
-    gap:12px;
-
-
-    padding:10px 12px;
-
-
-    color:#CBD5E1;
-
-
-    border-radius:10px;
-
-
-    font-size:13px;
-
-
-}
-
-
-
-.sidebar-version {
-
-
-    text-align:center;
-
-
-    margin-top:18px;
-
-
-    color:#94A3B8;
-
-
-    font-size:12px;
-
-
-}
-
-
-
-.sidebar-version strong {
-
-
-    display:block;
-
-
-    color:var(--izgios-yellow);
-
-
 }
 
 
 
 
 
+.admin-highlight span {
 
-/* =====================================================
-   TOPBAR
-===================================================== */
-
-
-.izgios-topbar {
-
-
-    height:88px;
-
-
-    background:white;
-
-
-    border-bottom:1px solid var(--border);
-
-
-    display:flex;
-
-
-    align-items:center;
-
-
-    gap:25px;
-
-
-    padding:0 30px;
-
-
-    position:sticky;
-
-
-    top:0;
-
-
-    z-index:900;
-
-
-}
-
-
-
-
-/* HAMBURGER */
-
-
-.mobile-menu-btn {
-
-
-    display:none;
-
-
-    width:42px;
-
-
-    height:42px;
-
-
-    border:none;
-
-
-    border-radius:12px;
-
-
-    background:#F1F5F9;
-
-
-    cursor:pointer;
-
-
-    font-size:24px;
-
-
-    align-items:center;
-
-
-    justify-content:center;
-
-
-}
-
-
-
-
-
-
-/* TOPBAR LOGO */
-
-
-.topbar-brand {
-
-
-    min-width:260px;
-
-
-}
-
-
-
-.topbar-logo-text {
-
-
-    display:flex;
-
-
-    justify-content:center;
-
-
-    align-items:center;
-
-
-    font-size:38px;
-
-
-    font-weight:900;
-
-
-    letter-spacing:-2px;
-
-
-}
-
-
-
-.top-logo-black {
-
-
-    color:#111827;
-
-
-}
-
-
-
-.top-logo-gold {
-
-
-    color:var(--izgios-yellow);
-
-
-}
-
-
-
-
-
-
-/* ARAMA */
-
-
-.topbar-search {
-
-
-    flex:1;
-
-
-    height:48px;
-
-
-    background:#F8FAFC;
-
-
-    border:1px solid var(--border);
-
-
-    border-radius:14px;
-
-
-    display:flex;
-
-
-    align-items:center;
-
-
-    gap:12px;
-
-
-    padding:0 18px;
-
-
-}
-
-
-
-.topbar-search input {
-
-
-    flex:1;
-
-
-    border:none;
-
-
-    outline:none;
-
-
-    background:transparent;
-
-
-    font-size:14px;
-
-
-}
-
-
-
-
-
-
-/* SAĞ ALAN */
-
-
-.topbar-actions {
-
-
-    display:flex;
-
-
-    align-items:center;
-
-
-    gap:12px;
-
-
-}
-
-
-
-.topbar-icon {
-
-
-    width:44px;
-
-
-    height:44px;
-
-
-    border:none;
-
-
-    border-radius:12px;
-
-
-    background:#F1F5F9;
-
-
-    display:flex;
-
-
-    align-items:center;
-
-
-    justify-content:center;
-
-
-}
-
-
-
-
-.topbar-user {
-
-
-    display:flex;
-
-
-    align-items:center;
-
-
-    gap:10px;
-
-
-}
-
-
-
-.top-user-avatar {
-
-
-    font-size:38px;
-
-
-}
-
-
-
-
-
-
-/* =====================================================
-   OVERLAY
-===================================================== */
-
-
-.sidebar-overlay {
-
-
-    position:fixed;
-
-
-    inset:0;
-
-
-    background:rgba(0,0,0,.45);
-
-
-    z-index:950;
-
-
-    display:none;
-
-
-}
-
-
-
-.sidebar-overlay.active {
-
-
-    display:block;
-
-
-}
-
-
-
-
-body.menu-open {
-
-
-    overflow:hidden;
-
-
-}
-
-
-
-
-
-
-/* =====================================================
-   TABLET
-===================================================== */
-
-
-@media(max-width:992px){
-
-
-
-    :root {
-
-
-        --sidebar-width:260px;
-
-
-    }
-
-
-
-    .izgios-sidebar {
-
-
-        width:260px;
-
-
-    }
-
-
-
-
-    .izgios-main {
-
-
-        margin-left:0;
-
-
-        width:100%;
-
-
-    }
-
-
-
-    .mobile-menu-btn {
-
-
-        display:flex;
-
-
-    }
-
-
-
-
-}
-
-
-
-
-
-
-
-/* =====================================================
-   MOBİL
-===================================================== */
-
-
-@media(max-width:768px){
-
-
-
-    .izgios-sidebar {
-
-
-        position:fixed;
-
-
-        left:-280px;
-
-
-        width:280px;
-
-
-        height:100vh;
-
-
-        transition:.3s ease;
-
-
-        z-index:1000;
-
-
-    }
-
-
-
-    .izgios-sidebar.open {
-
-
-        left:0;
-
-
-    }
-
-
-
-
-    .izgios-topbar {
-
-
-        padding:12px 15px;
-
-
-        height:80px;
-
-
-    }
-
-
-
-
-    .topbar-brand {
-
-
-        display:none;
-
-
-    }
-
-
-
-
-    .topbar-search {
-
-
-        display:none;
-
-
-    }
-
-
-
-
-    .izgios-content {
-
-
-        padding:15px;
-
-
-    }
-
+    color:#d1d5db;
 
 }

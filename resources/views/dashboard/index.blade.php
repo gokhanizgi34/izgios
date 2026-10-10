@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 
-@section('title','İZGİOS')
+@section('title','İZGİOS Yönetim Paneli')
 
 
 @section('content')
@@ -11,76 +11,53 @@
 
 
 
-    {{-- ================================================= --}}
-    {{-- HOŞ GELDİNİZ --}}
-    {{-- ================================================= --}}
+{{-- ================================================= --}}
+{{-- ADMIN HOŞ GELDİNİZ --}}
+{{-- ================================================= --}}
 
 
-    <section class="welcome-panel">
+<section class="welcome-panel">
 
 
-        <div class="welcome-content">
+    <div class="welcome-content">
 
 
-            <h1>
+        <h1>
 
-                İZGİOS'a Hoş Geldiniz
+            İZGİOS Yönetim Paneli
 
-            </h1>
-
-
-            <p>
-
-                İzgi Oto Servis Yönetim Sistemi ile servis süreçlerinizi kolayca yönetin.
-
-            </p>
+        </h1>
 
 
-        </div>
+        <p>
+
+            Sistem yöneticisi olarak tüm servis, kullanıcı ve sistem işlemlerini buradan yönetebilirsiniz.
+
+        </p>
 
 
-
-    </section>
+    </div>
 
 
 
+    <div class="welcome-info">
 
 
-    {{-- ================================================= --}}
-    {{-- ÖZET KARTLAR --}}
-    {{-- ================================================= --}}
+        <div class="welcome-info-box">
 
 
-    <section class="summary-grid">
+            <span>
+
+                Kullanıcı
+
+            </span>
 
 
-        <div class="summary-card">
+            <strong>
 
+                {{ auth()->user()->name ?? 'Yönetici' }}
 
-            <div class="summary-icon blue">
-
-                <i class="bi bi-car-front-fill"></i>
-
-            </div>
-
-
-            <div>
-
-                <span>
-
-                    Servisteki Araç
-
-                </span>
-
-
-                <strong>
-
-                    0
-
-                </strong>
-
-
-            </div>
+            </strong>
 
 
         </div>
@@ -88,34 +65,218 @@
 
 
 
-
-        <div class="summary-card">
-
-
-            <div class="summary-icon green">
-
-                <i class="bi bi-check-circle-fill"></i>
-
-            </div>
+        <div class="welcome-info-box">
 
 
-            <div>
+            <span>
 
-                <span>
+                Yetki
 
-                    Tamamlanan İş
-
-                </span>
+            </span>
 
 
-                <strong>
+            <strong>
 
-                    0
+                Sistem Yöneticisi
 
-                </strong>
+            </strong>
 
 
-            </div>
+        </div>
+
+
+    </div>
+
+
+</section>
+
+
+
+
+
+
+{{-- ================================================= --}}
+{{-- ADMIN ÖZET KARTLARI --}}
+{{-- ================================================= --}}
+
+
+
+<section class="summary-grid">
+
+
+
+    <div class="summary-card users">
+
+
+        <div class="summary-icon">
+
+            <i class="bi bi-people-fill"></i>
+
+        </div>
+
+
+        <span>
+
+            Kullanıcılar
+
+        </span>
+
+
+        <strong>
+
+            2
+
+        </strong>
+
+
+        <small>
+
+            Aktif kullanıcı
+
+        </small>
+
+
+    </div>
+
+
+
+
+
+    <div class="summary-card vehicle">
+
+
+        <div class="summary-icon">
+
+            <i class="bi bi-car-front-fill"></i>
+
+        </div>
+
+
+        <span>
+
+            Araçlar
+
+        </span>
+
+
+        <strong>
+
+            0
+
+        </strong>
+
+
+        <small>
+
+            Kayıtlı araç
+
+        </small>
+
+
+    </div>
+
+
+
+
+
+    <div class="summary-card service">
+
+
+        <div class="summary-icon">
+
+            <i class="bi bi-tools"></i>
+
+        </div>
+
+
+        <span>
+
+            Servis Yönetimi
+
+        </span>
+
+
+        <strong>
+
+            0
+
+        </strong>
+
+
+        <small>
+
+            Açık iş emri
+
+        </small>
+
+
+    </div>
+
+
+
+
+
+    <div class="summary-card finance">
+
+
+        <div class="summary-icon">
+
+            <i class="bi bi-cpu-fill"></i>
+
+        </div>
+
+
+        <span>
+
+            Sistem Durumu
+
+        </span>
+
+
+        <strong>
+
+            Aktif
+
+        </strong>
+
+
+        <small>
+
+            Sistem çalışıyor
+
+        </small>
+
+
+    </div>
+
+
+
+</section>
+{{-- ================================================= --}}
+{{-- SERVİS DURUMU + ADMİN İŞLEMLERİ --}}
+{{-- ================================================= --}}
+
+
+<section class="dashboard-columns">
+
+
+
+    {{-- SERVİS DURUMU --}}
+
+
+    <div class="dashboard-box">
+
+
+        <div class="box-header">
+
+
+            <h3>
+
+                <i class="bi bi-clipboard-data"></i>
+
+                Servis Durumu
+
+            </h3>
 
 
         </div>
@@ -123,621 +284,879 @@
 
 
 
+        <div class="service-status-list">
 
-        <div class="summary-card">
 
 
-            <div class="summary-icon yellow">
+            <div class="status-item">
 
-                <i class="bi bi-hourglass-split"></i>
 
-            </div>
-
-
-            <div>
-
-                <span>
-
-                    Bekleyen İş
-
-                </span>
-
-
-                <strong>
-
-                    0
-
-                </strong>
-
-
-            </div>
-
-
-        </div>
-
-
-
-
-
-        <div class="summary-card">
-
-
-            <div class="summary-icon red">
-
-                <i class="bi bi-wallet-fill"></i>
-
-            </div>
-
-
-            <div>
-
-                <span>
-
-                    Bekleyen Tahsilat
-
-                </span>
-
-
-                <strong>
-
-                    ₺0
-
-                </strong>
-
-
-            </div>
-
-
-        </div>
-
-
-
-    </section>
-
-
-
-
-
-
-
-    {{-- ================================================= --}}
-    {{-- SERVİS DURUMU + HIZLI İŞLEMLER --}}
-    {{-- ================================================= --}}
-
-
-    <section class="dashboard-columns">
-
-
-
-        <div class="dashboard-box">
-
-
-            <div class="box-header">
-
-
-                <h3>
-
-                    <i class="bi bi-clipboard-data"></i>
-
-                    Servis Durumu
-
-                </h3>
-
-
-            </div>
-
-
-
-
-            <div class="service-status-list">
-
-
-
-                <div class="status-item">
-
-
-                    <div class="status-icon blue">
-
-                        <i class="bi bi-car-front"></i>
-
-                    </div>
-
-
-                    <div>
-
-                        <strong>
-
-                            Kabul Bekleyen
-
-                        </strong>
-
-
-                        <span>
-
-                            0 Araç
-
-                        </span>
-
-
-                    </div>
-
-
-                </div>
-
-
-
-
-
-                <div class="status-item">
-
-
-                    <div class="status-icon yellow">
-
-                        <i class="bi bi-tools"></i>
-
-                    </div>
-
-
-                    <div>
-
-                        <strong>
-
-                            İşlemde
-
-                        </strong>
-
-
-                        <span>
-
-                            0 Araç
-
-                        </span>
-
-
-                    </div>
-
-
-                </div>
-
-
-
-
-
-                <div class="status-item">
-
-
-                    <div class="status-icon green">
-
-                        <i class="bi bi-check-lg"></i>
-
-                    </div>
-
-
-                    <div>
-
-                        <strong>
-
-                            Teslime Hazır
-
-                        </strong>
-
-
-                        <span>
-
-                            0 Araç
-
-                        </span>
-
-
-                    </div>
-
-
-                </div>
-
-
-
-            </div>
-
-
-        </div>
-
-
-
-
-
-
-
-        <div class="dashboard-box">
-
-
-            <div class="box-header">
-
-
-                <h3>
-
-                    <i class="bi bi-lightning-charge-fill"></i>
-
-                    Hızlı İşlemler
-
-                </h3>
-
-
-            </div>
-
-
-
-
-            <div class="quick-grid">
-
-
-
-                <a href="#" class="quick-card">
-
-
-                    <i class="bi bi-person-plus-fill"></i>
-
-
-                    <span>
-
-                        Yeni Müşteri
-
-                    </span>
-
-
-                </a>
-
-
-
-
-
-                <a href="#" class="quick-card">
-
-
-                    <i class="bi bi-car-front-fill"></i>
-
-
-                    <span>
-
-                        Araç Ekle
-
-                    </span>
-
-
-                </a>
-
-
-
-
-
-                <a href="#" class="quick-card">
-
-
-                    <i class="bi bi-clipboard-plus-fill"></i>
-
-
-                    <span>
-
-                        Servis Kabul
-
-                    </span>
-
-
-                </a>
-
-
-
-
-
-                <a href="#" class="quick-card">
-
-
-                    <i class="bi bi-file-earmark-text-fill"></i>
-
-
-                    <span>
-
-                        İş Emri
-
-                    </span>
-
-
-                </a>
-
-
-
-            </div>
-
-
-        </div>
-
-
-
-    </section>
-
-
-
-
-
-
-
-
-    {{-- ================================================= --}}
-    {{-- SON İŞLEMLER --}}
-    {{-- ================================================= --}}
-
-
-    <section class="dashboard-columns">
-
-
-
-        <div class="dashboard-box">
-
-
-            <div class="box-header">
-
-
-                <h3>
-
-                    <i class="bi bi-clock-history"></i>
-
-                    Son Servis Kayıtları
-
-                </h3>
-
-
-            </div>
-
-
-
-
-            <div class="table-responsive">
-
-
-                <table class="service-table">
-
-
-                    <thead>
-
-                    <tr>
-
-                        <th>
-
-                            Plaka
-
-                        </th>
-
-
-                        <th>
-
-                            Müşteri
-
-                        </th>
-
-
-                        <th>
-
-                            Durum
-
-                        </th>
-
-
-                    </tr>
-
-                    </thead>
-
-
-
-                    <tbody>
-
-
-                    <tr>
-
-
-                        <td colspan="3"
-                            class="empty-row">
-
-
-                            Henüz servis kaydı bulunmuyor.
-
-
-                        </td>
-
-
-                    </tr>
-
-
-                    </tbody>
-
-
-                </table>
-
-
-            </div>
-
-
-        </div>
-
-
-
-
-
-
-
-        <div class="dashboard-box">
-
-
-            <div class="box-header">
-
-
-                <h3>
-
-                    <i class="bi bi-calendar-check-fill"></i>
-
-                    Yaklaşan Bakımlar
-
-                </h3>
-
-
-            </div>
-
-
-
-            <div class="maintenance-list">
-
-
-                <div class="empty-state">
+                <div class="status-icon blue">
 
 
                     <i class="bi bi-car-front"></i>
 
 
-                    <p>
+                </div>
 
-                        Yaklaşan bakım bulunmuyor.
 
-                    </p>
+
+                <div>
+
+
+                    <strong>
+
+                        Kabul Bekleyen
+
+                    </strong>
+
+
+                    <span>
+
+                        0 Araç
+
+                    </span>
 
 
                 </div>
 
 
+
             </div>
+
+
+
+
+
+
+            <div class="status-item">
+
+
+                <div class="status-icon yellow">
+
+
+                    <i class="bi bi-tools"></i>
+
+
+                </div>
+
+
+
+                <div>
+
+
+                    <strong>
+
+                        İşlemde
+
+                    </strong>
+
+
+                    <span>
+
+                        0 Araç
+
+                    </span>
+
+
+                </div>
+
+
+
+            </div>
+
+
+
+
+
+
+
+            <div class="status-item">
+
+
+                <div class="status-icon green">
+
+
+                    <i class="bi bi-check-circle"></i>
+
+
+                </div>
+
+
+
+                <div>
+
+
+                    <strong>
+
+                        Teslime Hazır
+
+                    </strong>
+
+
+                    <span>
+
+                        0 Araç
+
+                    </span>
+
+
+                </div>
+
+
+
+            </div>
+
+
+
+        </div>
+
+
+    </div>
+
+
+
+
+
+
+
+
+    {{-- ADMİN HIZLI İŞLEMLER --}}
+
+
+
+    <div class="dashboard-box">
+
+
+        <div class="box-header">
+
+
+            <h3>
+
+
+                <i class="bi bi-lightning-charge-fill"></i>
+
+
+                Yönetim İşlemleri
+
+
+            </h3>
 
 
         </div>
 
 
 
-    </section>
 
 
+        <div class="quick-grid">
 
 
 
 
 
-    {{-- ================================================= --}}
-    {{-- SİSTEM BİLGİLERİ --}}
-    {{-- ================================================= --}}
+            <a href="#" class="quick-card">
 
 
+                <i class="bi bi-person-plus-fill"></i>
 
-    <section class="system-panel">
 
+                <span>
 
-        <div class="dashboard-box">
+                    Kullanıcı Ekle
 
+                </span>
 
-            <div class="box-header">
 
+            </a>
 
-                <h3>
 
-                    <i class="bi bi-cpu-fill"></i>
 
-                    Sistem Bilgileri
 
-                </h3>
 
 
-            </div>
 
+            <a href="#" class="quick-card">
 
 
-            <div class="system-grid">
+                <i class="bi bi-person-gear"></i>
 
 
+                <span>
 
-                <div class="system-card">
+                    Rol Yönetimi
 
-                    <span>
+                </span>
 
-                        Uygulama
 
-                    </span>
+            </a>
 
 
-                    <strong>
 
-                        İZGİOS
 
-                    </strong>
 
 
-                </div>
 
 
+            <a href="#" class="quick-card">
 
 
-                <div class="system-card">
+                <i class="bi bi-sliders"></i>
 
-                    <span>
 
-                        Versiyon
+                <span>
 
-                    </span>
+                    Sistem Ayarları
 
+                </span>
 
-                    <strong>
 
-                        v1.0.0
+            </a>
 
-                    </strong>
 
 
-                </div>
 
 
 
 
-                <div class="system-card">
 
-                    <span>
+            <a href="#" class="quick-card">
 
-                        Sunucu
 
-                    </span>
+                <i class="bi bi-bar-chart-fill"></i>
 
 
-                    <strong>
+                <span>
 
-                        Aktif
+                    Raporlar
 
-                    </strong>
+                </span>
 
 
-                </div>
+            </a>
 
 
 
-
-                <div class="system-card">
-
-                    <span>
-
-                        PHP
-
-                    </span>
-
-
-                    <strong>
-
-                        {{ PHP_VERSION }}
-
-                    </strong>
-
-
-                </div>
-
-
-
-            </div>
 
 
         </div>
 
 
-    </section>
+    </div>
+
+
+
+
+</section>
+{{-- ================================================= --}}
+{{-- AKTİVİTELER + SERVİS KAYITLARI --}}
+{{-- ================================================= --}}
+
+
+<section class="dashboard-columns">
+
+
+
+
+
+{{-- SON SİSTEM AKTİVİTELERİ --}}
+
+
+
+<div class="dashboard-box">
+
+
+    <div class="box-header">
+
+
+        <h3>
+
+
+            <i class="bi bi-clock-history"></i>
+
+
+            Son Sistem Aktiviteleri
+
+
+        </h3>
+
+
+    </div>
+
+
+
+
+
+    <div class="activity-list">
+
+
+
+
+
+        <div class="activity-item">
+
+
+            <div class="activity-user">
+
+
+                <div class="activity-avatar">
+
+
+                    Gİ
+
+
+                </div>
+
+
+
+                <div class="activity-info">
+
+
+                    <strong>
+
+                        Gökhan İzgi
+
+                    </strong>
+
+
+                    <span>
+
+                        Sisteme giriş yaptı
+
+                    </span>
+
+
+                </div>
+
+
+
+            </div>
+
+
+
+            <div class="activity-time">
+
+                Şimdi
+
+            </div>
+
+
+
+        </div>
+
+
+
+
+
+
+
+
+        <div class="activity-item">
+
+
+            <div class="activity-user">
+
+
+                <div class="activity-avatar">
+
+
+                    AD
+
+                </div>
+
+
+
+                <div class="activity-info">
+
+
+                    <strong>
+
+                        Admin
+
+                    </strong>
+
+
+                    <span>
+
+                        Sistem yönetimi aktif edildi
+
+                    </span>
+
+
+                </div>
+
+
+
+            </div>
+
+
+
+            <div class="activity-time">
+
+                Bugün
+
+            </div>
+
+
+
+        </div>
+
+
+
+
+
+
+        <div class="activity-item">
+
+
+            <div class="activity-user">
+
+
+                <div class="activity-avatar">
+
+
+                    US
+
+                </div>
+
+
+
+                <div class="activity-info">
+
+
+                    <strong>
+
+                        Kullanıcı
+
+                    </strong>
+
+
+                    <span>
+
+                        Bekleyen işlem yok
+
+                    </span>
+
+
+                </div>
+
+
+
+            </div>
+
+
+
+            <div class="activity-time">
+
+                -
+
+            </div>
+
+
+
+        </div>
+
+
+
+
+
+    </div>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+{{-- SON SERVİS KAYITLARI --}}
+
+
+
+<div class="dashboard-box">
+
+
+    <div class="box-header">
+
+
+        <h3>
+
+
+            <i class="bi bi-wrench-adjustable"></i>
+
+
+            Son Servis Kayıtları
+
+
+        </h3>
+
+
+    </div>
+
+
+
+
+
+    <div class="table-responsive">
+
+
+        <table class="service-table">
+
+
+
+            <thead>
+
+
+                <tr>
+
+
+                    <th>
+
+                        Plaka
+
+                    </th>
+
+
+
+                    <th>
+
+                        Müşteri
+
+                    </th>
+
+
+
+                    <th>
+
+                        Durum
+
+                    </th>
+
+
+
+                </tr>
+
+
+            </thead>
+
+
+
+
+
+            <tbody>
+
+
+
+                <tr>
+
+
+                    <td colspan="3"
+                        class="empty-row">
+
+
+                        Henüz servis kaydı bulunmuyor.
+
+
+                    </td>
+
+
+                </tr>
+
+
+
+            </tbody>
+
+
+
+        </table>
+
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+
+</section>
+{{-- ================================================= --}}
+{{-- SİSTEM BİLGİLERİ --}}
+{{-- ================================================= --}}
+
+
+
+<section class="system-panel">
+
+
+
+    <div class="dashboard-box">
+
+
+
+        <div class="box-header">
+
+
+            <h3>
+
+                <i class="bi bi-cpu-fill"></i>
+
+                Sistem Bilgileri
+
+            </h3>
+
+
+        </div>
+
+
+
+
+
+        <div class="system-grid">
+
+
+
+
+
+            <div class="system-card">
+
+
+                <span>
+
+                    Uygulama
+
+                </span>
+
+
+                <strong>
+
+                    İZGİOS
+
+                </strong>
+
+
+            </div>
+
+
+
+
+
+
+
+            <div class="system-card">
+
+
+                <span>
+
+                    Versiyon
+
+                </span>
+
+
+                <strong>
+
+                    v1.0.0
+
+                </strong>
+
+
+            </div>
+
+
+
+
+
+
+
+
+            <div class="system-card">
+
+
+                <span>
+
+                    Sunucu Durumu
+
+                </span>
+
+
+                <strong class="status-active">
+
+                    Aktif
+
+                </strong>
+
+
+            </div>
+
+
+
+
+
+
+
+
+            <div class="system-card">
+
+
+                <span>
+
+                    PHP
+
+                </span>
+
+
+                <strong>
+
+                    {{ PHP_VERSION }}
+
+                </strong>
+
+
+            </div>
+
+
+
+
+
+
+
+        </div>
+
+
+
+    </div>
+
+
+
+
+</section>
+
+
+
+
+
+
+
+{{-- ================================================= --}}
+{{-- LİSANS BİLGİSİ --}}
+{{-- ================================================= --}}
+
+
+
+<section class="dashboard-box license-box">
+
+
+
+    <div class="box-header">
+
+
+        <h3>
+
+
+            <i class="bi bi-shield-check"></i>
+
+
+            Lisans Bilgileri
+
+
+        </h3>
+
+
+
+    </div>
+
+
+
+
+
+
+    <div class="license-content">
+
+
+
+        <div>
+
+
+            <span>
+
+                Paket
+
+            </span>
+
+
+            <strong>
+
+                İZGİOS Profesyonel
+
+            </strong>
+
+
+        </div>
+
+
+
+
+
+        <div>
+
+
+            <span>
+
+                Durum
+
+            </span>
+
+
+            <strong class="status-active">
+
+                Aktif
+
+            </strong>
+
+
+        </div>
+
+
+
+
+
+        <div>
+
+
+            <span>
+
+                Kullanıcı Limiti
+
+            </span>
+
+
+            <strong>
+
+                Sınırsız
+
+            </strong>
+
+
+        </div>
+
+
+
+    </div>
+
+
+
+</section>
+
+
+
+
 
 
 

@@ -1,0 +1,8 @@
+<nav class="muhasebe-menu" aria-label="Muhasebe menüsü">
+    <a class="{{ request()->routeIs('ticari.index') ? 'active' : '' }}" href="{{ route('ticari.index',['firma_id'=>$firmaId]) }}"><i class="bi bi-grid-1x2"></i> Genel Bakış</a>
+    <a class="{{ request()->routeIs('ticari.cari*') ? 'active' : '' }}" href="{{ route('ticari.cari',['firma_id'=>$firmaId]) }}"><i class="bi bi-people"></i> Cari Hesaplar</a>
+    <a class="{{ request()->routeIs('ticari.belgeler') && request()->route('tur')==='teklif' ? 'active' : '' }}" href="{{ route('ticari.belgeler',['tur'=>'teklif','firma_id'=>$firmaId]) }}"><i class="bi bi-file-earmark-text"></i> Teklifler</a>
+    <a class="{{ request()->routeIs('ticari.belgeler') && request()->route('tur')==='fatura' ? 'active' : '' }}" href="{{ route('ticari.belgeler',['tur'=>'fatura','firma_id'=>$firmaId]) }}"><i class="bi bi-receipt"></i> Faturalar</a>
+    <a class="{{ request()->routeIs('ticari.fisler*') ? 'active' : '' }}" href="{{ route('ticari.fisler',['firma_id'=>$firmaId]) }}"><i class="bi bi-journal-plus"></i> Muhasebe Fişleri</a>
+</nav>
+<style>.muhasebe-menu{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;padding:3px 0 8px;margin-top:14px}.muhasebe-menu a{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;min-height:41px;padding:0 13px;border-radius:10px;border:1px solid #d8e3ee;background:#fff;color:#17355c;text-decoration:none;font-size:13px;font-weight:800}.muhasebe-menu a.active{background:#f5ca45;border-color:#d7a819;color:#11284d}.muhasebe-menu::-webkit-scrollbar{height:5px}.muhasebe-menu::-webkit-scrollbar-thumb{background:#d4dfeb;border-radius:9px}</style>
